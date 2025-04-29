@@ -5,6 +5,8 @@
 // Third party
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 
 typedef struct{
@@ -24,9 +26,9 @@ SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_Surface* surface;
 int isrunning = 1;
-const char* window_title = "Particle Simulator";
-int scrWidth = 640;
-int scrHeight = 480;
+const char* window_title = "SDL Playground";
+int scrWidth = 2304;
+int scrHeight = 1294;
 
 
 int InitAll();
@@ -40,6 +42,7 @@ int main(int argc, char* argv[]){
     }
 
     surface = SDL_GetWindowSurface(window);
+    
     Pos pos;
     Pos mouselast;
 
@@ -50,7 +53,39 @@ int main(int argc, char* argv[]){
     Color black = {0, 0, 0};
     ClearSurface(surface, white);
 
+    SDL_Surface* image = SDL_LoadBMP("./images/CHESS.bmp");
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, image);
+
+    scrWidth = image->w;
+    scrHeight = image->h;
+    SDL_SetWindowSize(window, image->w, image->h);
+    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+
+    SDL_Rect r;
+    r.h = scrHeight/3;
+    r.w = scrWidth/3;
+    r.x = 0;
+    r.y = 0;
+
+    SDL_Rect r2;
+    r2.h = 100;
+    r2.w = 200;
+    r2.x = 0;
+    r2.y = 0;
+
+
+
     while(isrunning){
+
+        // if(r.x == scrWidth - r.w){
+        //     r.x = 0;
+        //     if(r.y == scrHeight - r.h){
+        //         printf("x = %d, Y = %d", r.x, r.y);
+        //         r.x = 0, r.y = 0;
+        //     }
+        //     else r.y += r.h;
+        // }
+
         SDL_Event event;
         SDL_GetMouseState(&mouselast.x, &mouselast.y);
         while(SDL_PollEvent(&event)){
@@ -68,15 +103,62 @@ int main(int argc, char* argv[]){
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+
+        SDL_SetRenderDrawColor(renderer, 120, 120, 120, 255);
         SDL_RenderClear(renderer);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-        SDL_RenderDrawLine(renderer, 20, 20, 100, 100);
+        SDL_RenderDrawLine(renderer, 0, 0, mouselast.x, mouselast.y);
+        SDL_RenderDrawLine(renderer, scrWidth, scrHeight, mouselast.x, mouselast.y);
+        SDL_RenderDrawLine(renderer, 0, scrHeight, mouselast.x, mouselast.y);
+        SDL_RenderDrawLine(renderer, scrWidth, 0, mouselast.x, mouselast.y);
+
+        //r
+        SDL_RenderDrawLine(renderer, 0, 0, r.x, r.y);
+        SDL_RenderDrawLine(renderer, scrWidth, scrHeight, r.x + r.w, r.y + r.h);
+        SDL_RenderDrawLine(renderer, 0, scrHeight, r.x, r.y + r.h);
+        SDL_RenderDrawLine(renderer, scrWidth, 0, r.x + r.w, r.y);
+
+        //r2
+        SDL_RenderDrawLine(renderer, 0, 0, r2.x, r2.y);
+        SDL_RenderDrawLine(renderer, scrWidth, scrHeight, r2.x + r2.w, r2.y + r2.h);
+        SDL_RenderDrawLine(renderer, 0, scrHeight, r2.x, r2.y + r2.h);
+        SDL_RenderDrawLine(renderer, scrWidth, 0, r2.x + r2.w, r2.y);
+
+        //r
+        SDL_RenderDrawLine(renderer, r.x, r.y, r.x + r.w, r.y + r.h);
+        SDL_RenderDrawLine(renderer, r.x + r.w, r.y, r.x, r.y + r.h);
+
+        //r
+        r.x = mouselast.x - r.w/2;
+        r.y = mouselast.y - r.h/2;
+
+        //r2
+        r2.x = mouselast.x - r2.w/2;
+        r2.y = mouselast.y - r2.h/2;
+
+        // r.x++;
+        SDL_RenderCopy(renderer, texture, &r, &r);
+        SDL_RenderCopy(renderer, texture, &r2, &r2);
+        SDL_RenderDrawRect(renderer, &r);
+        SDL_RenderDrawRect(renderer, &r2);
+        // SDL_RenderFillRect(renderer, &r);
+
+
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 0);
+        SDL_RenderDrawLine(renderer, r.x, r.y, r.x + r.w, r.y + r.h);
+        SDL_RenderDrawLine(renderer, r.x + r.w, r.y, r.x, r.y + r.h);
+
+        // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
+        // SDL_RenderDrawLine(renderer, r2.x, r2.y, r2.x + r2.w, r2.y + r2.h);
+        // SDL_RenderDrawLine(renderer, r2.x + r2.w, r2.y, r2.x, r2.y + r2.h);
 
         SDL_RenderPresent(renderer);
+        SDL_Delay(6);
     }
 
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;
