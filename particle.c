@@ -1,9 +1,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
+#include <time.h>
 
 //Third party
 #include <SDL2/SDL.h>
+
+
+#define MWHITE 255, 255, 255, 255
+#define MBLACK 0, 0, 0, 255
+#define MRED 255, 0, 0, 255
+#define MGREEN 0, 255, 0, 255
+#define MBLUE 0, 0, 255, 255
+
+typedef enum{
+    EMPTY = 0,
+    SAND,
+    WATER,
+    BORDER
+} PartType;
 
 
 typedef enum{
@@ -30,15 +45,16 @@ typedef struct{
 typedef struct{
     int x, y;
     Color c;
+    PartType t;
 } Particle;
 
+//Time
+clock_t oldtime;
+clock_t deltatime;
+clock_t load;
 
-#define MWHITE 255, 255, 255, 255
-#define MBLACK 0, 0, 0, 255
-#define MRED 255, 0, 0, 255
-#define MGREEN 0, 255, 0, 255
-#define MBLUE 0, 0, 255, 255
 
+//Window
 SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_Surface* surface;
@@ -47,24 +63,36 @@ const char* window_title = "SDL Playground";
 int scrWidth = 640;
 int scrHeight = 480;
 
+
+//Simulator params
 int partSide = 32;
 int simRows;
 int simCols;
-
 Particle** pMap;
-SDL_Rect pList[500];
 int pCount = 0;
 
-
+//Color
+Color ZeroColor = {0, 0, 0, 255};
 Colors ColorSeq[] = {BLUE, RED, GREEN, YELLOW, ORANGE, PURPLE};
 int currentColor = 0;
-int seqSize = 6;
+int colorSeqSize = 6;
+
+//Particles
+Colors PartSeq[] = {SAND};
+int currentPart = 0;
+int partSeqSize = 1;
+int bound;
 
 
 int InitAll();
-void ClearList(int* pMap, int size);
+void ClearMap(Particle** pMap, int rows, int cols);
 void** Malloc2D(int rows, int cols, int elemSize);
 void ChangeColor(Color* c, Colors cs);
+void CopyColor(Color* dest, Color* src);
+int CompColors(Color* c1, Color* c2);
+void SandBehave(int* x, int* y, PartType ld, PartType d, PartType rd);
+void Simulate(Particle** pMap, int rows, int cols);
+clock_t FindDelta(clock_t old);
 
 int main(int argc, char* argv[]){
     
@@ -72,23 +100,23 @@ int main(int argc, char* argv[]){
     
     simRows = scrHeight/partSide;
     simCols = scrWidth/partSide;
-    Color color = {255, 255, 255, 255};
+    bound = scrHeight - partSide;
+    Color color;
+    ChangeColor(&color, BLACK);
+    PartType part = SAND;
 
     pMap = (Particle**)Malloc2D(simRows, simCols, sizeof(Particle));
 
-    for(size_t i = 0; i < simRows; i++){
-        for(size_t j = 0; j < simCols; j++){
-            pMap[i][j].x = 0;
-            pMap[i][j].y = 0;
-            pMap[i][j].c.r = 0, pMap[i][j].c.g = 0, pMap[i][j].c.b = 0, pMap[i][j].c.a = 0;
-        }
-    }
+    ClearMap(pMap, simRows, simCols);
 
     int mx, my;
 
+    oldtime = clock();
     while(isrunning){
+        deltatime = FindDelta(oldtime);
+        load += deltatime;
 
-        SDL_SetRenderDrawColor(renderer, MBLACK);
+        SDL_SetRenderDrawColor(renderer, MWHITE);
         SDL_RenderClear(renderer);
         
         SDL_Event event;
@@ -99,13 +127,11 @@ int main(int argc, char* argv[]){
             if(event.button.button == SDL_BUTTON_LEFT){
                 int px = ((mx) / partSide);
                 int py = ((my) / partSide);
-                if(px < simCols && py < simRows){
+                if(px >= 0 && py >= 0 && px < simCols && py < simRows){
                     pMap[py][px].x = (px * partSide)+1;
                     pMap[py][px].y = (py * partSide)+1;
-                    pMap[py][px].c.r = color.r;
-                    pMap[py][px].c.g = color.g;
-                    pMap[py][px].c.b = color.b;
-                    pMap[py][px].c.a = color.a;
+                    CopyColor(&pMap[py][px].c, &color);
+                    pMap[py][px].t = SAND;
                 }
             }
             if(event.button.button == SDL_BUTTON_RIGHT){
@@ -115,23 +141,20 @@ int main(int argc, char* argv[]){
             if(event.type == SDL_KEYDOWN){
                 if(event.key.keysym.sym == SDLK_ESCAPE) isrunning = 0;
                 if(event.key.keysym.sym == SDLK_a){
-                    
-                    for(size_t i = 0; i < simRows; i++){
-                        for(size_t j = 0; j < simCols; j++){
-                            pMap[i][j].x = 0;
-                            pMap[i][j].y = 0;
-                            pMap[i][j].c.r = 0, pMap[i][j].c.g = 0, pMap[i][j].c.b = 0, pMap[i][j].c.a = 0;
-                        }
-                    }
+                    ClearMap(pMap, simRows, simCols);
                 }
                 if(event.key.keysym.sym == SDLK_c){
-                    currentColor = (currentColor + 1) % seqSize;
+                    currentColor = (currentColor + 1) % colorSeqSize;
                     ChangeColor(&color, ColorSeq[currentColor]);
+                }
+                if(event.key.keysym.sym == SDLK_x){
+                    currentPart = (currentPart + 1) % partSeqSize;
+                    part = PartSeq[currentPart];
                 }
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, MWHITE);
+        SDL_SetRenderDrawColor(renderer, MBLACK);
 
         for(int i = 0; i < scrWidth; i += partSide){
             SDL_RenderDrawLine(renderer, i, 0, i, scrHeight);
@@ -143,6 +166,7 @@ int main(int argc, char* argv[]){
 
         for(size_t i = 0; i < simRows; i++){
             for(size_t j = 0; j < simCols; j++){
+                if(pMap[i][j].x == -1 || pMap[i][j].y == -1) continue;
                 SDL_SetRenderDrawColor(
                     renderer,
                     pMap[i][j].c.r, 
@@ -154,6 +178,7 @@ int main(int argc, char* argv[]){
             }
         }
 
+        Simulate(pMap, simRows, simCols);
         SDL_RenderPresent(renderer);
         SDL_Delay(20);
     }
@@ -202,13 +227,16 @@ int InitAll(){
 }
 
 
-// void ClearList(int* pMap, int size){
-//     for(size_t i = 0; i < 16; i++){
-//         for(size_t j = 0; j < 21; j++){
-//             pMap[i][j] = 0;
-//         }
-//     }
-// }
+void ClearMap(Particle** pMap, int rows, int cols){
+
+    for(size_t i = 0; i < rows; i++){
+        for(size_t j = 0; j < cols; j++){
+            pMap[i][j].x = -1;
+            pMap[i][j].y = -1;
+            pMap[i][j].t = EMPTY;
+        }
+    }
+}
 
 
 void** Malloc2D(int rows, int cols, int elemSize){
@@ -254,4 +282,54 @@ void ChangeColor(Color *c, Colors cs){
     default:
         break;
     }
+}
+
+
+void CopyColor(Color* dest, Color* src){
+    dest->r = src->r;
+    dest->g = src->g;
+    dest->b = src->b;
+    dest->a = src->a;
+}
+
+
+int CompColors(Color* c1, Color* c2){
+    if(c1->r != c2->r) return 1;
+    if(c1->g != c2->g) return 1;
+    if(c1->b != c2->b) return 1;
+    if(c1->a != c2->a) return 1;
+    return 0;
+}
+
+
+void SandBehave(int* x, int* y, PartType ld, PartType d, PartType rd){
+    if(d == EMPTY){ (*y) += partSide; return; }
+    if(ld == EMPTY){ (*y) += partSide, (*x) -= partSide; return; }
+    if(rd == EMPTY){ (*y) += partSide, (*x) += partSide; return; }
+}
+
+
+void Simulate(Particle** pMap, int rows, int cols){
+
+    if(load < 10000) return;   
+    load = 0; 
+
+    for(int i = 0; i < rows; i++){
+        for(int j = 0; j < cols; j++){
+            if(pMap[i][j].t == SAND){
+                if(pMap[i][j].y >= bound) continue;
+                SandBehave(
+                    &pMap[i][j].x, 
+                    &pMap[i][j].y, 
+                    pMap[i + 1][j - 1].t, 
+                    pMap[i + 1][j].t, 
+                    pMap[i + 1][j + 1].t);
+            }
+        }
+    }
+}
+
+
+clock_t FindDelta(clock_t old){
+    return clock() - old;
 }
