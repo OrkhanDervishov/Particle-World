@@ -13,6 +13,13 @@
 #define MGREEN 0, 255, 0, 255
 #define MBLUE 0, 0, 255, 255
 
+typedef struct
+{
+    int x, y;
+} Pos;
+
+
+
 typedef enum{
     EMPTY = 0,
     SAND,
@@ -28,30 +35,62 @@ typedef enum{
     GREEN,
     BLUE,
     YELLOW,
-    ORANGE,
+    LYELLOW,
     GRAY,
     PURPLE
 } Colors;
 
 
 typedef struct{
-    int r;
-    int g;
-    int b;
-    int a;
+    int r, g, b, a;
 } Color;
 
 
 typedef struct{
-    int x, y;
+    Pos p;
+    int id;
     Color c;
     PartType t;
 } Particle;
+
+
+typedef struct{
+    Particle** list;
+    size_t size;
+    size_t elems;
+} PartList;
+
+
+typedef struct{
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    SDL_Surface* surface;
+    int isrunning;
+    const char* window_title;
+    int scrWidth;
+    int scrHeight;    
+} Window;
+
+
+typedef struct
+{
+    int partSide;
+    int simRows;
+    int simCols;
+    Particle** pMap;
+    int pCount;
+} Simulator;
+
 
 //Time
 clock_t oldtime;
 clock_t deltatime;
 clock_t load;
+
+
+//Pragram params
+int mode = 1;
+int drawlines = 0;
 
 
 //Window
@@ -73,14 +112,15 @@ int pCount = 0;
 
 //Color
 Color ZeroColor = {0, 0, 0, 255};
-Colors ColorSeq[] = {BLUE, RED, GREEN, YELLOW, ORANGE, PURPLE};
+Colors ColorSeq[] = {BLUE, RED, GREEN, YELLOW, LYELLOW, PURPLE};
 int currentColor = 0;
 int colorSeqSize = 6;
 
 //Particles
-Colors PartSeq[] = {SAND, WATER};
+PartList partList;
+Colors PartSeq[] = {SAND, WATER, BORDER};
 int currentPart = 0;
-int partSeqSize = 2;
+int partSeqSize = 3;
 int bound;
 PartType genType = SAND;
 
@@ -91,14 +131,15 @@ void** Malloc2D(int rows, int cols, int elemSize);
 void ChangeColor(Color* c, Colors cs);
 void CopyColor(Color* dest, Color* src);
 int CompColors(Color* c1, Color* c2);
-void SandBehave(int* x, int* y, PartType ld, PartType d, PartType rd);
-void LiquidBehave(int* x,int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
-void Simulate(Particle** pMap, int rows, int cols);
+void SandBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
+void LiquidBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
+void Simulate(Particle** pMap, PartList partList, int rows, int cols);
 clock_t FindDelta(clock_t old);
-void CreateParticle(Particle** pMap, int px, int py, Color* color, PartType type);
+int CreateParticle(Particle** pMap, int px, int py, Color* color, PartType type);
 
 int main(int argc, char* argv[]){
     
+    // Inits
     InitAll();
     
     simRows = scrHeight/partSide;
@@ -107,13 +148,18 @@ int main(int argc, char* argv[]){
     Color color;
     ChangeColor(&color, BLACK);
 
-
+    partList.elems = 0;
+    partList.size = simRows*simCols;
+    partList.list = (Particle**)malloc(partList.size * sizeof(Particle*));
     pMap = (Particle**)Malloc2D(simRows, simCols, sizeof(Particle));
 
     ClearMap(pMap, simRows, simCols);
 
     int mx, my;
+    
 
+    // Loop
+    SDL_Event event;
     oldtime = clock();
     while(isrunning){
         deltatime = FindDelta(oldtime);
@@ -122,21 +168,43 @@ int main(int argc, char* argv[]){
         SDL_SetRenderDrawColor(renderer, MWHITE);
         SDL_RenderClear(renderer);
         
-        SDL_Event event;
-        
+
+        // Input handling
+
+        //SDL_Event event;
         //SDL_GetMouseState(&mx, &my);
         while(SDL_PollEvent(&event)){
             
-            SDL_GetMouseState(&mx, &my);
+            //SDL_GetMouseState(&mx, &my);
             if(event.type == SDL_QUIT) isrunning = 0;
-            //if(event.type == SDL_MOUSEMOTION) SDL_GetMouseState(&mx, &my);
+            if(event.type == SDL_MOUSEMOTION) SDL_GetMouseState(&mx, &my);
             if(event.button.button == SDL_BUTTON_LEFT){
+                //printf("works\n");
+                int created = 0;
                 int px = ((mx) / partSide);
                 int py = ((my) / partSide);
-                CreateParticle(pMap, px, py, &color, genType);
-            }
-            if(event.button.button == SDL_BUTTON_RIGHT){
-
+                if(mode == 0)
+                    CreateParticle(pMap, px, py, &color, genType);
+                if(mode == 1){
+                    switch (genType)
+                    {
+                    case SAND:
+                        ChangeColor(&color, LYELLOW);
+                        created = CreateParticle(pMap, px, py, &color, genType);
+                        break;
+                    case WATER:
+                        ChangeColor(&color, BLUE);
+                        created = CreateParticle(pMap, px, py, &color, genType);
+                        break;
+                    case BORDER:
+                        ChangeColor(&color, GRAY);
+                        created = CreateParticle(pMap, px, py, &color, genType);
+                        break;
+                    }
+                    if(created)
+                        partList.list[partList.elems++] = &pMap[py][px];
+                        //printf("elems: %d\n", partList.elems);
+                }
             }
 
             if(event.type == SDL_KEYDOWN){
@@ -155,36 +223,43 @@ int main(int argc, char* argv[]){
             }
         }
 
+
+        // Render
         SDL_SetRenderDrawColor(renderer, MBLACK);
 
-        for(int i = 0; i < scrWidth; i += partSide){
-            SDL_RenderDrawLine(renderer, i, 0, i, scrHeight);
-        }
-        
-        for(int i = 0; i < scrHeight; i += partSide){
-            SDL_RenderDrawLine(renderer, 0, i, scrWidth, i);
+        if(drawlines){
+            for(int i = 0; i < scrWidth; i += partSide){
+                SDL_RenderDrawLine(renderer, i, 0, i, scrHeight);
+            }
+            
+            for(int i = 0; i < scrHeight; i += partSide){
+                SDL_RenderDrawLine(renderer, 0, i, scrWidth, i);
+            }
         }
 
         for(size_t i = 0; i < simRows; i++){
             for(size_t j = 0; j < simCols; j++){
-                if(pMap[i][j].x == -1 || pMap[i][j].y == -1) continue;
+                if(pMap[i][j].id == -1) continue;
+                //printf("works\n");
                 SDL_SetRenderDrawColor(
                     renderer,
                     pMap[i][j].c.r, 
                     pMap[i][j].c.g, 
                     pMap[i][j].c.b, 
                     pMap[i][j].c.a);
-                SDL_Rect r = {pMap[i][j].x*partSide+1, pMap[i][j].y*partSide+1, partSide-1, partSide-1};
-                SDL_RenderFillRect(renderer, &r);                           
+                SDL_Rect r = {pMap[i][j].p.x*partSide+1, pMap[i][j].p.y*partSide+1, partSide-1, partSide-1};
+                SDL_RenderFillRect(renderer, &r);                          
             }
         }
 
-        Simulate(pMap, simRows, simCols);
+        if(mode == 1)
+            Simulate(pMap, partList, simRows, simCols);
         SDL_RenderPresent(renderer);
-        SDL_Delay(20);
+        SDL_Delay(30);
     }
 
 
+    // Destroy
     for(int i = 0; i < simRows; i++){
         free(pMap[i]);
     }
@@ -232,11 +307,11 @@ void ClearMap(Particle** pMap, int rows, int cols){
 
     for(size_t i = 0; i < rows; i++){
         for(size_t j = 0; j < cols; j++){
-            pMap[i][j].x = -1;
-            pMap[i][j].y = -1;
+            pMap[i][j].id = -1;
             pMap[i][j].t = EMPTY;
         }
     }
+    partList.elems = 0;
 }
 
 
@@ -270,7 +345,7 @@ void ChangeColor(Color *c, Colors cs){
     case YELLOW:
         c->r = 255, c->g = 255, c->b = 0, c->a = 255;
         break;
-    case ORANGE:
+    case LYELLOW:
         c->r = 255, c->g = 255, c->b = 100, c->a = 255;
         break;
     case GRAY:
@@ -306,14 +381,16 @@ int CompColors(Color* c1, Color* c2){
 void SandBehave(
     int* x, 
     int* y, 
+    PartType l, 
     PartType ld, 
     PartType d, 
+    PartType r, 
     PartType rd)
 {
-    // printf("x: %d, y: %d\n", *x, *y);
+    // printf("SAND\nx: %d, y: %d\n", *x, *y);
     if(d == EMPTY){ (*y) += 1; }
-    else if(ld == EMPTY){ (*y) += 1, (*x) -= 1; }
-    else if(rd == EMPTY){ (*y) += 1, (*x) += 1; }
+    else if(ld == EMPTY && l == EMPTY){ (*y) += 1, (*x) -= 1; }
+    else if(rd == EMPTY && r == EMPTY){ (*y) += 1, (*x) += 1; }
     // printf("x: %d, y: %d\n\n", *x, *y);
 }
 
@@ -328,26 +405,68 @@ void LiquidBehave(
     PartType rd)
 {
     if(d == EMPTY){ (*y) += 1; }
-    else if(ld == EMPTY){ (*y) += 1, (*x) -= 1; }
-    else if(rd == EMPTY){ (*y) += 1, (*x) += 1; }
+    else if(ld == EMPTY && l == EMPTY){ (*y) += 1, (*x) -= 1; }
+    else if(rd == EMPTY && r == EMPTY){ (*y) += 1, (*x) += 1; }
+    //else if(r == EMPTY){ (*x) += 1; }
     else if(l == EMPTY){ (*x) -= 1; }
     else if(r == EMPTY){ (*x) += 1; }
 
 }
 
 
-void Simulate(Particle** pMap, int rows, int cols){
+void Simulate(Particle** pMap, PartList partList, int rows, int cols){
 
     // if(load < 10000) return;   
     // load = 0;
 
+    int a = 0;
+    for(size_t k = 0; k < partList.elems; k++){
+
+        int j = (partList.list[k])->p.x;
+        int i = (partList.list[k])->p.y;
+
+        if(pMap[i][j].p.y >= rows-1 || pMap[i][j].t == EMPTY || pMap[i][j].t == BORDER) {continue;}
+        int* x = &pMap[i][j].p.x;
+        int* y = &pMap[i][j].p.y;
+
+        PartType type = pMap[i][j].t;
+
+        if(type == SAND){  
+            SandBehave(
+                x, 
+                y, 
+                ((*x > 0) ? pMap[i][j - 1].t : BORDER),
+                ((*x > 0) ? pMap[i + 1][j - 1].t : BORDER), 
+                pMap[i + 1][j].t,
+                ((*x < cols - 1) ? pMap[i][j + 1].t : BORDER),
+                ((*x < cols - 1) ? pMap[i + 1][j + 1].t : BORDER));
+        }
+        else if(type == WATER){
+            LiquidBehave(
+                x, 
+                y, 
+                ((*x > 0) ? pMap[i][j - 1].t : BORDER),
+                ((*x > 0) ? pMap[i + 1][j - 1].t : BORDER), 
+                pMap[i + 1][j].t,
+                ((*x < cols - 1) ? pMap[i][j + 1].t : BORDER),
+                ((*x < cols - 1) ? pMap[i + 1][j + 1].t : BORDER));
+        }
+
+        if(*y == i && *x == j) continue;
+        partList.list[k] = &pMap[*y][*x];
+        pMap[i][j].t = type;
+        pMap[*y][*x] = pMap[i][j];
+        pMap[i][j].id = -1;
+        pMap[i][j].t = EMPTY;
+    }
+    
+    return;
 
     for(int i = rows-1; i >= 0; i--){
         for(int j = cols-1; j >= 0; j--){
-            if(pMap[i][j].y >= rows-1 || pMap[i][j].t == EMPTY) {continue;}
-            int oldx = j, oldy = i;
-            int* x = &pMap[i][j].x;
-            int* y = &pMap[i][j].y;
+            if(pMap[i][j].p.y >= rows-1 || pMap[i][j].t == EMPTY || pMap[i][j].t == BORDER) {continue;}
+            int* x = &pMap[i][j].p.x;
+            int* y = &pMap[i][j].p.y;
 
             PartType type = pMap[i][j].t;
 
@@ -355,26 +474,28 @@ void Simulate(Particle** pMap, int rows, int cols){
                 SandBehave(
                     x, 
                     y, 
-                    ((*x > 0) ? pMap[i + 1][j - 1].t : SAND), 
-                    pMap[i + 1][j].t, 
-                    ((*x < cols-1) ? pMap[i + 1][j + 1].t : SAND));
+                    ((*x > 0) ? pMap[i][j - 1].t : BORDER),
+                    ((*x > 0) ? pMap[i + 1][j - 1].t : BORDER), 
+                    pMap[i + 1][j].t,
+                    ((*x < cols - 1) ? pMap[i][j + 1].t : BORDER),
+                    ((*x < cols - 1) ? pMap[i + 1][j + 1].t : BORDER));
             }
             else if(type == WATER){
                 LiquidBehave(
                     x, 
                     y, 
-                    pMap[i][j - 1].t,
-                    ((*x > 0) ? pMap[i + 1][j - 1].t : SAND), 
+                    ((*x > 0) ? pMap[i][j - 1].t : BORDER),
+                    ((*x > 0) ? pMap[i + 1][j - 1].t : BORDER), 
                     pMap[i + 1][j].t,
-                    pMap[i][j + 1].t, 
-                    ((*x < cols-1) ? pMap[i + 1][j + 1].t : SAND));
+                    ((*x < cols - 1) ? pMap[i][j + 1].t : BORDER),
+                    ((*x < cols - 1) ? pMap[i + 1][j + 1].t : BORDER));
             }
+            //printf("\n");
             if(*y == i && *x == j) continue;
             pMap[i][j].t = type;
             pMap[*y][*x] = pMap[i][j];
-            pMap[oldy][oldx].x = -1;
-            pMap[oldy][oldx].y = -1;
-            pMap[oldy][oldx].t = EMPTY;
+            pMap[i][j].id = -1;
+            pMap[i][j].t = EMPTY;
         }
     }
 }
@@ -385,11 +506,21 @@ clock_t FindDelta(clock_t old){
 }
 
 
-void CreateParticle(Particle** pMap, int px, int py, Color* color, PartType type){
+int CreateParticle(Particle** pMap, int px, int py, Color* color, PartType type){
     if(px >= 0 && py >= 0 && px < simCols && py < simRows){
-        pMap[py][px].x = px;
-        pMap[py][px].y = py;
+        //printf("works\n");
+        //printf("px: %d, py: %d\n", px, py);
+        if(pMap[py][px].id != -1) return 0;
+        pMap[py][px].p.x = px;
+        pMap[py][px].p.y = py;
+        pMap[py][px].id = 1;
         CopyColor(&pMap[py][px].c, color);
         pMap[py][px].t = type;
+        return 1;
     }
+}
+
+
+void DrawScene(){
+
 }
