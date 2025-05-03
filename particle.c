@@ -13,12 +13,6 @@
 #define MGREEN 0, 255, 0, 255
 #define MBLUE 0, 0, 255, 255
 
-typedef struct
-{
-    int x, y;
-} Pos;
-
-
 
 typedef enum{
     EMPTY = 0,
@@ -41,6 +35,12 @@ typedef enum{
 } Colors;
 
 
+typedef struct
+{
+    int x, y;
+} Pos;
+
+
 typedef struct{
     int r, g, b, a;
 } Color;
@@ -51,6 +51,8 @@ typedef struct{
     int id;
     Color c;
     PartType t;
+    int dens;
+    int vel;
 } Particle;
 
 
@@ -64,21 +66,20 @@ typedef struct{
 typedef struct{
     SDL_Window* window;
     SDL_Renderer* renderer;
-    SDL_Surface* surface;
     int isrunning;
-    const char* window_title;
-    int scrWidth;
-    int scrHeight;    
+    char title[64];
+    int w;
+    int h;    
 } Window;
 
 
 typedef struct
 {
-    int partSide;
-    int simRows;
-    int simCols;
+    int pSide;
+    int rows;
+    int cols;
     Particle** pMap;
-    int pCount;
+    PartList pList;
 } Simulator;
 
 
@@ -94,21 +95,20 @@ int drawlines = 0;
 
 
 //Window
-SDL_Window* window;
-SDL_Renderer* renderer;
-SDL_Surface* surface;
-int isrunning = 1;
-const char* window_title = "SDL Playground";
-int scrWidth = 1080;
-int scrHeight = 720;
+// SDL_Window* window;
+// SDL_Renderer* renderer;
+// int isrunning = 1;
+// const char* window_title = "SDL Playground";
+// int scrWidth = 1080;
+// int scrHeight = 720;
 
 
 //Simulator params
-int partSide = 16;
-int simRows;
-int simCols;
-Particle** pMap;
-int pCount = 0;
+// int partSide = 16;
+// int simRows;
+// int simCols;
+// Particle** pMap;
+
 
 //Color
 Color ZeroColor = {0, 0, 0, 255};
@@ -117,140 +117,173 @@ int currentColor = 0;
 int colorSeqSize = 6;
 
 //Particles
-PartList partList;
+// PartList pList;
 Colors PartSeq[] = {SAND, WATER, BORDER};
 int currentPart = 0;
 int partSeqSize = 3;
 int bound;
 PartType genType = SAND;
 
+// Declarations
 
-int InitAll();
-void ClearMap(Particle** pMap, int rows, int cols);
+int InitWindow(Window** win, int w, int h, const char* title);
+void DestroyWindow(Window** win);
+int InitSimulator(Simulator** sim, int w, int h, int ps);
+void DestroySimulator(Simulator** sim);
+void ClearMap(Simulator* sim);
 void** Malloc2D(int rows, int cols, int elemSize);
 void ChangeColor(Color* c, Colors cs);
 void CopyColor(Color* dest, Color* src);
 int CompColors(Color* c1, Color* c2);
 void SandBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
 void LiquidBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
-void Simulate(Particle** pMap, PartList partList, int rows, int cols);
+void Simulate(Simulator* sim);
 clock_t FindDelta(clock_t old);
-int CreateParticle(Particle** pMap, int px, int py, Color* color, PartType type);
-void DrawScene(SDL_Renderer* renderer, PartList partList);
-void ProcessInput(SDL_Event event, int* isrunning, Particle** pMap, PartList* partList, Color* color);
+int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type);
+void DrawScene(Window* win, Simulator* sim);
+void ProcessInput(SDL_Event event, Window* win, Simulator* sim, Color* color);
+void DrawCage(Window* win, Simulator* sim, int r, int g, int b, int a);
+
 
 int main(int argc, char* argv[]){
     
     // Inits
-    InitAll();
-    
-    simRows = scrHeight/partSide;
-    simCols = scrWidth/partSide;
-    bound = scrHeight - partSide;
+    Simulator* sim;
+    Window* win;
+    if(InitWindow(&win, 1080, 720, "SDL Playground")) return 1;
+    if(InitSimulator(&sim, 1080, 720, 16)) return 1;
+
     Color color;
     ChangeColor(&color, BLACK);
 
-    partList.elems = 0;
-    partList.size = simRows*simCols;
-    partList.list = (Particle**)malloc(partList.size * sizeof(Particle*));
-    pMap = (Particle**)Malloc2D(simRows, simCols, sizeof(Particle));
-
-    ClearMap(pMap, simRows, simCols);
-
     // Loop
     SDL_Event event;
-    oldtime = clock();
-    while(isrunning){
-        deltatime = FindDelta(oldtime);
-        load += deltatime;
-
-        SDL_SetRenderDrawColor(renderer, MWHITE);
-        SDL_RenderClear(renderer);
+    while(win->isrunning){
+        SDL_SetRenderDrawColor(win->renderer, MWHITE);
+        SDL_RenderClear(win->renderer);
         
         // Input handling
-
-        //SDL_Event event;
-        //SDL_GetMouseState(&mx, &my);
         while(SDL_PollEvent(&event)){
-            ProcessInput(event, &isrunning, pMap, &partList, &color);
+            ProcessInput(event, win, sim, &color);
         }
-
 
         // Render
-        SDL_SetRenderDrawColor(renderer, MBLACK);
-
         if(drawlines){
-            for(int i = 0; i < scrWidth; i += partSide){
-                SDL_RenderDrawLine(renderer, i, 0, i, scrHeight);
-            }
-            
-            for(int i = 0; i < scrHeight; i += partSide){
-                SDL_RenderDrawLine(renderer, 0, i, scrWidth, i);
-            }
+            DrawCage(win, sim, MBLACK);
         }
 
-        DrawScene(renderer, partList);
+        DrawScene(win, sim);
 
+        // Calculations
         if(mode == 1)
-            Simulate(pMap, partList, simRows, simCols);
-        SDL_RenderPresent(renderer);
+            Simulate(sim);
+
+        
+        // End Frame
+        SDL_RenderPresent(win->renderer);
         SDL_Delay(20);
     }
 
 
     // Destroy
-    for(int i = 0; i < simRows; i++){
-        free(pMap[i]);
-    }
-    free(pMap);
-
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    DestroySimulator(&sim);
+    DestroyWindow(&win);
     return 0;
 }
 
 
 
-int InitAll(){
+
+// Implementations
+
+int InitWindow(Window** win, int w, int h, const char* title){
     if(SDL_Init(SDL_INIT_VIDEO)){
         fprintf(stderr, "Error: %s\n", SDL_GetError());
         return 1;
     }
 
-    window = SDL_CreateWindow(
-        window_title,
+    *win = (Window*)malloc(sizeof(Window));
+
+    (*win)->isrunning = 1;
+    strcpy((*win)->title, title);
+    (*win)->w = w;
+    (*win)->h = h;
+    
+    (*win)->window = SDL_CreateWindow(
+        title,
         SDL_WINDOWPOS_CENTERED, 
         SDL_WINDOWPOS_CENTERED,
-        scrWidth,
-        scrHeight,
+        w,
+        h,
         SDL_WINDOW_SHOWN
     );
 
-    if(window == NULL){
+    if((*win)->window == NULL){
         fprintf(stderr, "Error: %s\n", SDL_GetError());
         return 1;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+    (*win)->renderer = SDL_CreateRenderer((*win)->window, -1, SDL_RENDERER_SOFTWARE);
 
-    if(renderer == NULL){
+    if((*win)->renderer == NULL){
         fprintf(stderr, "Error: %s\n", SDL_GetError());
         return 1;
     }
+
     return 0;
 }
 
 
-void ClearMap(Particle** pMap, int rows, int cols){
+void DestroyWindow(Window** win){
+    SDL_DestroyRenderer((*win)->renderer);
+    SDL_DestroyWindow((*win)->window);
+    free(*win);
+    SDL_Quit();
+}
 
-    for(size_t i = 0; i < rows; i++){
-        for(size_t j = 0; j < cols; j++){
-            pMap[i][j].id = -1;
-            pMap[i][j].t = EMPTY;
+
+int InitSimulator(Simulator** sim, int w, int h, int ps){
+
+    *sim = (Simulator*)malloc(sizeof(Simulator));
+    
+    (*sim)->pSide = ps;
+    (*sim)->rows = h/ps;
+    (*sim)->cols = w/ps;
+    bound = h - ps;
+
+    (*sim)->pList.elems = 0;
+    (*sim)->pList.size = (*sim)->rows * (*sim)->cols;
+    (*sim)->pList.list = (Particle**)malloc((*sim)->pList.size * sizeof(Particle*));
+    (*sim)->pMap = (Particle**)Malloc2D((*sim)->rows, (*sim)->cols, sizeof(Particle));
+
+    if((*sim)->pList.list == NULL) return 1;
+    if((*sim)->pMap == NULL) return 1;
+
+    ClearMap((*sim));
+    return 0;
+}
+
+
+void DestroySimulator(Simulator** sim){
+    for(int i = 0; i < (*sim)->rows; i++){
+        free((*sim)->pMap[i]);
+    }
+    free((*sim)->pMap);
+
+    free((*sim)->pList.list);
+    free(*sim);
+}
+
+
+void ClearMap(Simulator* sim){
+
+    for(size_t i = 0; i < sim->rows; i++){
+        for(size_t j = 0; j < sim->cols; j++){
+            sim->pMap[i][j].id = -1;
+            sim->pMap[i][j].t = EMPTY;
         }
     }
-    partList.elems = 0;
+    sim->pList.elems = 0;
 }
 
 
@@ -353,89 +386,50 @@ void LiquidBehave(
 }
 
 
-void Simulate(Particle** pMap, PartList partList, int rows, int cols){
+void Simulate(Simulator* sim){
 
     // if(load < 10000) return;   
     // load = 0;
 
     int a = 0;
-    for(size_t k = 0; k < partList.elems; k++){
+    for(size_t k = 0; k < sim->pList.elems; k++){
 
-        int j = (partList.list[k])->p.x;
-        int i = (partList.list[k])->p.y;
+        int j = (sim->pList.list[k])->p.x;
+        int i = (sim->pList.list[k])->p.y;
 
-        if(pMap[i][j].p.y >= rows-1 || pMap[i][j].t == EMPTY || pMap[i][j].t == BORDER) {continue;}
-        int* x = &pMap[i][j].p.x;
-        int* y = &pMap[i][j].p.y;
+        if(sim->pMap[i][j].p.y >= sim->rows-1 || sim->pMap[i][j].t == EMPTY || sim->pMap[i][j].t == BORDER) {continue;}
+        int* x = &sim->pMap[i][j].p.x;
+        int* y = &sim->pMap[i][j].p.y;
 
-        PartType type = pMap[i][j].t;
+        PartType type = sim->pMap[i][j].t;
 
         if(type == SAND){  
             SandBehave(
                 x, 
                 y, 
-                ((*x > 0) ? pMap[i][j - 1].t : BORDER),
-                ((*x > 0) ? pMap[i + 1][j - 1].t : BORDER), 
-                pMap[i + 1][j].t,
-                ((*x < cols - 1) ? pMap[i][j + 1].t : BORDER),
-                ((*x < cols - 1) ? pMap[i + 1][j + 1].t : BORDER));
+                ((*x > 0) ? sim->pMap[i][j - 1].t : BORDER),
+                ((*x > 0) ? sim->pMap[i + 1][j - 1].t : BORDER), 
+                sim->pMap[i + 1][j].t,
+                ((*x < sim->cols - 1) ? sim->pMap[i][j + 1].t : BORDER),
+                ((*x < sim->cols - 1) ? sim->pMap[i + 1][j + 1].t : BORDER));
         }
         else if(type == WATER){
             LiquidBehave(
                 x, 
                 y, 
-                ((*x > 0) ? pMap[i][j - 1].t : BORDER),
-                ((*x > 0) ? pMap[i + 1][j - 1].t : BORDER), 
-                pMap[i + 1][j].t,
-                ((*x < cols - 1) ? pMap[i][j + 1].t : BORDER),
-                ((*x < cols - 1) ? pMap[i + 1][j + 1].t : BORDER));
+                ((*x > 0) ? sim->pMap[i][j - 1].t : BORDER),
+                ((*x > 0) ? sim->pMap[i + 1][j - 1].t : BORDER), 
+                sim->pMap[i + 1][j].t,
+                ((*x < sim->cols - 1) ? sim->pMap[i][j + 1].t : BORDER),
+                ((*x < sim->cols - 1) ? sim->pMap[i + 1][j + 1].t : BORDER));
         }
 
         if(*y == i && *x == j) continue;
-        partList.list[k] = &pMap[*y][*x];
-        pMap[i][j].t = type;
-        pMap[*y][*x] = pMap[i][j];
-        pMap[i][j].id = -1;
-        pMap[i][j].t = EMPTY;
-    }
-    
-    return;
-
-    for(int i = rows-1; i >= 0; i--){
-        for(int j = cols-1; j >= 0; j--){
-            if(pMap[i][j].p.y >= rows-1 || pMap[i][j].t == EMPTY || pMap[i][j].t == BORDER) {continue;}
-            int* x = &pMap[i][j].p.x;
-            int* y = &pMap[i][j].p.y;
-
-            PartType type = pMap[i][j].t;
-
-            if(type == SAND){
-                SandBehave(
-                    x, 
-                    y, 
-                    ((*x > 0) ? pMap[i][j - 1].t : BORDER),
-                    ((*x > 0) ? pMap[i + 1][j - 1].t : BORDER), 
-                    pMap[i + 1][j].t,
-                    ((*x < cols - 1) ? pMap[i][j + 1].t : BORDER),
-                    ((*x < cols - 1) ? pMap[i + 1][j + 1].t : BORDER));
-            }
-            else if(type == WATER){
-                LiquidBehave(
-                    x, 
-                    y, 
-                    ((*x > 0) ? pMap[i][j - 1].t : BORDER),
-                    ((*x > 0) ? pMap[i + 1][j - 1].t : BORDER), 
-                    pMap[i + 1][j].t,
-                    ((*x < cols - 1) ? pMap[i][j + 1].t : BORDER),
-                    ((*x < cols - 1) ? pMap[i + 1][j + 1].t : BORDER));
-            }
-            //printf("\n");
-            if(*y == i && *x == j) continue;
-            pMap[i][j].t = type;
-            pMap[*y][*x] = pMap[i][j];
-            pMap[i][j].id = -1;
-            pMap[i][j].t = EMPTY;
-        }
+        sim->pList.list[k] = &sim->pMap[*y][*x];
+        sim->pMap[i][j].t = type;
+        sim->pMap[*y][*x] = sim->pMap[i][j];
+        sim->pMap[i][j].id = -1;
+        sim->pMap[i][j].t = EMPTY;
     }
 }
 
@@ -445,88 +439,87 @@ clock_t FindDelta(clock_t old){
 }
 
 
-int CreateParticle(Particle** pMap, int px, int py, Color* color, PartType type){
-    if(px >= 0 && py >= 0 && px < simCols && py < simRows){
+int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type){
+    if(px >= 0 && py >= 0 && px < sim->cols && py < sim->rows){
         //printf("works\n");
         // printf("px: %d, py: %d\n", px, py);
-        if(pMap[py][px].id != -1) return 0;
-        pMap[py][px].p.x = px;
-        pMap[py][px].p.y = py;
-        pMap[py][px].id = 1;
-        CopyColor(&pMap[py][px].c, color);
-        pMap[py][px].t = type;
+        if(sim->pMap[py][px].id != -1) return 0;
+        sim->pMap[py][px].p.x = px;
+        sim->pMap[py][px].p.y = py;
+        sim->pMap[py][px].id = 1;
+        CopyColor(&sim->pMap[py][px].c, color);
+        sim->pMap[py][px].t = type;
         return 1;
     }
     return 0;
 }
 
 
-void DrawScene(SDL_Renderer* renderer, PartList partList){
+void DrawScene(Window* win, Simulator* sim){
     
-    for(size_t i = 0; i < partList.elems; i++){
+    for(size_t i = 0; i < sim->pList.elems; i++){
         SDL_SetRenderDrawColor(
-            renderer,
-            partList.list[i]->c.r, 
-            partList.list[i]->c.g, 
-            partList.list[i]->c.b, 
-            partList.list[i]->c.a);
+            win->renderer,
+            sim->pList.list[i]->c.r, 
+            sim->pList.list[i]->c.g, 
+            sim->pList.list[i]->c.b, 
+            sim->pList.list[i]->c.a);
         SDL_Rect r = {
-            partList.list[i]->p.x*partSide+1, 
-            partList.list[i]->p.y*partSide+1, 
-            partSide-1, 
-            partSide-1};
-        SDL_RenderFillRect(renderer, &r);                          
+            sim->pList.list[i]->p.x * sim->pSide + 1, 
+            sim->pList.list[i]->p.y * sim->pSide + 1, 
+            sim->pSide - 1, 
+            sim->pSide - 1};
+        SDL_RenderFillRect(win->renderer, &r);                          
     }
 }
 
 
 void ProcessInput(
     SDL_Event event, 
-    int* isrunning, 
-    Particle** pMap, 
-    PartList* partList,
+    Window* win, 
+    Simulator* sim,
     Color* color
 )
 {
     // printf("works\n");
     int mx, my;
     SDL_GetMouseState(&mx, &my);
-    if(event.type == SDL_QUIT) *isrunning = 0;
+    if(event.type == SDL_QUIT) win->isrunning = 0;
     // if(event.type == SDL_MOUSEMOTION) SDL_GetMouseState(&mx, &my);
     if(event.button.button == SDL_BUTTON_LEFT){
         // printf("works\n");
         int created = 0;
-        int px = ((mx) / partSide);
-        int py = ((my) / partSide);
+        int px = ((mx) / sim->pSide);
+        int py = ((my) / sim->pSide);
         if(mode == 0)
-            CreateParticle(pMap, px, py, color, genType);
+            CreateParticle(sim, px, py, color, genType);
         if(mode == 1){
             switch (genType)
             {
             case SAND:
                 ChangeColor(color, LYELLOW);
-                created = CreateParticle(pMap, px, py, color, genType);
+                created = CreateParticle(sim, px, py, color, genType);
                 break;
             case WATER:
                 ChangeColor(color, BLUE);
-                created = CreateParticle(pMap, px, py, color, genType);
+                created = CreateParticle(sim, px, py, color, genType);
                 break;
             case BORDER:
                 ChangeColor(color, GRAY);
-                created = CreateParticle(pMap, px, py, color, genType);
+                created = CreateParticle(sim, px, py, color, genType);
                 break;
             }
             if(created)
-                partList->list[partList->elems++] = &pMap[py][px];
-                //printf("elems: %d\n", partList.elems);
+                sim->pList.list[sim->pList.elems++] = &sim->pMap[py][px];
+                //printf("elems: %d\n", pList.elems);
         }
     }
 
     if(event.type == SDL_KEYDOWN){
         // printf("works\n");
-        if(event.key.keysym.sym == SDLK_ESCAPE) *isrunning = 0;
+        if(event.key.keysym.sym == SDLK_ESCAPE) win->isrunning = 0;
         if(event.key.keysym.sym == SDLK_a){
-            ClearMap(pMap, simRows, simCols);
+            ClearMap(sim);
         }
         if(event.key.keysym.sym == SDLK_c){
             currentColor = (currentColor + 1) % colorSeqSize;
@@ -536,5 +529,25 @@ void ProcessInput(
             currentPart = (currentPart + 1) % partSeqSize;
             genType = PartSeq[currentPart];
         }
+    }
+}
+
+
+void DrawCage(
+    Window* win, 
+    Simulator* sim,
+    int r, 
+    int g, 
+    int b, 
+    int a)
+{
+    SDL_SetRenderDrawColor(win->renderer, r, g, b, a);
+
+    for(int i = 0; i < win->w; i += sim->pSide){
+        SDL_RenderDrawLine(win->renderer, i, 0, i, win->h);
+    }
+    
+    for(int i = 0; i < win->h; i += sim->pSide){
+        SDL_RenderDrawLine(win->renderer, 0, i, win->w, i);
     }
 }
