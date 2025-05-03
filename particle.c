@@ -136,6 +136,8 @@ void LiquidBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType 
 void Simulate(Particle** pMap, PartList partList, int rows, int cols);
 clock_t FindDelta(clock_t old);
 int CreateParticle(Particle** pMap, int px, int py, Color* color, PartType type);
+void DrawScene(SDL_Renderer* renderer, PartList partList);
+void ProcessInput(SDL_Event event, int* isrunning, Particle** pMap, PartList* partList, Color* color);
 
 int main(int argc, char* argv[]){
     
@@ -155,9 +157,6 @@ int main(int argc, char* argv[]){
 
     ClearMap(pMap, simRows, simCols);
 
-    int mx, my;
-    
-
     // Loop
     SDL_Event event;
     oldtime = clock();
@@ -168,59 +167,12 @@ int main(int argc, char* argv[]){
         SDL_SetRenderDrawColor(renderer, MWHITE);
         SDL_RenderClear(renderer);
         
-
         // Input handling
 
         //SDL_Event event;
         //SDL_GetMouseState(&mx, &my);
         while(SDL_PollEvent(&event)){
-            
-            //SDL_GetMouseState(&mx, &my);
-            if(event.type == SDL_QUIT) isrunning = 0;
-            if(event.type == SDL_MOUSEMOTION) SDL_GetMouseState(&mx, &my);
-            if(event.button.button == SDL_BUTTON_LEFT){
-                //printf("works\n");
-                int created = 0;
-                int px = ((mx) / partSide);
-                int py = ((my) / partSide);
-                if(mode == 0)
-                    CreateParticle(pMap, px, py, &color, genType);
-                if(mode == 1){
-                    switch (genType)
-                    {
-                    case SAND:
-                        ChangeColor(&color, LYELLOW);
-                        created = CreateParticle(pMap, px, py, &color, genType);
-                        break;
-                    case WATER:
-                        ChangeColor(&color, BLUE);
-                        created = CreateParticle(pMap, px, py, &color, genType);
-                        break;
-                    case BORDER:
-                        ChangeColor(&color, GRAY);
-                        created = CreateParticle(pMap, px, py, &color, genType);
-                        break;
-                    }
-                    if(created)
-                        partList.list[partList.elems++] = &pMap[py][px];
-                        //printf("elems: %d\n", partList.elems);
-                }
-            }
-
-            if(event.type == SDL_KEYDOWN){
-                if(event.key.keysym.sym == SDLK_ESCAPE) isrunning = 0;
-                if(event.key.keysym.sym == SDLK_a){
-                    ClearMap(pMap, simRows, simCols);
-                }
-                if(event.key.keysym.sym == SDLK_c){
-                    currentColor = (currentColor + 1) % colorSeqSize;
-                    ChangeColor(&color, ColorSeq[currentColor]);
-                }
-                if(event.key.keysym.sym == SDLK_x){
-                    currentPart = (currentPart + 1) % partSeqSize;
-                    genType = PartSeq[currentPart];
-                }
-            }
+            ProcessInput(event, &isrunning, pMap, &partList, &color);
         }
 
 
@@ -237,25 +189,12 @@ int main(int argc, char* argv[]){
             }
         }
 
-        for(size_t i = 0; i < simRows; i++){
-            for(size_t j = 0; j < simCols; j++){
-                if(pMap[i][j].id == -1) continue;
-                //printf("works\n");
-                SDL_SetRenderDrawColor(
-                    renderer,
-                    pMap[i][j].c.r, 
-                    pMap[i][j].c.g, 
-                    pMap[i][j].c.b, 
-                    pMap[i][j].c.a);
-                SDL_Rect r = {pMap[i][j].p.x*partSide+1, pMap[i][j].p.y*partSide+1, partSide-1, partSide-1};
-                SDL_RenderFillRect(renderer, &r);                          
-            }
-        }
+        DrawScene(renderer, partList);
 
         if(mode == 1)
             Simulate(pMap, partList, simRows, simCols);
         SDL_RenderPresent(renderer);
-        SDL_Delay(30);
+        SDL_Delay(20);
     }
 
 
@@ -509,7 +448,7 @@ clock_t FindDelta(clock_t old){
 int CreateParticle(Particle** pMap, int px, int py, Color* color, PartType type){
     if(px >= 0 && py >= 0 && px < simCols && py < simRows){
         //printf("works\n");
-        //printf("px: %d, py: %d\n", px, py);
+        // printf("px: %d, py: %d\n", px, py);
         if(pMap[py][px].id != -1) return 0;
         pMap[py][px].p.x = px;
         pMap[py][px].p.y = py;
@@ -518,9 +457,84 @@ int CreateParticle(Particle** pMap, int px, int py, Color* color, PartType type)
         pMap[py][px].t = type;
         return 1;
     }
+    return 0;
 }
 
 
-void DrawScene(){
+void DrawScene(SDL_Renderer* renderer, PartList partList){
+    
+    for(size_t i = 0; i < partList.elems; i++){
+        SDL_SetRenderDrawColor(
+            renderer,
+            partList.list[i]->c.r, 
+            partList.list[i]->c.g, 
+            partList.list[i]->c.b, 
+            partList.list[i]->c.a);
+        SDL_Rect r = {
+            partList.list[i]->p.x*partSide+1, 
+            partList.list[i]->p.y*partSide+1, 
+            partSide-1, 
+            partSide-1};
+        SDL_RenderFillRect(renderer, &r);                          
+    }
+}
 
+
+void ProcessInput(
+    SDL_Event event, 
+    int* isrunning, 
+    Particle** pMap, 
+    PartList* partList,
+    Color* color
+)
+{
+    // printf("works\n");
+    int mx, my;
+    SDL_GetMouseState(&mx, &my);
+    if(event.type == SDL_QUIT) *isrunning = 0;
+    // if(event.type == SDL_MOUSEMOTION) SDL_GetMouseState(&mx, &my);
+    if(event.button.button == SDL_BUTTON_LEFT){
+        // printf("works\n");
+        int created = 0;
+        int px = ((mx) / partSide);
+        int py = ((my) / partSide);
+        if(mode == 0)
+            CreateParticle(pMap, px, py, color, genType);
+        if(mode == 1){
+            switch (genType)
+            {
+            case SAND:
+                ChangeColor(color, LYELLOW);
+                created = CreateParticle(pMap, px, py, color, genType);
+                break;
+            case WATER:
+                ChangeColor(color, BLUE);
+                created = CreateParticle(pMap, px, py, color, genType);
+                break;
+            case BORDER:
+                ChangeColor(color, GRAY);
+                created = CreateParticle(pMap, px, py, color, genType);
+                break;
+            }
+            if(created)
+                partList->list[partList->elems++] = &pMap[py][px];
+                //printf("elems: %d\n", partList.elems);
+        }
+    }
+
+    if(event.type == SDL_KEYDOWN){
+        // printf("works\n");
+        if(event.key.keysym.sym == SDLK_ESCAPE) *isrunning = 0;
+        if(event.key.keysym.sym == SDLK_a){
+            ClearMap(pMap, simRows, simCols);
+        }
+        if(event.key.keysym.sym == SDLK_c){
+            currentColor = (currentColor + 1) % colorSeqSize;
+            ChangeColor(color, ColorSeq[currentColor]);
+        }
+        if(event.key.keysym.sym == SDLK_x){
+            currentPart = (currentPart + 1) % partSeqSize;
+            genType = PartSeq[currentPart];
+        }
+    }
 }
