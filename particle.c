@@ -7,11 +7,22 @@
 #include <SDL2/SDL.h>
 
 
+#define SCR_WIDTH 1080
+#define SCR_HEIGHT 720
+#define TITLE "SDL Playground"
+#define MAX_TITLE_LEN 64
+#define PART_SIDE 2
+#define DELAY 2
+#define RADIUS 4
+
+
 #define MWHITE 255, 255, 255, 255
 #define MBLACK 0, 0, 0, 255
 #define MRED 255, 0, 0, 255
 #define MGREEN 0, 255, 0, 255
 #define MBLUE 0, 0, 255, 255
+
+#define SWAP(a, b, t) t = a, a = b, b = t 
 
 
 typedef enum{
@@ -31,7 +42,8 @@ typedef enum{
     YELLOW,
     LYELLOW,
     GRAY,
-    PURPLE
+    PURPLE,
+    BROWN
 } Colors;
 
 
@@ -67,7 +79,7 @@ typedef struct{
     SDL_Window* window;
     SDL_Renderer* renderer;
     int isrunning;
-    char title[64];
+    char title[MAX_TITLE_LEN];
     int w;
     int h;    
 } Window;
@@ -83,31 +95,9 @@ typedef struct
 } Simulator;
 
 
-//Time
-clock_t oldtime;
-clock_t deltatime;
-clock_t load;
-
-
 //Pragram params
 int mode = 1;
 int drawlines = 0;
-
-
-//Window
-// SDL_Window* window;
-// SDL_Renderer* renderer;
-// int isrunning = 1;
-// const char* window_title = "SDL Playground";
-// int scrWidth = 1080;
-// int scrHeight = 720;
-
-
-//Simulator params
-// int partSide = 16;
-// int simRows;
-// int simCols;
-// Particle** pMap;
 
 
 //Color
@@ -126,23 +116,38 @@ PartType genType = SAND;
 
 // Declarations
 
+// Inits
 int InitWindow(Window** win, int w, int h, const char* title);
 void DestroyWindow(Window** win);
 int InitSimulator(Simulator** sim, int w, int h, int ps);
 void DestroySimulator(Simulator** sim);
-void ClearMap(Simulator* sim);
+
+// System
 void** Malloc2D(int rows, int cols, int elemSize);
+
+// Drawing
+void DrawCage(Window* win, Simulator* sim, int r, int g, int b, int a);
+void DrawScene(Window* win, Simulator* sim);
+void ClearMap(Simulator* sim);
+
+// Other
+clock_t FindDelta(clock_t old);
+void ProcessInput(SDL_Event event, Window* win, Simulator* sim, Color* color);
+
+// Color
 void ChangeColor(Color* c, Colors cs);
 void CopyColor(Color* dest, Color* src);
 int CompColors(Color* c1, Color* c2);
+
+// Simulation
 void SandBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
 void LiquidBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
 void Simulate(Simulator* sim);
-clock_t FindDelta(clock_t old);
+
+// Particle
 int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type);
-void DrawScene(Window* win, Simulator* sim);
-void ProcessInput(SDL_Event event, Window* win, Simulator* sim, Color* color);
-void DrawCage(Window* win, Simulator* sim, int r, int g, int b, int a);
+void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, PartType type);
+void SwapParticles(Simulator* sim, Particle* p1, Particle* p2);
 
 
 int main(int argc, char* argv[]){
@@ -150,8 +155,8 @@ int main(int argc, char* argv[]){
     // Inits
     Simulator* sim;
     Window* win;
-    if(InitWindow(&win, 1080, 720, "SDL Playground")) return 1;
-    if(InitSimulator(&sim, 1080, 720, 16)) return 1;
+    if(InitWindow(&win, SCR_WIDTH, SCR_HEIGHT, TITLE)) return 1;
+    if(InitSimulator(&sim, SCR_WIDTH, SCR_HEIGHT, PART_SIDE)) return 1;
 
     Color color;
     ChangeColor(&color, BLACK);
@@ -181,7 +186,7 @@ int main(int argc, char* argv[]){
         
         // End Frame
         SDL_RenderPresent(win->renderer);
-        SDL_Delay(20);
+        SDL_Delay(DELAY);
     }
 
 
@@ -190,7 +195,6 @@ int main(int argc, char* argv[]){
     DestroyWindow(&win);
     return 0;
 }
-
 
 
 
@@ -204,8 +208,9 @@ int InitWindow(Window** win, int w, int h, const char* title){
 
     *win = (Window*)malloc(sizeof(Window));
 
-    (*win)->isrunning = 1;
+    if(strlen(title) > MAX_TITLE_LEN)
     strcpy((*win)->title, title);
+    (*win)->isrunning = 1;
     (*win)->w = w;
     (*win)->h = h;
     
@@ -326,6 +331,9 @@ void ChangeColor(Color *c, Colors cs){
     case PURPLE:
         c->r = 255, c->g = 0, c->b = 255, c->a = 255;
         break;
+    case BROWN:
+        c->r = 150, c->g = 75, c->b = 0, c->a = 255;
+        break;
     
     default:
         break;
@@ -439,20 +447,6 @@ clock_t FindDelta(clock_t old){
 }
 
 
-int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type){
-    if(px >= 0 && py >= 0 && px < sim->cols && py < sim->rows){
-        //printf("works\n");
-        // printf("px: %d, py: %d\n", px, py);
-        if(sim->pMap[py][px].id != -1) return 0;
-        sim->pMap[py][px].p.x = px;
-        sim->pMap[py][px].p.y = py;
-        sim->pMap[py][px].id = 1;
-        CopyColor(&sim->pMap[py][px].c, color);
-        sim->pMap[py][px].t = type;
-        return 1;
-    }
-    return 0;
-}
 
 
 void DrawScene(Window* win, Simulator* sim){
@@ -474,6 +468,26 @@ void DrawScene(Window* win, Simulator* sim){
 }
 
 
+void DrawCage(
+    Window* win, 
+    Simulator* sim,
+    int r, 
+    int g, 
+    int b, 
+    int a)
+{
+    SDL_SetRenderDrawColor(win->renderer, r, g, b, a);
+
+    for(int i = 0; i < win->w; i += sim->pSide){
+        SDL_RenderDrawLine(win->renderer, i, 0, i, win->h);
+    }
+    
+    for(int i = 0; i < win->h; i += sim->pSide){
+        SDL_RenderDrawLine(win->renderer, 0, i, win->w, i);
+    }
+}
+
+
 void ProcessInput(
     SDL_Event event, 
     Window* win, 
@@ -481,7 +495,7 @@ void ProcessInput(
     Color* color
 )
 {
-    // printf("works\n");
+    //printf("works\n");
     int mx, my;
     SDL_GetMouseState(&mx, &my);
     if(event.type == SDL_QUIT) win->isrunning = 0;
@@ -494,24 +508,25 @@ void ProcessInput(
         if(mode == 0)
             CreateParticle(sim, px, py, color, genType);
         if(mode == 1){
+
             switch (genType)
             {
             case SAND:
-                ChangeColor(color, LYELLOW);
-                created = CreateParticle(sim, px, py, color, genType);
+                ChangeColor(color, BROWN);
+                // created = CreateParticle(sim, px, py, color, genType);
+                CreateManyParticles(sim, px, py, RADIUS, color, genType);
                 break;
             case WATER:
                 ChangeColor(color, BLUE);
-                created = CreateParticle(sim, px, py, color, genType);
+                //CreateParticle(sim, px, py, color, genType);
+                CreateManyParticles(sim, px, py, RADIUS, color, genType);
                 break;
             case BORDER:
                 ChangeColor(color, GRAY);
-                created = CreateParticle(sim, px, py, color, genType);
+                // created = CreateParticle(sim, px, py, color, genType);
+                CreateManyParticles(sim, px, py, RADIUS, color, genType);
                 break;
             }
-            if(created)
-                sim->pList.list[sim->pList.elems++] = &sim->pMap[py][px];
-                //printf("elems: %d\n", pList.elems);
         }
     }
 
@@ -533,21 +548,42 @@ void ProcessInput(
 }
 
 
-void DrawCage(
-    Window* win, 
-    Simulator* sim,
-    int r, 
-    int g, 
-    int b, 
-    int a)
-{
-    SDL_SetRenderDrawColor(win->renderer, r, g, b, a);
+int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type){
+    if(px >= 0 && py >= 0 && px < sim->cols && py < sim->rows){
+        //printf("works\n");
+        // printf("px: %d, py: %d\n", px, py);
+        if(sim->pMap[py][px].id != -1) return 0;
+        sim->pMap[py][px].p.x = px;
+        sim->pMap[py][px].p.y = py;
+        sim->pMap[py][px].id = 1;
+        CopyColor(&sim->pMap[py][px].c, color);
+        sim->pMap[py][px].t = type;
+        sim->pList.list[sim->pList.elems++] = &sim->pMap[py][px];
+        return 1;
+    }
+    return 0;
+}
 
-    for(int i = 0; i < win->w; i += sim->pSide){
-        SDL_RenderDrawLine(win->renderer, i, 0, i, win->h);
+void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, PartType type){
+    int begy = py - rad;
+    int begx = px - rad;
+    int endy = py + rad;
+    int endx = px + rad;
+
+    for(int i = begy; i < endy; i++){
+        for(int j = begx; j < endx; j++){
+            CreateParticle(sim, j, i, color, type);
+        }
     }
-    
-    for(int i = 0; i < win->h; i += sim->pSide){
-        SDL_RenderDrawLine(win->renderer, 0, i, win->w, i);
-    }
+}
+
+
+void SwapParticles(Simulator* sim, Particle* p1, Particle* p2){
+    Particle tp = *p1;
+    sim->pMap[p1->p.y][p1->p.x] = sim->pMap[p2->p.y][p2->p.x];
+    sim->pMap[p2->p.y][p2->p.x] = tp;
+
+    int t;
+    SWAP(p1->p.x, p1->p.x, t);
+    SWAP(p2->p.x, p2->p.x, t);
 }
