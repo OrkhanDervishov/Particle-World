@@ -5,4 +5,5 @@
 2. Add density
 3. Add velocity
 4. Perform action without mouse movement
-5. Make the code readable
+5. ~~Make the code readable~~
+6. Make quadtree

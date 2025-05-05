@@ -22,6 +22,14 @@
 #define MGREEN 0, 255, 0, 255
 #define MBLUE 0, 0, 255, 255
 
+
+#define PARTICLE_GENERATION_BUTTON (event.button.button == SDL_BUTTON_LEFT)
+#define PARTICLE_CHANGE_MOUSE_BUTTON (event.button.button == SDL_BUTTON_RIGHT)
+#define SCREEN_CLEAR_BUTTON (event.key.keysym.sym == SDLK_c)
+#define COLOR_CHANGE_BUTTON (event.key.keysym.sym == SDLK_x)
+#define PARTICLE_CHANGE_BUTTON (event.key.keysym.sym == SDLK_v)
+#define QUIT_BUTTON (event.key.keysym.sym == SDLK_ESCAPE)
+
 #define SWAP(a, b, t) t = a, a = b, b = t 
 
 
@@ -64,7 +72,7 @@ typedef struct{
     Color c;
     PartType t;
     int dens;
-    int vel;
+    int velo;
 } Particle;
 
 
@@ -500,7 +508,7 @@ void ProcessInput(
     SDL_GetMouseState(&mx, &my);
     if(event.type == SDL_QUIT) win->isrunning = 0;
     // if(event.type == SDL_MOUSEMOTION) SDL_GetMouseState(&mx, &my);
-    if(event.button.button == SDL_BUTTON_LEFT){
+    if(PARTICLE_GENERATION_BUTTON){
         // printf("works\n");
         int created = 0;
         int px = ((mx) / sim->pSide);
@@ -530,17 +538,22 @@ void ProcessInput(
         }
     }
 
+    if(PARTICLE_CHANGE_MOUSE_BUTTON){
+        currentPart = (currentPart + 2) % partSeqSize;
+        genType = PartSeq[currentPart];
+    }
+
     if(event.type == SDL_KEYDOWN){
         // printf("works\n");
-        if(event.key.keysym.sym == SDLK_ESCAPE) win->isrunning = 0;
-        if(event.key.keysym.sym == SDLK_a){
+        if(QUIT_BUTTON) win->isrunning = 0;
+        if(SCREEN_CLEAR_BUTTON){
             ClearMap(sim);
         }
-        if(event.key.keysym.sym == SDLK_c){
+        if(COLOR_CHANGE_BUTTON){
             currentColor = (currentColor + 1) % colorSeqSize;
             ChangeColor(color, ColorSeq[currentColor]);
         }
-        if(event.key.keysym.sym == SDLK_x){
+        if(PARTICLE_CHANGE_BUTTON){
             currentPart = (currentPart + 1) % partSeqSize;
             genType = PartSeq[currentPart];
         }
@@ -553,11 +566,29 @@ int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type){
         //printf("works\n");
         // printf("px: %d, py: %d\n", px, py);
         if(sim->pMap[py][px].id != -1) return 0;
-        sim->pMap[py][px].p.x = px;
-        sim->pMap[py][px].p.y = py;
-        sim->pMap[py][px].id = 1;
-        CopyColor(&sim->pMap[py][px].c, color);
-        sim->pMap[py][px].t = type;
+        Particle part;
+        part.p.x = px;
+        part.p.y = py;
+        part.id = 1;
+        CopyColor(&part.c, color);
+        part.t = type;
+        part.velo = 0;
+    
+        switch (type)
+        {
+        case SAND:
+            part.dens = 15;
+            break;
+        case WATER:
+            part.dens = 10;
+            break;
+        case BORDER:
+            part.dens = 1000000;
+            break;
+        }
+
+        sim->pMap[py][px] = part;
+
         sim->pList.list[sim->pList.elems++] = &sim->pMap[py][px];
         return 1;
     }
