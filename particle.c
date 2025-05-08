@@ -2,6 +2,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <time.h>
+#include <math.h>
 
 //Third party
 #include <SDL2/SDL.h>
@@ -39,6 +40,13 @@ typedef enum{
     WATER,
     BORDER
 } PartType;
+
+typedef enum{
+    EMPTY_DENSITY = 0,
+    WATER_DENSITY = 50,
+    SAND_DENSITY = 100,
+    BORDER_DENSITY = 1000000
+} PartDensity;
 
 
 typedef enum{
@@ -103,6 +111,11 @@ typedef struct
 } Simulator;
 
 
+// Main objects
+Simulator* sim;
+Window* win;
+
+
 //Pragram params
 int mode = 1;
 int drawlines = 0;
@@ -148,23 +161,48 @@ void CopyColor(Color* dest, Color* src);
 int CompColors(Color* c1, Color* c2);
 
 // Simulation
-void SandBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
-void LiquidBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
+// void SandBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
+void SandBehave(int* x, int* y, Particle* obj, Particle* ld, Particle* d, Particle* rd);
+// void LiquidBehave(int* x, int* y, PartType l, PartType ld, PartType d, PartType r, PartType rd);
+void LiquidBehave(
+    int* x, 
+    int* y, 
+    Particle* obj, 
+    Particle* l, 
+    Particle* ld, 
+    Particle* d, 
+    Particle* r,
+    Particle* rd);
 void Simulate(Simulator* sim);
 
 // Particle
-int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type);
-void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, PartType type);
+int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, int dens);
+void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, PartType type, int dens);
 void SwapParticles(Simulator* sim, Particle* p1, Particle* p2);
+
+void SetCircle(int** circle, int rad);
+void SetFilledCircle(int** filledCircle, int rad);
+void AddCircle(Window* win, Simulator* sim, int* circle, int rad, int x, int y);
 
 
 int main(int argc, char* argv[]){
     
     // Inits
-    Simulator* sim;
-    Window* win;
     if(InitWindow(&win, SCR_WIDTH, SCR_HEIGHT, TITLE)) return 1;
     if(InitSimulator(&sim, SCR_WIDTH, SCR_HEIGHT, PART_SIDE)) return 1;
+
+    int* filledCircle = NULL;
+    int* circle = NULL;
+    SetCircle(&circle, RADIUS);
+    SetFilledCircle(&filledCircle, RADIUS);
+
+    // int side = 2*RADIUS + 1;
+    // for(int i = 0; i < side; i++){
+    //     for(int j = 0; j < side; j++){
+    //         printf("%d ", filledCircle[i*side + j]);
+    //     }
+    //     printf("\n");
+    // }
 
     Color color;
     ChangeColor(&color, BLACK);
@@ -186,6 +224,10 @@ int main(int argc, char* argv[]){
         }
 
         DrawScene(win, sim);
+        // int x, y;
+        // SDL_SetRenderDrawColor(win->renderer, MBLACK);
+        // SDL_GetMouseState(&x, &y);
+        // AddCircle(win, sim, filledCircle, RADIUS, x, y);
 
         // Calculations
         if(mode == 1)
@@ -199,6 +241,9 @@ int main(int argc, char* argv[]){
 
 
     // Destroy
+    free(circle);
+    free(filledCircle);
+
     DestroySimulator(&sim);
     DestroyWindow(&win);
     return 0;
@@ -294,6 +339,7 @@ void ClearMap(Simulator* sim){
         for(size_t j = 0; j < sim->cols; j++){
             sim->pMap[i][j].id = -1;
             sim->pMap[i][j].t = EMPTY;
+            sim->pMap[i][j].dens = EMPTY_DENSITY;
         }
     }
     sim->pList.elems = 0;
@@ -366,41 +412,82 @@ int CompColors(Color* c1, Color* c2){
 }
 
 
+// void SandBehave(
+//     int* x, 
+//     int* y, 
+//     PartType ld, 
+//     PartType d, 
+//     PartType rd)
+// {
+//     // printf("SAND\nx: %d, y: %d\n", *x, *y);
+//     if(d == EMPTY){ (*y) += 1; }
+//     else if(ld == EMPTY){ (*y) += 1, (*x) -= 1; }
+//     else if(rd == EMPTY){ (*y) += 1, (*x) += 1; }
+//     // printf("x: %d, y: %d\n\n", *x, *y);
+// }
+
+int swapped = 0;
+
+
 void SandBehave(
     int* x, 
     int* y, 
-    PartType l, 
-    PartType ld, 
-    PartType d, 
-    PartType r, 
-    PartType rd)
+    Particle* obj, 
+    Particle* ld, 
+    Particle* d, 
+    Particle* rd)
 {
     // printf("SAND\nx: %d, y: %d\n", *x, *y);
-    if(d == EMPTY){ (*y) += 1; }
-    else if(ld == EMPTY && l == EMPTY){ (*y) += 1, (*x) -= 1; }
-    else if(rd == EMPTY && r == EMPTY){ (*y) += 1, (*x) += 1; }
+    if(d->t == EMPTY || d->dens < obj->dens){ (*y) += 1; }
+    else if(ld->t == EMPTY || ld->dens < obj->dens){ (*y) += 1, (*x) -= 1; }
+    else if(rd->t == EMPTY || rd->dens < obj->dens){ (*y) += 1, (*x) += 1; }
+
+    // else if(d->dens < obj->dens) {SwapParticles(sim, d, obj); swapped = 1;}
+    // else if(ld->dens < obj->dens) {SwapParticles(sim, ld, obj); swapped = 1;}
+    // else if(rd->dens < obj->dens) {SwapParticles(sim, rd, obj); swapped = 1;}
     // printf("x: %d, y: %d\n\n", *x, *y);
 }
 
 
+// void LiquidBehave(
+//     int* x,
+//     int* y, 
+//     PartType l, 
+//     PartType ld, 
+//     PartType d, 
+//     PartType r, 
+//     PartType rd)
+// {
+//     if(d == EMPTY){ (*y) += 1; }
+//     else if(ld == EMPTY && l == EMPTY){ (*y) += 1, (*x) -= 1; }
+//     else if(rd == EMPTY && r == EMPTY){ (*y) += 1, (*x) += 1; }
+//     //else if(r == EMPTY){ (*x) += 1; }
+//     else if(l == EMPTY){ (*x) -= 1; }
+//     else if(r == EMPTY){ (*x) += 1; }
+
+// }
+
 void LiquidBehave(
-    int* x,
+    int* x, 
     int* y, 
-    PartType l, 
-    PartType ld, 
-    PartType d, 
-    PartType r, 
-    PartType rd)
+    Particle* obj, 
+    Particle* l, 
+    Particle* ld, 
+    Particle* d, 
+    Particle* r,
+    Particle* rd)
 {
-    if(d == EMPTY){ (*y) += 1; }
-    else if(ld == EMPTY && l == EMPTY){ (*y) += 1, (*x) -= 1; }
-    else if(rd == EMPTY && r == EMPTY){ (*y) += 1, (*x) += 1; }
-    //else if(r == EMPTY){ (*x) += 1; }
-    else if(l == EMPTY){ (*x) -= 1; }
-    else if(r == EMPTY){ (*x) += 1; }
-
+    // printf("SAND\nx: %d, y: %d\n", *x, *y);
+    if(d->t == EMPTY || d->dens < obj->dens){ (*y) += 1; }
+    else if(ld->t == EMPTY || ld->dens < obj->dens){ (*y) += 1, (*x) -= 1; }
+    else if(rd->t == EMPTY || rd->dens < obj->dens){ (*y) += 1, (*x) += 1; }
+    else if(l->t == EMPTY || l->dens < obj->dens){ (*x) -= 1; }
+    else if(r->t == EMPTY || r->dens < obj->dens){ (*x) += 1; }
+    // else if(d->dens < obj->dens) { SwapParticles(sim, d, obj); swapped = 1;}
+    // else if(ld->dens < obj->dens) { SwapParticles(sim, ld, obj); swapped = 1;}
+    // else if(rd->dens < obj->dens) { SwapParticles(sim, rd, obj); swapped = 1;}
+    // printf("x: %d, y: %d\n\n", *x, *y);
 }
-
 
 void Simulate(Simulator* sim){
 
@@ -414,38 +501,46 @@ void Simulate(Simulator* sim){
         int i = (sim->pList.list[k])->p.y;
 
         if(sim->pMap[i][j].p.y >= sim->rows-1 || sim->pMap[i][j].t == EMPTY || sim->pMap[i][j].t == BORDER) {continue;}
-        int* x = &sim->pMap[i][j].p.x;
-        int* y = &sim->pMap[i][j].p.y;
+        int x = sim->pMap[i][j].p.x;
+        int y = sim->pMap[i][j].p.y;
 
         PartType type = sim->pMap[i][j].t;
 
-        if(type == SAND){  
+        if(type == SAND){
+
             SandBehave(
-                x, 
-                y, 
-                ((*x > 0) ? sim->pMap[i][j - 1].t : BORDER),
-                ((*x > 0) ? sim->pMap[i + 1][j - 1].t : BORDER), 
-                sim->pMap[i + 1][j].t,
-                ((*x < sim->cols - 1) ? sim->pMap[i][j + 1].t : BORDER),
-                ((*x < sim->cols - 1) ? sim->pMap[i + 1][j + 1].t : BORDER));
+                &x, &y,
+                &sim->pMap[i][j],
+                &sim->pMap[i + 1][j - 1],
+                &sim->pMap[i + 1][j],
+                &sim->pMap[i + 1][j + 1]
+            );
         }
         else if(type == WATER){
+
             LiquidBehave(
-                x, 
-                y, 
-                ((*x > 0) ? sim->pMap[i][j - 1].t : BORDER),
-                ((*x > 0) ? sim->pMap[i + 1][j - 1].t : BORDER), 
-                sim->pMap[i + 1][j].t,
-                ((*x < sim->cols - 1) ? sim->pMap[i][j + 1].t : BORDER),
-                ((*x < sim->cols - 1) ? sim->pMap[i + 1][j + 1].t : BORDER));
+                &x, &y,
+                &sim->pMap[i][j],
+                &sim->pMap[i][j - 1],
+                &sim->pMap[i + 1][j - 1],
+                &sim->pMap[i + 1][j],
+                &sim->pMap[i][j + 1],
+                &sim->pMap[i + 1][j + 1]
+            );
         }
 
-        if(*y == i && *x == j) continue;
-        sim->pList.list[k] = &sim->pMap[*y][*x];
-        sim->pMap[i][j].t = type;
-        sim->pMap[*y][*x] = sim->pMap[i][j];
+        if(y == i && x == j) continue;
+        if(x < 0 || x >= sim->cols) continue;
+        if(y < 0 || y >= sim->rows) continue;
+        if(sim->pMap[y][x].id != -1){
+            SwapParticles(sim, &sim->pMap[y][x], &sim->pMap[i][j]);
+            continue;
+        }
+        sim->pList.list[k] = &sim->pMap[y][x];
+        sim->pMap[y][x] = sim->pMap[i][j];
         sim->pMap[i][j].id = -1;
         sim->pMap[i][j].t = EMPTY;
+        sim->pMap[i][j].dens = EMPTY_DENSITY;
     }
 }
 
@@ -514,7 +609,7 @@ void ProcessInput(
         int px = ((mx) / sim->pSide);
         int py = ((my) / sim->pSide);
         if(mode == 0)
-            CreateParticle(sim, px, py, color, genType);
+            CreateParticle(sim, px, py, color, genType, BORDER_DENSITY);
         if(mode == 1){
 
             switch (genType)
@@ -522,17 +617,17 @@ void ProcessInput(
             case SAND:
                 ChangeColor(color, BROWN);
                 // created = CreateParticle(sim, px, py, color, genType);
-                CreateManyParticles(sim, px, py, RADIUS, color, genType);
+                CreateManyParticles(sim, px, py, RADIUS, color, genType, SAND_DENSITY);
                 break;
             case WATER:
                 ChangeColor(color, BLUE);
                 //CreateParticle(sim, px, py, color, genType);
-                CreateManyParticles(sim, px, py, RADIUS, color, genType);
+                CreateManyParticles(sim, px, py, RADIUS, color, genType, WATER_DENSITY);
                 break;
             case BORDER:
                 ChangeColor(color, GRAY);
                 // created = CreateParticle(sim, px, py, color, genType);
-                CreateManyParticles(sim, px, py, RADIUS, color, genType);
+                CreateManyParticles(sim, px, py, RADIUS, color, genType, BORDER_DENSITY);
                 break;
             }
         }
@@ -561,7 +656,7 @@ void ProcessInput(
 }
 
 
-int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type){
+int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, int dens){
     if(px >= 0 && py >= 0 && px < sim->cols && py < sim->rows){
         //printf("works\n");
         // printf("px: %d, py: %d\n", px, py);
@@ -573,19 +668,7 @@ int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type){
         CopyColor(&part.c, color);
         part.t = type;
         part.velo = 0;
-    
-        switch (type)
-        {
-        case SAND:
-            part.dens = 15;
-            break;
-        case WATER:
-            part.dens = 10;
-            break;
-        case BORDER:
-            part.dens = 1000000;
-            break;
-        }
+        part.dens = dens;
 
         sim->pMap[py][px] = part;
 
@@ -595,7 +678,7 @@ int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type){
     return 0;
 }
 
-void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, PartType type){
+void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, PartType type, int dens){
     int begy = py - rad;
     int begx = px - rad;
     int endy = py + rad;
@@ -603,18 +686,83 @@ void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, 
 
     for(int i = begy; i < endy; i++){
         for(int j = begx; j < endx; j++){
-            CreateParticle(sim, j, i, color, type);
+            CreateParticle(sim, j, i, color, type, dens);
         }
     }
 }
 
 
 void SwapParticles(Simulator* sim, Particle* p1, Particle* p2){
-    Particle tp = *p1;
-    sim->pMap[p1->p.y][p1->p.x] = sim->pMap[p2->p.y][p2->p.x];
-    sim->pMap[p2->p.y][p2->p.x] = tp;
-
+    Particle tp;
     int t;
-    SWAP(p1->p.x, p1->p.x, t);
-    SWAP(p2->p.x, p2->p.x, t);
+
+    SWAP(sim->pMap[p1->p.y][p1->p.x], sim->pMap[p2->p.y][p2->p.x], tp);
+    SWAP(p1->p.x, p2->p.x, t);
+    SWAP(p1->p.y, p2->p.y, t);
+}
+
+
+void SetCircle(int** circle, int rad){
+    if((*circle) != NULL) return;
+    int size = sizeof(int) * rad*rad;
+    (*circle) = (int*)malloc(size);
+    memset((*circle), 0, size);
+
+    float frad = (float)rad;
+
+    int side = 2 * rad;
+    float fi = -5.0f;
+    for(int i = 0; i < side; i++){
+        float fj = -5.0f;
+        for(int j = 0; j < side; j++){
+            if(sqrtf(fi*fi + fj*fj) == frad) (*circle)[i*rad + j] = 1;
+            fj += 1.0f;
+        }
+        fi += 1.0f;
+    }
+}
+
+void SetFilledCircle(int** filledCircle, int rad){
+    if((*filledCircle) != NULL) return;
+    int size = sizeof(int) * (2*rad + 1)*(2*rad + 1);
+    (*filledCircle) = (int*)malloc(size);
+    memset((*filledCircle), 0, size);
+
+    int x = rad;
+    int y = rad;
+    int side = 2*rad + 1;
+    for(int i = 0; i < side; i++){
+        for(int j = 0; j < side; j++){
+            int dx = abs(x - j);
+            int dy = abs(y - i);
+            if(dx*dx + dy*dy <= rad * rad) (*filledCircle)[i*side + j] = 1;
+        }
+    }
+}
+
+
+void AddCircle(Window* win, Simulator* sim, int* circle, int rad, int x, int y){
+    // SDL_SetRenderDrawColor(sim->
+    if(sim == NULL || circle == NULL) return;
+    int startx = x - rad - 1;
+    int starty = y - rad - 1;
+    int endx = x + rad;
+    int endy = y + rad;
+    printf("%d\n", endx - startx);
+    printf("%d\n", endy - starty);
+
+    for(int i = starty; i < endy; i++){
+        for(int j = startx; j < endx; j++){
+            int pos = (i - starty)*(2*rad + 1) + (j - startx);
+            if(circle[pos]){
+                SDL_Rect rect;
+                rect.x = j;
+                rect.y = i;
+                rect.w = sim->pSide;
+                rect.h = sim->pSide;
+                SDL_RenderDrawRect(win->renderer, &rect);
+            }
+            if(!circle[pos + 1]) break;
+        }
+    }
 }
