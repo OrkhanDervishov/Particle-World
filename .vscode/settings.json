@@ -3,6 +3,9 @@
     "files.associations": {
         "simulator.h": "c",
         "window.h": "c",
-        "particle.h": "c"
+        "particle.h": "c",
+        "common.h": "c",
+        "sdl.h": "c",
+        "math.h": "c"
     }
 }

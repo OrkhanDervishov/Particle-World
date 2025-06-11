@@ -35,6 +35,7 @@ struct QuadNode{
 
 void CreateQuadTree(QuadNode** root, int w, int h);
 void InsertQuadNode(QuadNode* root, Particle* part);
+Particle* FindItem(QuadNode* root, int x, int y);
 
 
 
@@ -52,12 +53,10 @@ void CreateQuadTree(QuadNode** root, int w, int h){
     (*root)->rd = NULL;
 }
 
-void InsertQuadNode(QuadNode* tree, Particle* part){
+void InsertQuadNode(QuadNode* tree, Particle* part, int x, int y){
     if(tree == NULL) return;
     if(part == NULL) return;
     // printf("worked2\n");
-    int x = part->p.x;
-    int y = part->p.y;
     int w = abs(tree->tl.x - tree->br.x);
     int h = abs(tree->tl.y - tree->br.y);
     // printf("worked3\n");
@@ -91,7 +90,7 @@ void InsertQuadNode(QuadNode* tree, Particle* part){
         tree->lu->br.x = midx;
         tree->lu->br.y = midy;
         INIT_QUAD(tree->lu)
-        InsertQuadNode(tree->lu, part);
+        InsertQuadNode(tree->lu, part, x, y);
         break;
     // down left
     case 1:
@@ -102,7 +101,7 @@ void InsertQuadNode(QuadNode* tree, Particle* part){
         tree->ld->br.x = midx;
         tree->ld->br.y = tree->br.y;
         INIT_QUAD(tree->ld)
-        InsertQuadNode(tree->ld, part);
+        InsertQuadNode(tree->ld, part, x, y);
         break;
     // up right
     case 2:
@@ -113,7 +112,7 @@ void InsertQuadNode(QuadNode* tree, Particle* part){
         tree->ru->br.x = tree->br.x;
         tree->ru->br.y = midy;
         INIT_QUAD(tree->ru)
-        InsertQuadNode(tree->ru, part);
+        InsertQuadNode(tree->ru, part, x, y);
         break;
     // down right
     case 3:
@@ -124,7 +123,7 @@ void InsertQuadNode(QuadNode* tree, Particle* part){
         tree->rd->br.x = tree->br.x;
         tree->rd->br.y = tree->br.y;
         INIT_QUAD(tree->rd)
-        InsertQuadNode(tree->rd, part);
+        InsertQuadNode(tree->rd, part, x, y);
         break;
     }
 
