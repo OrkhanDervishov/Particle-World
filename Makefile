@@ -8,7 +8,6 @@ LINKER_LIBS = -lmingw32 -lSDL2main -lSDL2 -lm
 main: particle.c
 	$(C_COMPILER) $(INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINKER_LIBS)
 
-
 all: main
 	./main
 
