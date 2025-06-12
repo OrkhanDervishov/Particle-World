@@ -14,7 +14,7 @@
 #define MAX_TITLE_LEN 64
 #define PART_SIDE 4
 #define DELAY 8
-#define RADIUS 2
+#define RADIUS 3
 #define STEAM_DISAPPEAR_TIME 400
 
 
@@ -27,7 +27,7 @@
 
 
 #define PARTICLE_GENERATION_BUTTON (event.button.button == SDL_BUTTON_LEFT)
-#define PARTICLE_CHANGE_MOUSE_BUTTON (event.button.button == SDL_BUTTON_RIGHT)
+#define DELETE_PARTICLE_BUTTON (event.button.button == SDL_BUTTON_RIGHT)
 #define SCREEN_CLEAR_BUTTON (event.key.keysym.sym == SDLK_c)
 #define COLOR_CHANGE_BUTTON (event.key.keysym.sym == SDLK_x)
 #define PARTICLE_CHANGE_BUTTON (event.key.keysym.sym == SDLK_v)
@@ -71,7 +71,11 @@ typedef enum{
     GRAY,
     GOOD_GRAY,
     PURPLE,
-    BROWN
+    BROWN,
+    SAND_COLORS,
+    WATER_COLORS,
+    WALL_COLORS,
+    ACID_COLORS
 } Colors;
 
 
@@ -92,7 +96,8 @@ typedef struct{
     Color c;
     PartType t;
     int dens;
-    char velo;
+    char xvel;
+    char yvel;
     int sim_t;
 } Particle;
 
@@ -145,6 +150,11 @@ int* shuffledIndexesX;
 int* shuffledIndexesY;
 int mov = 0;
 
+// Input
+int delmode = 0;
+int genmode = 0;
+
+
 Particle air = {{-1, -1}, -1, {255, 255, 255, 255}, AIR, AIR_DENSITY, 0, 0};
 
 // Inits
@@ -172,7 +182,8 @@ int CompColors(Color* c1, Color* c2);
 
 // Simulation
 void SandBehave(Simulator* sim, int* x, int* y);
-void LiquidBehave(Simulator* sim, int* x, int* y);
+void WaterBehave(Simulator* sim, int* x, int* y);
+void AcidBehave(Simulator* sim, int* x, int* y);
 void SteamBehave(Simulator* sim, int* x, int* y);
 void FungusBehave(Simulator* sim, int* x, int* y);
 void Simulate(Simulator* sim);
@@ -207,9 +218,9 @@ int main(int argc, char* argv[]){
     while(win->isrunning){
         
         // Input handling
-        while(SDL_PollEvent(&event)){
+        // while(SDL_PollEvent(&event)){
             ProcessInput(event, win, sim, &color);
-        }
+        // }
 
         // Render
         if(drawlines){
@@ -337,6 +348,8 @@ void** Malloc2D(int rows, int cols, int elemSize){
 
 
 void ChangeColor(Color *c, Colors cs){
+
+    int r = rand() % 4;
     switch (cs)
     {
     case WHITE:
@@ -378,6 +391,75 @@ void ChangeColor(Color *c, Colors cs){
     case BROWN:
         c->r = 150, c->g = 75, c->b = 0, c->a = 255;
         break;
+
+    case SAND_COLORS:
+        switch (r)
+        {
+        case 0:
+            c->r = 155, c->g = 80, c->b = 0, c->a = 255;
+            break;
+        case 1:
+            c->r = 145, c->g = 65, c->b = 0, c->a = 255;
+            break;
+        case 2:
+            c->r = 160, c->g = 70, c->b = 0, c->a = 255;
+            break;
+        case 3:
+            c->r = 150, c->g = 80, c->b = 0, c->a = 255;
+            break;
+        }
+        break;
+    case WATER_COLORS:
+        switch (r)
+        {
+        case 0:
+            c->r = 0, c->g = 0, c->b = 250, c->a = 255;
+            break;
+        case 1:
+            c->r = 0, c->g = 0, c->b = 240, c->a = 255;
+            break;
+        case 2:
+            c->r = 0, c->g = 0, c->b = 230, c->a = 255;
+            break;
+        case 3:
+            c->r = 0, c->g = 0, c->b = 220, c->a = 255;
+            break;
+        }
+        break;
+    case WALL_COLORS:
+        switch (r)
+        {
+        case 0:
+            c->r = 135, c->g = 135, c->b = 135, c->a = 255;
+            break;
+        case 1:
+            c->r = 145, c->g = 145, c->b = 145, c->a = 255;
+            break;
+        case 2:
+            c->r = 155, c->g = 155, c->b = 155, c->a = 255;
+            break;
+        case 3:
+            c->r = 125, c->g = 125, c->b = 125, c->a = 255;
+            break;
+        }
+        break;
+    case ACID_COLORS:
+        switch (r)
+        {
+        case 0:
+            c->r = 0, c->g = 250, c->b = 0, c->a = 255;
+            break;
+        case 1:
+            c->r = 0, c->g = 240, c->b = 0, c->a = 255;
+            break;
+        case 2:
+            c->r = 0, c->g = 230, c->b = 0, c->a = 255;
+            break;
+        case 3:
+            c->r = 0, c->g = 220, c->b = 0, c->a = 255;
+            break;
+        }
+        break;
     
     default:
         break;
@@ -416,12 +498,39 @@ void SandBehave(Simulator* sim, int* x, int* y){
     else if(rd->dens < p->dens){ (*y) += 1, (*x) += 1;}
 }
 
-void LiquidBehave(Simulator* sim, int* x, int* y)
+void WaterBehave(Simulator* sim, int* x, int* y)
 {
     Particle* p = &sim->pMap[*y][*x];
 
     Particle* d = &sim->pMap[*y + 1][*x];
     if(d->dens < p->dens){ (*y) += 1; return;}
+
+    Particle* ld = &sim->pMap[*y + 1][*x - 1];
+    if(ld->dens < p->dens){ (*y) += 1, (*x) -= 1; return;}
+    Particle* rd = &sim->pMap[*y + 1][*x + 1];
+    if(rd->dens < p->dens){ (*y) += 1, (*x) += 1; return;}
+
+    if(p->xvel > 1){
+        Particle* l = &sim->pMap[*y][*x - 1];
+        if(l->dens < p->dens){ (*x) -= 1; return;}
+        Particle* r = &sim->pMap[*y][*x + 1];
+        if(r->dens < p->dens){ (*x) += 1; if(p->xvel == 1)p->xvel -= 2; p->xvel -= 1; return;}
+    } else {
+        Particle* r = &sim->pMap[*y][*x + 1];
+        if(r->dens < p->dens){ (*x) += 1; return;}
+        Particle* l = &sim->pMap[*y][*x - 1];
+        if(l->dens < p->dens){ (*x) -= 1; if(p->xvel == 1)p->xvel += 2; p->xvel += 1; return;}
+    }
+}
+
+void AcidBehave(Simulator* sim, int* x, int* y)
+{
+    Particle* p = &sim->pMap[*y][*x];
+
+    Particle* d = &sim->pMap[*y + 1][*x];
+    if(d->dens < p->dens){ (*y) += 1; return;}
+    // Particle* u = &sim->pMap[*y - 1][*x];
+    // if(u->dens < p->dens){ (*y) -= 1; return;}
 
     Particle* ld = &sim->pMap[*y + 1][*x - 1];
     if(ld->dens < p->dens){ (*y) += 1, (*x) -= 1; return;}
@@ -488,10 +597,10 @@ void Simulate(Simulator* sim){
                     FungusBehave(sim, &x, &y);
                     break;
                 case WATER:
-                    LiquidBehave(sim, &x, &y);
+                    WaterBehave(sim, &x, &y);
                     break;
                 case ACID:
-                    LiquidBehave(sim, &x, &y);
+                    AcidBehave(sim, &x, &y);
                     break;
                 case STEAM:
                     SteamBehave(sim, &x, &y);
@@ -598,12 +707,11 @@ void ProcessInput(
     Color* color
 )
 {
-    //printf("works\n");
     int mx, my;
-    SDL_GetMouseState(&mx, &my);
-    if(event.type == SDL_QUIT) win->isrunning = 0;
-    // if(event.type == SDL_MOUSEMOTION) SDL_GetMouseState(&mx, &my);
-    if(PARTICLE_GENERATION_BUTTON){
+    int state = SDL_GetMouseState(&mx, &my);
+
+    // Particle generation
+    if((state & SDL_BUTTON(SDL_BUTTON_LEFT))){
         // printf("works\n");
         int created = 0;
         int px = ((mx) / sim->pSide);
@@ -615,7 +723,7 @@ void ProcessInput(
             switch (genType)
             {
             case SAND:
-                ChangeColor(color, BROWN);
+                ChangeColor(color, SAND_COLORS);
                 // created = CreateParticle(sim, px, py, color, genType);
                 CreateManyParticles(sim, px, py, RADIUS, color, genType, SAND_DENSITY);
                 break;
@@ -625,17 +733,17 @@ void ProcessInput(
                 CreateManyParticles(sim, px, py, RADIUS, color, genType, SAND_DENSITY);
                 break;
             case WATER:
-                ChangeColor(color, BLUE);
+                ChangeColor(color, WATER_COLORS);
                 //CreateParticle(sim, px, py, color, genType);
                 CreateManyParticles(sim, px, py, RADIUS, color, genType, WATER_DENSITY);
                 break;
             case ACID:
-                ChangeColor(color, GREEN);
+                ChangeColor(color, ACID_COLORS);
                 //CreateParticle(sim, px, py, color, genType);
                 CreateManyParticles(sim, px, py, RADIUS, color, genType, ACID_DENSITY);
                 break;
             case WALL:
-                ChangeColor(color, GRAY);
+                ChangeColor(color, WALL_COLORS);
                 // created = CreateParticle(sim, px, py, color, genType);
                 CreateManyParticles(sim, px, py, RADIUS, color, genType, WALL_DENSITY);
                 break;
@@ -648,26 +756,36 @@ void ProcessInput(
         }
     }
 
-    if(PARTICLE_CHANGE_MOUSE_BUTTON){
-        int px = ((mx) / sim->pSide);
-        int py = ((my) / sim->pSide);
-        DeleteManyParticles(sim, px, py, RADIUS);
-    }
 
-    if(event.type == SDL_KEYDOWN){
-        // printf("works\n");
-        if(QUIT_BUTTON) win->isrunning = 0;
-        if(SCREEN_CLEAR_BUTTON){
-            ClearMap(sim);
-            WallBox(sim);
+    // Other events
+    while(SDL_PollEvent(&event)){
+        if(event.type == SDL_QUIT) win->isrunning = 0;
+
+        if(DELETE_PARTICLE_BUTTON){
+            delmode = delmode ? 0 : 1;
         }
-        if(COLOR_CHANGE_BUTTON){
-            currentColor = (currentColor + 1) % colorSeqSize;
-            ChangeColor(color, ColorSeq[currentColor]);
+
+        if(delmode){
+            int px = ((mx) / sim->pSide);
+            int py = ((my) / sim->pSide);
+            DeleteManyParticles(sim, px, py, RADIUS * 2);
         }
-        if(PARTICLE_CHANGE_BUTTON){
-            currentPart = (currentPart + 1) % partSeqSize;
-            genType = PartSeq[currentPart];
+
+        if(event.type == SDL_KEYDOWN){
+            // printf("works\n");
+            if(QUIT_BUTTON) win->isrunning = 0;
+            if(SCREEN_CLEAR_BUTTON){
+                ClearMap(sim);
+                WallBox(sim);
+            }
+            if(COLOR_CHANGE_BUTTON){
+                currentColor = (currentColor + 1) % colorSeqSize;
+                ChangeColor(color, ColorSeq[currentColor]);
+            }
+            if(PARTICLE_CHANGE_BUTTON){
+                currentPart = (currentPart + 1) % partSeqSize;
+                genType = PartSeq[currentPart];
+            }
         }
     }
 }
@@ -684,7 +802,8 @@ int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, 
         part.id = 1;
         CopyColor(&part.c, color);
         part.t = type;
-        part.velo = 0;
+        part.xvel = 2;
+        part.yvel = 1;
         part.dens = dens;
         part.sim_t = 0;
 
@@ -701,8 +820,11 @@ void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, 
     int endx = px + rad;
 
     for(int i = begy; i < endy; i++){
+        int di = abs(py - i);
         for(int j = begx; j < endx; j++){
-            CreateParticle(sim, j, i, color, type, dens);
+            int dj = abs(px - j);
+            if(di*di + dj*dj <= rad*rad)
+                CreateParticle(sim, j, i, color, type, dens);
         }
     }
 }
@@ -720,8 +842,13 @@ void DeleteManyParticles(Simulator* sim, int px, int py, int rad){
     int endx = px + rad;
 
     for(int i = begy; i < endy; i++){
+        if(i <= 0 || i >= sim->rows - 1) continue;
+        int di = abs(py - i);
         for(int j = begx; j < endx; j++){
-            DeleteParticle(sim, j, i);
+            if(j <= 0 || j >= sim->cols - 1) continue;
+            int dj = abs(px - j);
+            if(di*di + dj*dj <= rad*rad)
+                DeleteParticle(sim, j, i);
         }
     }
 }
