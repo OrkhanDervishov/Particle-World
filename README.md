@@ -6,7 +6,7 @@
 3. Add velocity
 4. ~~Perform action without mouse movement~~
 5. ~~Make the code readable~~
-6. Improve liquid movement
+6. ~~Improve liquid movement~~
 7. ~~Improve particle deletion~~
 8. Add fire
 9. Add acid(1/2)
@@ -16,4 +16,7 @@
 13. Add heat
 14. Add explosion
 15. Add powder
-16. Improve particle colors
+16. Improve density checking
+17. Add some kind of gui
+18. Add letters
+19. Add buttons
