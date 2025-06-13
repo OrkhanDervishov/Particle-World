@@ -15,8 +15,13 @@
 #define MAX_TITLE_LEN 64
 #define PART_SIDE 4
 #define DELAY 8
-#define RADIUS 5
-#define STEAM_DISAPPEAR_TIME 400
+#define RADIUS 6
+#define STEAM_LIFE_TIME 400
+#define ACID_EFFECT_TIME 50
+#define FIRE_LIFE_TIME 700
+#define FIRE_EFFECT_TIME 30
+
+#define CSIDE 4
 
 
 #define MWHITE 255, 255, 255, 255
@@ -54,6 +59,7 @@ typedef enum{
     ACID_DENSITY = 80,
     SAND_DENSITY = 500,
     FUNGUS_DENSITY = 400,
+    FIRE_DENSITY = 100000,
     WALL_DENSITY = 1000000
 } PartDensity;
 
@@ -73,7 +79,7 @@ typedef enum{
     F_AIR = (uint32_t)0x20000000,
     F_STEAM = (uint32_t)0x20000000,
     F_SAND = (uint32_t)0x88000000,
-    F_FUNGUS = (uint32_t)0x88000000,
+    F_FUNGUS = (uint32_t)0x8C000000,
     F_WATER = (uint32_t)0x40000000,
     F_ACID = (uint32_t)0x40000000,
     F_FIRE = (uint32_t)0x20000000,
@@ -98,7 +104,8 @@ typedef enum{
     SAND_COLORS,
     WATER_COLORS,
     WALL_COLORS,
-    ACID_COLORS
+    ACID_COLORS,
+    FIRE_COLORS
 } Colors;
 
 
@@ -109,7 +116,7 @@ typedef struct
 
 
 typedef struct{
-    int r, g, b, a;
+    uint8_t r, g, b, a;
 } Color;
 
 /* 
@@ -126,7 +133,8 @@ typedef struct{
     int dens;
     char xvel;
     char yvel;
-    int sim_t;
+    int effect_t;
+    int life_t;
     uint32_t flags;
 } Particle;
 
@@ -169,9 +177,9 @@ int colorSeqSize = 6;
 
 //Particles
 // PartList pList;
-Colors PartSeq[] = {SAND, FUNGUS, WATER, ACID, STEAM, WALL};
+Colors PartSeq[] = {SAND, FUNGUS, FIRE, WATER, ACID, STEAM, WALL};
 int currentPart = 0;
-int partSeqSize = 6;
+int partSeqSize = 7;
 int bound;
 PartType genType = SAND;
 
@@ -199,6 +207,7 @@ void** Malloc2D(int rows, int cols, int elemSize);
 // Drawing
 void DrawCage(Window* win, Simulator* sim, int r, int g, int b, int a);
 void DrawScene(Window* win, Simulator* sim);
+void DrawCircle(Simulator* sim, int mx, int my, int rad);
 void ClearMap(Simulator* sim);
 
 // Other
@@ -216,10 +225,12 @@ void WaterBehave(Simulator* sim, int* x, int* y);
 void AcidBehave(Simulator* sim, int* x, int* y);
 void SteamBehave(Simulator* sim, int* x, int* y);
 void FungusBehave(Simulator* sim, int* x, int* y);
+void FireBehave(Simulator* sim, int* x, int* y);
 void Simulate(Simulator* sim);
 
 // Particle
 int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, int dens, PartFlags flags);
+void CreateReplaceParticle(Simulator* sim, int px, int py, Color* color, PartType type, int dens, PartFlags flags);
 void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, PartType type, int dens, PartFlags flags);
 void DeleteParticle(Simulator* sim, int px, int py);
 void DeleteManyParticles(Simulator* sim, int px, int py, int rad);
@@ -259,6 +270,9 @@ int main(int argc, char* argv[]){
         }
 
         DrawScene(win, sim);
+        int mx, my;
+        SDL_GetMouseState(&mx, &my);
+        DrawCircle(sim, mx, my, RADIUS);
 
         // Calculations
         if(mode == 1){
@@ -492,6 +506,23 @@ void ChangeColor(Color *c, Colors cs){
             break;
         }
         break;
+    case FIRE_COLORS:
+        switch (r)
+        {
+        case 0:
+            c->r = 255, c->g = 0, c->b = 0, c->a = 255;
+            break;
+        case 1:
+            c->r = 255, c->g = 90, c->b = 0, c->a = 255;
+            break;
+        case 2:
+            c->r = 255, c->g = 154, c->b = 0, c->a = 255;
+            break;
+        case 3:
+            c->r = 255, c->g = 206, c->b = 0, c->a = 255;
+            break;
+        }
+        break;
     
     default:
         break;
@@ -563,35 +594,34 @@ void AcidBehave(Simulator* sim, int* x, int* y)
 
     Particle* d = &sim->pMap[*y + 1][*x];
     if(d->dens < p->dens || (del = CHECK_FLAG(d, ACID_HAS_AN_EFFECT))){ 
-        // printf("del:%d\n", del);
         if(del){
-            DeleteParticle(sim, *x, *y);
-            DeleteParticle(sim, *x, *y + 1);
+            if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
+            else{
+                DeleteParticle(sim, *x, *y);
+                DeleteParticle(sim, *x, *y + 1);
+            }
             return;
         }
         (*y) += 1;
         return;
     }
-    // Particle* u = &sim->pMap[*y - 1][*x];
-    // if(u->dens < p->dens){ (*y) -= 1; return;}
+    Particle* u = &sim->pMap[*y - 1][*x];
+    if(CHECK_FLAG(u, ACID_HAS_AN_EFFECT)){ 
+        if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
+        else{
+            DeleteParticle(sim, *x, *y);
+            DeleteParticle(sim, *x, *y - 1);
+        }
+        return;
+    }
 
     Particle* ld = &sim->pMap[*y + 1][*x - 1];
-    if(ld->dens < p->dens || (del = CHECK_FLAG(ld, ACID_HAS_AN_EFFECT))){
-        if(del){
-            DeleteParticle(sim, *x, *y);
-            DeleteParticle(sim, *x - 1, *y + 1);
-            return;
-        }
+    if(ld->dens < p->dens){
         (*y) += 1, (*x) -= 1; 
         return;
     }
     Particle* rd = &sim->pMap[*y + 1][*x + 1];
-    if(rd->dens < p->dens || (del = CHECK_FLAG(rd, ACID_HAS_AN_EFFECT))){
-        if(del){
-            DeleteParticle(sim, *x, *y);
-            DeleteParticle(sim, *x + 1, *y + 1);
-            return;
-        }
+    if(rd->dens < p->dens){
         (*y) += 1, (*x) += 1; 
         return;
     }
@@ -600,8 +630,11 @@ void AcidBehave(Simulator* sim, int* x, int* y)
         Particle* l = &sim->pMap[*y][*x - 1];
         if(l->dens < p->dens || (del = CHECK_FLAG(l, ACID_HAS_AN_EFFECT))){
             if(del){
-                DeleteParticle(sim, *x, *y);
-                DeleteParticle(sim, *x - 1, *y);
+                if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
+                else{
+                    DeleteParticle(sim, *x, *y);
+                    DeleteParticle(sim, *x - 1, *y);
+                }
                 return;
             }
             (*x) -= 1; 
@@ -610,8 +643,11 @@ void AcidBehave(Simulator* sim, int* x, int* y)
         Particle* r = &sim->pMap[*y][*x + 1];
         if(r->dens < p->dens|| (del = CHECK_FLAG(r, ACID_HAS_AN_EFFECT))){ 
             if(del){
-                DeleteParticle(sim, *x, *y);
-                DeleteParticle(sim, *x + 1, *y);
+                if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
+                else{
+                    DeleteParticle(sim, *x, *y);
+                    DeleteParticle(sim, *x + 1, *y);
+                }
                 return;
             }
             (*x) += 1; 
@@ -623,8 +659,11 @@ void AcidBehave(Simulator* sim, int* x, int* y)
         Particle* r = &sim->pMap[*y][*x + 1];
         if(r->dens < p->dens || (del = CHECK_FLAG(r, ACID_HAS_AN_EFFECT))){
             if(del){
-                DeleteParticle(sim, *x, *y);
-                DeleteParticle(sim, *x + 1, *y);
+                if(p->effect_t < ACID_EFFECT_TIME)p->effect_t++;
+                else{
+                    DeleteParticle(sim, *x, *y);
+                    DeleteParticle(sim, *x + 1, *y);
+                }
                 return;
             }
             (*x) += 1; 
@@ -633,8 +672,11 @@ void AcidBehave(Simulator* sim, int* x, int* y)
         Particle* l = &sim->pMap[*y][*x - 1];
         if(l->dens < p->dens|| (del = CHECK_FLAG(l, ACID_HAS_AN_EFFECT))){ 
             if(del){
-                DeleteParticle(sim, *x, *y);
-                DeleteParticle(sim, *x - 1, *y);
+                if(p->effect_t < ACID_EFFECT_TIME)p->effect_t++;
+                else{
+                    DeleteParticle(sim, *x, *y);
+                    DeleteParticle(sim, *x - 1, *y);
+                }
                 return;
             }
             (*x) -= 1; 
@@ -648,20 +690,23 @@ void AcidBehave(Simulator* sim, int* x, int* y)
 void SteamBehave(Simulator* sim, int* x, int* y)
 {
     Particle* p = &sim->pMap[*y][*x];
+    p->life_t++;
+    if(p->life_t > STEAM_LIFE_TIME){DeleteParticle(sim, *x, *y); return;}
+
     Particle* u = &sim->pMap[*y - 1][*x];
+    if(u->dens > p->dens){ (*y) -= 1; return;}
+
     Particle* lu = &sim->pMap[*y - 1][*x - 1];
+    if(lu->dens > p->dens){ (*y) -= 1, (*x) -= 1; return;}
+
     Particle* ru = &sim->pMap[*y - 1][*x + 1];
+    if(ru->dens > p->dens){ (*y) -= 1, (*x) += 1; return;}
+
     Particle* l = &sim->pMap[*y][*x - 1];
+    if(l->dens > p->dens){ (*x) -= 1; return;}
+
     Particle* r = &sim->pMap[*y][*x + 1];
-
-    p->sim_t++;
-    if(p->sim_t > STEAM_DISAPPEAR_TIME){p->id = -2; return;}
-
-    if(u->dens > p->dens){ (*y) -= 1; }
-    else if(lu->dens > p->dens){ (*y) -= 1, (*x) -= 1; }
-    else if(ru->dens > p->dens){ (*y) -= 1, (*x) += 1;}
-    else if(l->dens > p->dens){ (*x) -= 1; }
-    else if(r->dens > p->dens){ (*x) += 1;}
+    if(r->dens > p->dens){ (*x) += 1; return;}
 }
 
 void FungusBehave(Simulator* sim, int* x, int* y)
@@ -670,6 +715,54 @@ void FungusBehave(Simulator* sim, int* x, int* y)
     Particle* d = &sim->pMap[*y + 1][*x];
 
     if(d->dens < p->dens){ (*y) += 1; }
+}
+
+void FireBehave(Simulator* sim, int* x, int* y){
+
+    Particle* p = &sim->pMap[*y][*x];
+    // printf("life:%d effect:%d\n",p->life_t, p->effect_t);
+    p->life_t++;
+    if(p->effect_t < FIRE_EFFECT_TIME){
+        p->effect_t++;
+        return;
+    }
+
+    if(p->life_t > FIRE_LIFE_TIME){DeleteParticle(sim, *x, *y); return;}
+
+    int fire;
+    Particle* d = &sim->pMap[*y + 1][*x];
+    if(CHECK_FLAG(d, FIRE_HAS_AN_EFFECT)){
+        // printf("works\n");
+        Color c;
+        ChangeColor(&c, FIRE_COLORS);
+        CreateReplaceParticle(sim, *x, *y + 1, &c, FIRE, FIRE_DENSITY, F_FIRE);
+        // printf("t:%d\n", d->dens);
+        return;
+    }
+
+    Particle* u = &sim->pMap[*y - 1][*x];
+    if(fire = (CHECK_FLAG(u, FIRE_HAS_AN_EFFECT))){
+        Color c;
+        ChangeColor(&c, FIRE_COLORS);
+        CreateReplaceParticle(sim, *x, *y - 1, &c, FIRE, FIRE_DENSITY, F_FIRE);
+        return;
+    }
+
+    Particle* l = &sim->pMap[*y][*x - 1];
+    if(fire = (CHECK_FLAG(l, FIRE_HAS_AN_EFFECT))){
+        Color c;
+        ChangeColor(&c, FIRE_COLORS);
+        CreateReplaceParticle(sim, *x - 1, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
+        return;
+    }
+
+    Particle* r = &sim->pMap[*y][*x + 1];
+    if(fire = (CHECK_FLAG(r, FIRE_HAS_AN_EFFECT))){
+        Color c;
+        ChangeColor(&c, FIRE_COLORS);
+        CreateReplaceParticle(sim, *x + 1, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
+        return;
+    }
 }
 
 void Simulate(Simulator* sim){
@@ -706,6 +799,9 @@ void Simulate(Simulator* sim){
                     break;
                 case STEAM:
                     SteamBehave(sim, &x, &y);
+                    break;
+                case FIRE:
+                    FireBehave(sim, &x, &y);
                     break;
                 }
 
@@ -794,6 +890,49 @@ void DrawCage(
     }
 }
 
+void DrawCircle(Simulator* sim, int px, int py, int rad){
+    int x = rad - 1;
+    int y = 0;
+    int dx = 1;
+    int dy = 1;
+    int err = dx - (rad << 1);
+
+    SDL_SetRenderDrawColor(win->renderer, MWHITE);
+    while(x >= y){
+        int cx = x * CSIDE;
+        int cy = y * CSIDE;
+        SDL_Rect r0 = {px + cx, py + cy, CSIDE, CSIDE};
+        SDL_RenderFillRect(win->renderer, &r0);
+        SDL_Rect r1 = {px + cy, py + cx, CSIDE, CSIDE};
+        SDL_RenderFillRect(win->renderer, &r1);
+        SDL_Rect r2 = {px - cy, py + cx, CSIDE, CSIDE};
+        SDL_RenderFillRect(win->renderer, &r2);
+        SDL_Rect r3 = {px - cx, py + cy, CSIDE, CSIDE};
+        SDL_RenderFillRect(win->renderer, &r3);
+        SDL_Rect r4 = {px - cx, py - cy, CSIDE, CSIDE};
+        SDL_RenderFillRect(win->renderer, &r4);
+        SDL_Rect r5 = {px - cy, py - cx, CSIDE, CSIDE};
+        SDL_RenderFillRect(win->renderer, &r5);
+        SDL_Rect r6 = {px + cy, py - cx, CSIDE, CSIDE};
+        SDL_RenderFillRect(win->renderer, &r6);
+        SDL_Rect r7 = {px + cx, py - cy, CSIDE, CSIDE};
+        SDL_RenderFillRect(win->renderer, &r7);
+
+        if(err <= 0){
+            y++;
+            err += dy;
+            dy += 2;  
+        }
+        if(err > 0){
+            x--;
+            dx += 2;
+            err += dx - (rad << 1);
+        }
+    }
+    // SDL_Rect r = {j * CSIDE + 1, i * CSIDE + 1, CSIDE, CSIDE};
+    // SDL_RenderFillRect(win->renderer, &r);
+}
+
 
 void ProcessInput(
     SDL_Event event, 
@@ -847,6 +986,11 @@ void ProcessInput(
                 // created = CreateParticle(sim, px, py, color, genType);
                 CreateManyParticles(sim, px, py, RADIUS, color, genType, STEAM_DENSITY, F_STEAM);
                 break;
+            case FIRE:
+                ChangeColor(color, FIRE_COLORS);
+                // created = CreateParticle(sim, px, py, color, genType);
+                CreateManyParticles(sim, px, py, RADIUS, color, genType, FIRE_DENSITY, F_FIRE);
+                break;
             }
         }
     }
@@ -854,7 +998,7 @@ void ProcessInput(
     if(state & SDL_BUTTON(SDL_BUTTON_RIGHT)){
         int px = ((mx) / sim->pSide);
         int py = ((my) / sim->pSide);
-        DeleteManyParticles(sim, px, py, RADIUS * 2);
+        DeleteManyParticles(sim, px, py, RADIUS);
     }
 
     // Other events
@@ -905,7 +1049,8 @@ int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, 
         part.xvel = 2;
         part.yvel = 1;
         part.dens = dens;
-        part.sim_t = 0;
+        part.life_t = rand() % 30;
+        part.effect_t = rand() % 30;
         part.flags = flags;
         // printf("%d\n", (flags & IS_SOLID) ? 1 : 0);
 
@@ -913,6 +1058,24 @@ int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, 
         return 1;
     }
     return 0;
+}
+
+void CreateReplaceParticle(Simulator* sim, int px, int py, Color* color, PartType type, int dens, PartFlags flags){
+    Particle part;
+    part.p.x = px;
+    part.p.y = py;
+    part.id = 1;
+    CopyColor(&part.c, color);
+    part.t = type;
+    part.xvel = 2;
+    part.yvel = 1;
+    part.dens = dens;
+    part.life_t = rand() % 30;
+    part.effect_t = rand() % 30;
+    part.flags = flags;
+    // printf("%d\n", (flags & IS_SOLID) ? 1 : 0);
+
+    sim->pMap[py][px] = part;
 }
 
 void CreateManyParticles(Simulator* sim, int px, int py, int rad, Color* color, PartType type, int dens, PartFlags flags){

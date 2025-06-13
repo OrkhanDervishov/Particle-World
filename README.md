@@ -8,8 +8,8 @@
 5. ~~Make the code readable~~
 6. ~~Improve liquid movement~~
 7. ~~Improve particle deletion~~
-8. Add fire
-9. Add acid(1/2)
+8. Add fire(1/2)
+9. ~~Add acid~~
 10. Add oil
 11. Add lava
 12. Add water evaporation
