@@ -10,13 +10,14 @@
 7. ~~Improve particle deletion~~
 8. Add fire(1/2)
 9. ~~Add acid~~
-10. Add oil
+10. Add oil(1/2)
 11. Add lava
 12. Add water evaporation
 13. Add heat
 14. Add explosion
 15. Add powder
 16. Improve density checking
-17. Add some kind of gui
+17. Add some kind of gui(1/2)
 18. Add letters
-19. Add buttons
+19. Add buttons(1/2)
+20. Use SDL_Surface for drawing
