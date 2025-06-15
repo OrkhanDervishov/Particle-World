@@ -21,3 +21,12 @@
 18. Add letters
 19. Add buttons(1/2)
 20. Use SDL_Surface for drawing
+21. Add heat map
+
+<h3>GOALS</h3>
+8. Add fire(1/2)
+11. Add lava
+12. Add water evaporation
+13. Add heat
+15. Add powder
+Additional: Add obsidian

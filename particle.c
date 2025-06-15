@@ -15,7 +15,7 @@
 #define MAX_TITLE_LEN 64
 #define ICON_PATH "./images/sand.bmp"
 
-#define NUMBERS_OF_ELEMENTS 10
+#define NUMBERS_OF_ELEMENTS 11
 
 // GUI macros
 #define MAX_BUTTONS 100
@@ -34,6 +34,7 @@
 #define M_FIRE_BUTTON_COLOR 255, 0, 0, 255
 #define M_SMOKE_BUTTON_COLOR 40, 40, 40, 255
 #define M_OIL_BUTTON_COLOR 131, 66, 0, 255
+#define M_LAVA_BUTTON_COLOR 255, 69, 0, 255
 
 // Simulator macros
 #define PART_SIDE 4
@@ -42,8 +43,15 @@
 #define STEAM_LIFE_TIME 350
 #define SMOKE_LIFE_TIME 300
 #define ACID_EFFECT_TIME 50
-#define FIRE_LIFE_TIME 100
-#define FIRE_EFFECT_TIME 30
+#define FIRE_LIFE_TIME 400
+#define FIRE_EFFECT_TIME 10
+
+#define FIRE_HEAT_RELEASE_TEMP 40
+#define WATER_TO_STEAM_TEMP 400
+#define COAL_TO_FIRE_TEMP 40
+#define OIL_TO_FIRE_TEMP 40
+
+#define WATER_HEAT_STEAL 100
 
 
 #define CSIDE 4
@@ -77,7 +85,8 @@ typedef enum{
     FIRE,
     WALL,
     SMOKE,
-    COAL
+    COAL,
+    LAVA
 } PartType;
 
 typedef enum{
@@ -91,6 +100,7 @@ typedef enum{
     COAL_DENSITY = 350,
     FUNGUS_DENSITY = 250,
     FIRE_DENSITY = 80,
+    LAVA_DENSITY = 400,
     WALL_DENSITY = 1000000
 } PartDensity;
 
@@ -106,6 +116,9 @@ typedef enum{
 
 #define ACID_HAS_AN_EFFECT 0x08000000
 #define FIRE_HAS_AN_EFFECT 0x04000000
+#define HEAT_STEALER 0x02000000
+#define HEAT_RELEASER 0x01000000
+
 
 typedef enum{
     F_AIR = (uint32_t)0x20000000,
@@ -113,12 +126,13 @@ typedef enum{
     F_SAND = (uint32_t)0x88000000,
     F_FUNGUS = (uint32_t)0x8C000000,
     F_COAL = (uint32_t)0x8C000000,
-    F_WATER = (uint32_t)0x40000000,
+    F_WATER = (uint32_t)0x42000000,
     F_ACID = (uint32_t)0x40000000,
     F_OIL = (uint32_t)0x44000000,
-    F_FIRE = (uint32_t)0x20000000,
+    F_FIRE = (uint32_t)0x11000000,
     F_WALL = (uint32_t)0x10000000,
-    F_SMOKE = (uint32_t)0x20000000
+    F_SMOKE = (uint32_t)0x20000000,
+    F_LAVA = (uint32_t)0x41000000
 } PartFlags;
 
 
@@ -132,6 +146,7 @@ typedef enum{
     LIGHT_BLUE,
     YELLOW,
     LYELLOW,
+    ORANGE,
     GRAY,
     GOOD_GRAY,
     PURPLE,
@@ -152,8 +167,11 @@ typedef struct
 } Pos;
 
 
-typedef struct{
-    uint8_t r, g, b, a;
+typedef union{
+    struct{
+        uint8_t r, g, b, a;
+    };
+    uint32_t rgba;
 } Color;
 
 /* 
@@ -164,14 +182,14 @@ from left to right
 */
 typedef struct{
     Pos p;
-    char id;
+    int8_t id;
     Color c;
     PartType t;
-    int dens;
-    char xvel;
-    char yvel;
-    int effect_t;
-    int life_t;
+    uint16_t dens;
+    uint8_t xvel, yvel;
+    uint16_t effect_t;
+    uint16_t life_t;
+    uint16_t heat;
     uint32_t flags;
 } Particle;
 
@@ -208,14 +226,14 @@ int drawlines = 0;
 
 
 //Color
-Color ZeroColor = {0, 0, 0, 255};
+// Color ZeroColor = {0, 0, 0, 255};
 Colors ColorSeq[] = {BLUE, RED, GREEN, YELLOW, LYELLOW, PURPLE};
 int currentColor = 0;
 int colorSeqSize = 6;
 
 //Particles
 // PartList pList;
-Colors PartSeq[] = {SAND, WATER, FUNGUS, ACID, WALL, STEAM, FIRE, SMOKE, COAL, OIL};
+PartType PartSeq[] = {SAND, WATER, FUNGUS, ACID, WALL, STEAM, FIRE, SMOKE, COAL, OIL, LAVA};
 int currentPart = 0;
 int partSeqSize = NUMBERS_OF_ELEMENTS;
 int bound;
@@ -233,7 +251,8 @@ int genmode = 0;
 SDL_Rect buttons[MAX_BUTTONS];
 int buttonCount = 0;
 
-Particle air = {{-1, -1}, -1, {255, 255, 255, 255}, AIR, AIR_DENSITY, 0, 0};
+Color WHILE_C;
+// Particle air = {{-1, -1}, -1, , AIR, AIR_DENSITY, 0, 0};
 
 // Inits
 int InitWindow(Window** win, int w, int h, const char* title);
@@ -262,10 +281,13 @@ int CompColors(Color* c1, Color* c2);
 // Simulation
 void SandBehave(Simulator* sim, int* x, int* y);
 void WaterBehave(Simulator* sim, int* x, int* y);
+void OilBehave(Simulator* sim, int* x, int* y);
 void AcidBehave(Simulator* sim, int* x, int* y);
 void SteamBehave(Simulator* sim, int* x, int* y);
 void FungusBehave(Simulator* sim, int* x, int* y);
 void FireBehave(Simulator* sim, int* x, int* y);
+void CoalBehave(Simulator* sim, int* x, int* y);
+void LavaBehave(Simulator* sim, int* x, int* y);
 void Simulate(Simulator* sim);
 
 // Particle
@@ -286,7 +308,7 @@ void DrawGui(Window* win, SDL_Rect* buttons, int buttonCount);
 void CheckGuiButtons(Window* win, int mx, int my);
 
 int main(int argc, char* argv[]){
-    
+
     // Inits
     if(InitWindow(&win, SCR_WIDTH, SCR_HEIGHT, WIN_TITLE)) return 1;
     if(InitSimulator(&sim, SCR_WIDTH, SCR_HEIGHT, PART_SIDE)) return 1;
@@ -432,6 +454,7 @@ void ClearMap(Simulator* sim){
             sim->pMap[i][j].t = AIR;
             sim->pMap[i][j].dens = AIR_DENSITY;
             sim->pMap[i][j].flags = F_AIR;
+            sim->pMap[i][j].heat = 0;
             sim->partCount = 0;
         }
     }
@@ -452,149 +475,68 @@ void ChangeColor(Color *c, Colors cs){
     int r = rand() % 4;
     switch (cs)
     {
-    case WHITE:
-        c->r = 255, c->g = 255, c->b = 255, c->a = 255;
-        break;
-    case BLACK:
-        c->r = 0, c->g = 0, c->b = 0, c->a = 255;
-        break;
-    case RED:
-        c->r = 255, c->g = 0, c->b = 0, c->a = 255;
-        break;
-    case PINK:
-        c->r = 252, c->g = 70, c->b = 170, c->a = 255;
-        break;
-    case GREEN:
-        c->r = 0, c->g = 255, c->b = 0, c->a = 255;
-        break;
-    case BLUE:
-        c->r = 0, c->g = 0, c->b = 255, c->a = 255;
-        break;
-    case LIGHT_BLUE:
-        c->r = 150, c->g = 150, c->b = 255, c->a = 255;
-        break;
-    case YELLOW:
-        c->r = 255, c->g = 255, c->b = 0, c->a = 255;
-        break;
-    case LYELLOW:
-        c->r = 255, c->g = 255, c->b = 100, c->a = 255;
-        break;
-    case GRAY:
-        c->r = 135, c->g = 135, c->b = 135, c->a = 255;
-        break;
-    case GOOD_GRAY:
-        c->r = 58, c->g = 58, c->b = 58, c->a = 255;
-        break;
-    case PURPLE:
-        c->r = 255, c->g = 0, c->b = 255, c->a = 255;
-        break;
-    case BROWN:
-        c->r = 150, c->g = 75, c->b = 0, c->a = 255;
-        break;
-    case OIL_BROWN:
-        c->r = 131, c->g = 66, c->b = 0, c->a = 255;
-        break;
+    case WHITE:      c->rgba = 0xFFFFFFFF; break;
+    case BLACK:      c->rgba = 0xFF000000; break;
+    case RED:        c->rgba = 0xFF0000FF; break;
+    case PINK:       c->rgba = 0xFFAA46FC; break;
+    case GREEN:      c->rgba = 0xFF00FF00; break;
+    case BLUE:       c->rgba = 0xFFFF0000; break;
+    case LIGHT_BLUE: c->rgba = 0xFFFF9696; break;
+    case YELLOW:     c->rgba = 0xFF00FFFF; break;
+    case LYELLOW:    c->rgba = 0xFF64FFFF; break;
+    case ORANGE:     c->rgba = 0xFF0045FF; break;
+    case GRAY:       c->rgba = 0xFF878787; break;
+    case GOOD_GRAY:  c->rgba = 0xFF3A3A3A; break;
+    case PURPLE:     c->rgba = 0xFFFF00FF; break;
+    case BROWN:      c->rgba = 0xFF4B9696; break;
+    case OIL_BROWN:  c->rgba = 0xFF004283; break;
 
     case SAND_COLORS:
-        switch (r)
-        {
-        case 0:
-            c->r = 155, c->g = 80, c->b = 0, c->a = 255;
-            break;
-        case 1:
-            c->r = 145, c->g = 65, c->b = 0, c->a = 255;
-            break;
-        case 2:
-            c->r = 160, c->g = 70, c->b = 0, c->a = 255;
-            break;
-        case 3:
-            c->r = 150, c->g = 80, c->b = 0, c->a = 255;
-            break;
+        switch (r) {
+            case 0: c->rgba = 0xFF00509B; break;
+            case 1: c->rgba = 0xFF004191; break;
+            case 2: c->rgba = 0xFF0046A0; break;
+            case 3: c->rgba = 0xFF005096; break;
         }
         break;
     case WATER_COLORS:
-        switch (r)
-        {
-        case 0:
-            c->r = 0, c->g = 0, c->b = 250, c->a = 255;
-            break;
-        case 1:
-            c->r = 0, c->g = 0, c->b = 240, c->a = 255;
-            break;
-        case 2:
-            c->r = 0, c->g = 0, c->b = 230, c->a = 255;
-            break;
-        case 3:
-            c->r = 0, c->g = 0, c->b = 220, c->a = 255;
-            break;
+        switch (r) {
+            case 0: c->rgba = 0xFFFA0000; break;
+            case 1: c->rgba = 0xFFF00000; break;
+            case 2: c->rgba = 0xFFE60000; break;
+            case 3: c->rgba = 0xFFD80000; break;
         }
         break;
     case WALL_COLORS:
-        switch (r)
-        {
-        case 0:
-            c->r = 135, c->g = 135, c->b = 135, c->a = 255;
-            break;
-        case 1:
-            c->r = 145, c->g = 145, c->b = 145, c->a = 255;
-            break;
-        case 2:
-            c->r = 155, c->g = 155, c->b = 155, c->a = 255;
-            break;
-        case 3:
-            c->r = 125, c->g = 125, c->b = 125, c->a = 255;
-            break;
+        switch (r) {
+            case 0: c->rgba = 0xFF878787; break;
+            case 1: c->rgba = 0xFF919191; break;
+            case 2: c->rgba = 0xFF9B9B9B; break;
+            case 3: c->rgba = 0xFF7D7D7D; break;
         }
         break;
     case ACID_COLORS:
-        switch (r)
-        {
-        case 0:
-            c->r = 0, c->g = 250, c->b = 0, c->a = 255;
-            break;
-        case 1:
-            c->r = 0, c->g = 240, c->b = 0, c->a = 255;
-            break;
-        case 2:
-            c->r = 0, c->g = 230, c->b = 0, c->a = 255;
-            break;
-        case 3:
-            c->r = 0, c->g = 220, c->b = 0, c->a = 255;
-            break;
+        switch (r) {
+            case 0: c->rgba = 0xFF00FA00; break;
+            case 1: c->rgba = 0xFF00F000; break;
+            case 2: c->rgba = 0xFF00E600; break;
+            case 3: c->rgba = 0xFF00DC00; break;
         }
         break;
     case FIRE_COLORS:
-        switch (r)
-        {
-        case 0:
-            c->r = 255, c->g = 0, c->b = 0, c->a = 255;
-            break;
-        case 1:
-            c->r = 255, c->g = 90, c->b = 0, c->a = 255;
-            break;
-        case 2:
-            c->r = 255, c->g = 154, c->b = 0, c->a = 255;
-            break;
-        case 3:
-            c->r = 255, c->g = 206, c->b = 0, c->a = 255;
-            break;
+        switch (r) {
+            case 0: c->rgba = 0xFF0000FF; break;
+            case 1: c->rgba = 0xFF005AFF; break;
+            case 2: c->rgba = 0xFF009AFF; break;
+            case 3: c->rgba = 0xFF00CEFF; break;
         }
         break;
     case COAL_COLORS:
-        switch (r)
-        {
-        case 0:
-            c->r = 0, c->g = 0, c->b = 0, c->a = 255;
-            break;
-        case 1:
-            c->r = 10, c->g = 10, c->b = 10, c->a = 255;
-            break;
-        case 2:
-            c->r = 15, c->g = 15, c->b = 15, c->a = 255;
-            break;
-        case 3:
-            c->r = 5, c->g = 5, c->b = 5, c->a = 255;
-            break;
+        switch (r) {
+            case 0: c->rgba = 0xFF000000; break;
+            case 1: c->rgba = 0xFF0A0A0A; break;
+            case 2: c->rgba = 0xFF0F0F0F; break;
+            case 3: c->rgba = 0xFF050505; break;
         }
         break;
     
@@ -605,23 +547,13 @@ void ChangeColor(Color *c, Colors cs){
 
 
 void CopyColor(Color* dest, Color* src){
-    dest->r = src->r;
-    dest->g = src->g;
-    dest->b = src->b;
-    dest->a = src->a;
+    dest->rgba = src->rgba;
 }
-
 
 int CompColors(Color* c1, Color* c2){
-    if(c1->r != c2->r) return 1;
-    if(c1->g != c2->g) return 1;
-    if(c1->b != c2->b) return 1;
-    if(c1->a != c2->a) return 1;
+    if(c1->rgba != c2->rgba) return 1;
     return 0;
 }
-
-
-int swapped = 0;
 
 
 void SandBehave(Simulator* sim, int* x, int* y){
@@ -630,7 +562,32 @@ void SandBehave(Simulator* sim, int* x, int* y){
     Particle* ld = &sim->pMap[*y + 1][*x - 1];
     Particle* rd = &sim->pMap[*y + 1][*x + 1];
 
-    if((d->dens < p->dens) && !CHECK_FLAG(d, IS_DUST)){(*y) += 1;}
+    if((d->dens < p->dens) && !CHECK_FLAG(d, IS_DUST)){
+        // Particle* l = &sim->pMap[*y][*x - 1];
+        // if(l->id < 0) 
+        (*y) += 1;
+    }
+    else if((ld->dens < p->dens) && !CHECK_FLAG(ld, IS_DUST)){ (*y) += 1, (*x) -= 1; }
+    else if((rd->dens < p->dens) && !CHECK_FLAG(rd, IS_DUST)){ (*y) += 1, (*x) += 1;}
+}
+
+void CoalBehave(Simulator* sim, int* x, int* y){
+    Particle* p = &sim->pMap[*y][*x];
+    Particle* d = &sim->pMap[*y + 1][*x];
+    Particle* ld = &sim->pMap[*y + 1][*x - 1];
+    Particle* rd = &sim->pMap[*y + 1][*x + 1];
+
+    if(p->heat > COAL_TO_FIRE_TEMP){
+        Color c;
+        ChangeColor(&c, FIRE_COLORS);
+        CreateReplaceParticle(sim, *x, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
+    }
+
+    if((d->dens < p->dens) && !CHECK_FLAG(d, IS_DUST)){
+        // Particle* l = &sim->pMap[*y][*x - 1];
+        // if(l->id < 0) 
+        (*y) += 1;
+    }
     else if((ld->dens < p->dens) && !CHECK_FLAG(ld, IS_DUST)){ (*y) += 1, (*x) -= 1; }
     else if((rd->dens < p->dens) && !CHECK_FLAG(rd, IS_DUST)){ (*y) += 1, (*x) += 1;}
 }
@@ -638,6 +595,100 @@ void SandBehave(Simulator* sim, int* x, int* y){
 void WaterBehave(Simulator* sim, int* x, int* y)
 {
     Particle* p = &sim->pMap[*y][*x];
+    if(p->heat > WATER_TO_STEAM_TEMP){
+        Color c;
+        ChangeColor(&c, LIGHT_BLUE);
+        CreateReplaceParticle(sim, *x, *y, &c, STEAM, STEAM_DENSITY, F_STEAM);
+    }
+
+    Particle* d = &sim->pMap[*y + 1][*x];
+    if(d->heat > p->heat){
+        d->heat -= WATER_HEAT_STEAL;
+        p->heat += WATER_HEAT_STEAL;
+    }
+    if(d->dens < p->dens){
+        if(!CHECK_FLAG(d, IS_DUST) && !CHECK_FLAG(d, IS_SOLID)){
+            (*y) += 1;
+            return;
+        }
+    }
+
+    Particle* ld = &sim->pMap[*y + 1][*x - 1];
+    if(ld->dens < p->dens){
+        if(!CHECK_FLAG(ld, IS_SOLID)){
+            (*y) += 1, (*x) -= 1; 
+            return;
+        }
+    }
+    Particle* rd = &sim->pMap[*y + 1][*x + 1];
+    if(rd->dens < p->dens){
+        if(!CHECK_FLAG(rd, IS_SOLID)){
+            (*y) += 1, (*x) += 1; 
+            return;
+        }
+    }
+
+    if(p->xvel > 1){
+        Particle* l = &sim->pMap[*y][*x - 1];
+        if(l->heat > p->heat){
+            l->heat -= WATER_HEAT_STEAL;
+            p->heat += WATER_HEAT_STEAL;
+        }
+        if(l->dens < p->dens){
+        if(!CHECK_FLAG(l, IS_SOLID)){
+            (*x) -= 1; 
+            return;
+        }
+    }
+        Particle* r = &sim->pMap[*y][*x + 1];
+        if(r->heat > p->heat){
+            r->heat -= WATER_HEAT_STEAL;
+            p->heat += WATER_HEAT_STEAL;
+        }
+        if(r->dens < p->dens){
+            if(!CHECK_FLAG(r, IS_SOLID)){
+                (*x) += 1; 
+                if(p->xvel == 1)p->xvel -= 2; 
+                p->xvel -= 1; 
+                return;
+            }
+        }
+    } else {
+        Particle* r = &sim->pMap[*y][*x + 1];
+        if(r->heat > p->heat){
+            r->heat -= WATER_HEAT_STEAL;
+            p->heat += WATER_HEAT_STEAL;
+        }
+        if(r->dens < p->dens){
+            if(!CHECK_FLAG(r, IS_SOLID)){
+                (*x) += 1; 
+                return;
+            }
+        }
+        Particle* l = &sim->pMap[*y][*x - 1];
+        if(l->heat > p->heat){
+            l->heat -= WATER_HEAT_STEAL;
+            p->heat += WATER_HEAT_STEAL;
+        }
+        if(l->dens < p->dens){ 
+            if(!CHECK_FLAG(l, IS_SOLID)){
+                (*x) -= 1; 
+                if(p->xvel == 1)p->xvel += 2; 
+                p->xvel += 1; 
+                return;
+            }
+        }
+    }
+}
+
+void OilBehave(Simulator* sim, int* x, int* y)
+{
+    Particle* p = &sim->pMap[*y][*x];
+    if(p->heat > OIL_TO_FIRE_TEMP){
+        Color c;
+        ChangeColor(&c, FIRE_COLORS);
+        CreateReplaceParticle(sim, *x, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
+    }
 
     Particle* d = &sim->pMap[*y + 1][*x];
     if(d->dens < p->dens){
@@ -649,14 +700,14 @@ void WaterBehave(Simulator* sim, int* x, int* y)
 
     Particle* ld = &sim->pMap[*y + 1][*x - 1];
     if(ld->dens < p->dens){
-        if(!CHECK_FLAG(ld, IS_DUST) && !CHECK_FLAG(ld, IS_SOLID)){
+        if(!CHECK_FLAG(ld, IS_SOLID)){
             (*y) += 1, (*x) -= 1; 
             return;
         }
     }
     Particle* rd = &sim->pMap[*y + 1][*x + 1];
     if(rd->dens < p->dens){
-        if(!CHECK_FLAG(rd, IS_DUST) && !CHECK_FLAG(rd, IS_SOLID)){
+        if(!CHECK_FLAG(rd, IS_SOLID)){
             (*y) += 1, (*x) += 1; 
             return;
         }
@@ -665,14 +716,14 @@ void WaterBehave(Simulator* sim, int* x, int* y)
     if(p->xvel > 1){
         Particle* l = &sim->pMap[*y][*x - 1];
         if(l->dens < p->dens){
-        if(!CHECK_FLAG(l, IS_DUST) && !CHECK_FLAG(l, IS_SOLID)){
+        if(!CHECK_FLAG(l, IS_SOLID)){
             (*x) -= 1; 
             return;
         }
     }
         Particle* r = &sim->pMap[*y][*x + 1];
         if(r->dens < p->dens){
-            if(!CHECK_FLAG(r, IS_DUST) && !CHECK_FLAG(r, IS_SOLID)){
+            if(!CHECK_FLAG(r, IS_SOLID)){
                 (*x) += 1; 
                 if(p->xvel == 1)p->xvel -= 2; 
                 p->xvel -= 1; 
@@ -682,14 +733,14 @@ void WaterBehave(Simulator* sim, int* x, int* y)
     } else {
         Particle* r = &sim->pMap[*y][*x + 1];
         if(r->dens < p->dens){
-            if(!CHECK_FLAG(r, IS_DUST) && !CHECK_FLAG(r, IS_SOLID)){
+            if(!CHECK_FLAG(r, IS_SOLID)){
                 (*x) += 1; 
                 return;
             }
         }
         Particle* l = &sim->pMap[*y][*x - 1];
         if(l->dens < p->dens){ 
-            if(!CHECK_FLAG(l, IS_DUST) && !CHECK_FLAG(l, IS_SOLID)){
+            if(!CHECK_FLAG(l, IS_SOLID)){
                 (*x) -= 1; 
                 if(p->xvel == 1)p->xvel += 2; 
                 p->xvel += 1; 
@@ -856,6 +907,13 @@ void FireBehave(Simulator* sim, int* x, int* y){
         return;
     }
 
+    if(p->heat <= 0){
+        Color c;
+        ChangeColor(&c, BLACK);
+        CreateReplaceParticle(sim, *x, *y, &c, SMOKE, SMOKE_DENSITY, F_SMOKE);
+        return;
+    }
+
     if(p->life_t > FIRE_LIFE_TIME){
         Color c;
         ChangeColor(&c, BLACK);
@@ -865,38 +923,42 @@ void FireBehave(Simulator* sim, int* x, int* y){
 
     int fire;
     Particle* d = &sim->pMap[*y + 1][*x];
-    if(CHECK_FLAG(d, FIRE_HAS_AN_EFFECT)){
-        // printf("works\n");
-        Color c;
-        ChangeColor(&c, FIRE_COLORS);
-        CreateReplaceParticle(sim, *x, *y + 1, &c, FIRE, FIRE_DENSITY, F_FIRE);
-        // printf("t:%d\n", d->dens);
-        return;
+    if(!CHECK_FLAG(d, HEAT_RELEASER)){
+        d->heat += FIRE_HEAT_RELEASE_TEMP;
     }
-
     Particle* u = &sim->pMap[*y - 1][*x];
-    if(fire = (CHECK_FLAG(u, FIRE_HAS_AN_EFFECT))){
-        Color c;
-        ChangeColor(&c, FIRE_COLORS);
-        CreateReplaceParticle(sim, *x, *y - 1, &c, FIRE, FIRE_DENSITY, F_FIRE);
-        return;
+    if(!CHECK_FLAG(u, HEAT_RELEASER)){
+        u->heat += FIRE_HEAT_RELEASE_TEMP;
     }
-
     Particle* l = &sim->pMap[*y][*x - 1];
-    if(fire = (CHECK_FLAG(l, FIRE_HAS_AN_EFFECT))){
-        Color c;
-        ChangeColor(&c, FIRE_COLORS);
-        CreateReplaceParticle(sim, *x - 1, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
-        return;
+    if(!CHECK_FLAG(l, HEAT_RELEASER)){
+        l->heat += FIRE_HEAT_RELEASE_TEMP;
+    }
+    Particle* r = &sim->pMap[*y][*x + 1];
+    if(!CHECK_FLAG(r, HEAT_RELEASER)){
+        r->heat += FIRE_HEAT_RELEASE_TEMP;
     }
 
-    Particle* r = &sim->pMap[*y][*x + 1];
-    if(fire = (CHECK_FLAG(r, FIRE_HAS_AN_EFFECT))){
-        Color c;
-        ChangeColor(&c, FIRE_COLORS);
-        CreateReplaceParticle(sim, *x + 1, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
-        return;
-    }
+    // Particle* u = &sim->pMap[*y - 1][*x];
+    // if(fire = (CHECK_FLAG(u, FIRE_HAS_AN_EFFECT))){
+    //     u->heat += FIRE_HEAT_RELEASE_TEMP;
+    // }
+
+    // Particle* l = &sim->pMap[*y][*x - 1];
+    // if(fire = (CHECK_FLAG(l, FIRE_HAS_AN_EFFECT))){
+    //     Color c;
+    //     ChangeColor(&c, FIRE_COLORS);
+    //     CreateReplaceParticle(sim, *x - 1, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
+    //     return;
+    // }
+
+    // Particle* r = &sim->pMap[*y][*x + 1];
+    // if(fire = (CHECK_FLAG(r, FIRE_HAS_AN_EFFECT))){
+    //     Color c;
+    //     ChangeColor(&c, FIRE_COLORS);
+    //     CreateReplaceParticle(sim, *x + 1, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
+    //     return;
+    // }
 }
 
 void Simulate(Simulator* sim){
@@ -941,10 +1003,13 @@ void Simulate(Simulator* sim){
                     SteamBehave(sim, &x, &y);
                     break;
                 case COAL:
-                    SandBehave(sim, &x, &y);
+                    CoalBehave(sim, &x, &y);
                     break;
                 case OIL:
-                    WaterBehave(sim, &x, &y);
+                    OilBehave(sim, &x, &y);
+                    break;
+                case LAVA:
+                    OilBehave(sim, &x, &y);
                     break;
                 }
 
@@ -1013,14 +1078,7 @@ void DrawScene(Window* win, Simulator* sim){
     }
 }
 
-
-void DrawCage(
-    Window* win, 
-    Simulator* sim,
-    int r, 
-    int g, 
-    int b, 
-    int a)
+void DrawCage(Window* win, Simulator* sim,int r, int g, int b, int a)
 {
     SDL_SetRenderDrawColor(win->renderer, r, g, b, a);
 
@@ -1096,18 +1154,15 @@ void DrawGui(Window* win, SDL_Rect* buttons, int buttonCount){
     SDL_RenderFillRect(win->renderer, &buttons[8]);
     SDL_SetRenderDrawColor(win->renderer, M_OIL_BUTTON_COLOR);
     SDL_RenderFillRect(win->renderer, &buttons[9]);
+    SDL_SetRenderDrawColor(win->renderer, M_LAVA_BUTTON_COLOR);
+    SDL_RenderFillRect(win->renderer, &buttons[10]);
 
     SDL_SetRenderDrawColor(win->renderer, MWHITE);
     SDL_RenderDrawRect(win->renderer, &buttons[currentPart]);
 }
 
 
-void ProcessInput(
-    SDL_Event event, 
-    Window* win, 
-    Simulator* sim,
-    Color* color
-)
+void ProcessInput(SDL_Event event, Window* win, Simulator* sim,Color* color)
 {
     int mx, my;
     int state = SDL_GetMouseState(&mx, &my);
@@ -1153,6 +1208,9 @@ void ProcessInput(
                 break;
             case OIL:
                 CreateManyParticles(sim, px, py, RADIUS, OIL_BROWN, genType, OIL_DENSITY, F_OIL);
+                break;
+            case LAVA:
+                CreateManyParticles(sim, px, py, RADIUS, ORANGE, genType, OIL_DENSITY, F_OIL);
                 break;
             }
         }
@@ -1209,6 +1267,7 @@ int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, 
         part.life_t = rand() % 30;
         part.effect_t = rand() % 30;
         part.flags = flags;
+        part.heat = 0;
         
 
         sim->pMap[py][px] = part;
@@ -1235,6 +1294,7 @@ void CreateReplaceParticle(Simulator* sim, int px, int py, Color* color, PartTyp
     part.life_t = rand() % 30;
     part.effect_t = rand() % 30;
     part.flags = flags;
+    part.heat = (type == FIRE ? 400 : 0);
     // printf("%d\n", (flags & IS_SOLID) ? 1 : 0);
 
     sim->pMap[py][px] = part;
@@ -1268,6 +1328,7 @@ void DeleteParticle(Simulator* sim, int px, int py){
         sim->pMap[py][px].t = AIR;
         sim->pMap[py][px].dens = AIR_DENSITY;
         sim->pMap[py][px].flags = F_AIR;
+        sim->pMap[py][px].heat = 0;
 
         sim->partCount--;
     }
@@ -1364,6 +1425,10 @@ void CheckGuiButtons(Window* win, int mx, int my){
         if(my > ELEMENT_BUTTON_MARGIN_H + 9*bd && my <= (bt + 9*bd)){
             genType = OIL;
             currentPart = 9;
+        }
+        if(my > ELEMENT_BUTTON_MARGIN_H + 10*bd && my <= (bt + 10*bd)){
+            genType = LAVA;
+            currentPart = 10;
         }
     }
 }
