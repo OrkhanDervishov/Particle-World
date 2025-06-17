@@ -76,38 +76,23 @@
 #define SWAP(a, b, t) t = a, a = b, b = t
 
 typedef enum{
-    AIR = 0,
-    STEAM,
-    SAND,
-    FUNGUS,
+    SAND = 0,
     WATER,
+    STEAM,
     ACID,
-    OIL,
-    FIRE,
     WALL,
+    FIRE,
     SMOKE,
     COAL,
-    LAVA
+    OIL,
+    LAVA,
+    FUNGUS,
+    AIR
 } PartType;
 
-typedef enum{
-    AIR_DENSITY = 50,
-    STEAM_DENSITY = 40,
-    SMOKE_DENSITY = 45,
-    WATER_DENSITY = 200,
-    ACID_DENSITY = 190,
-    OIL_DENSITY = 180,
-    SAND_DENSITY = 500,
-    COAL_DENSITY = 350,
-    FUNGUS_DENSITY = 250,
-    FIRE_DENSITY = 80,
-    LAVA_DENSITY = 400,
-    WALL_DENSITY = 1000000
-} PartDensity;
 
-
-#define CHECK_FLAG(p, f) ((p)->flags & (f) ? 1 : 0)
-#define CHECK_FLAG(p, f) ((p)->flags & (f) ? 1 : 0)
+#define CHECK_FLAG(p, f) ((p) & (f) ? 1 : 0)
+#define CHECK_FLAG(p, f) ((p) & (f) ? 1 : 0)
 
 
 #define IS_DUST 0x80000000
@@ -119,22 +104,6 @@ typedef enum{
 #define FIRE_HAS_AN_EFFECT 0x04000000
 #define HEAT_STEALER 0x02000000
 #define HEAT_RELEASER 0x01000000
-
-
-typedef enum{
-    F_AIR = (uint32_t)0x20000000,
-    F_STEAM = (uint32_t)0x20000000,
-    F_SAND = (uint32_t)0x88000000,
-    F_FUNGUS = (uint32_t)0x8C000000,
-    F_COAL = (uint32_t)0x8C000000,
-    F_WATER = (uint32_t)0x42000000,
-    F_ACID = (uint32_t)0x40000000,
-    F_OIL = (uint32_t)0x44000000,
-    F_FIRE = (uint32_t)0x11000000,
-    F_WALL = (uint32_t)0x10000000,
-    F_SMOKE = (uint32_t)0x20000000,
-    F_LAVA = (uint32_t)0x41000000
-} PartFlags;
 
 
 typedef enum{
@@ -185,14 +154,11 @@ typedef struct{
     Pos p;
     int8_t id;
     Color c;
-    PartType t;
     int type;
-    uint16_t dens;
     uint8_t xvel, yvel;
     uint16_t effect_t;
     uint16_t life_t;
     uint16_t heat;
-    uint32_t flags;
 } Particle;
 
 
@@ -232,11 +198,6 @@ int fps = 0;
 //Color
 
 //Particles
-PartType PartSeq[] = {SAND, WATER, FUNGUS, ACID, WALL, STEAM, FIRE, SMOKE, COAL, OIL, LAVA};
-int currentPart = 0;
-int partSeqSize = NUMBERS_OF_ELEMENTS;
-int bound;
-PartType genType = SAND;
 
 // Declarations
 int* shuffledIndexesX;
@@ -303,14 +264,13 @@ void Simulate(Simulator* sim);
 // Particle
 void InitTypes();
 void AddType(char* name, Colors color, Color buttonColor, int dens, uint32_t flags, void (*func)(Simulator* sim, int* x, int* y));
-int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, int dens, PartFlags flags);
-void CreateReplaceParticle(Simulator* sim, int px, int py, Color* color, PartType type, int dens, PartFlags flags);
-void CreateManyParticles(Simulator* sim, int px, int py, int rad, Colors c, PartType type, int dens, PartFlags flags);
+int CreateParticle(Simulator* sim, int px, int py, Color* color, int t);
+void CreateReplaceParticle(Simulator* sim, int px, int py, Color* color, int t);
+void CreateManyParticles(Simulator* sim, int px, int py, int rad, Colors c, int t);
 void DeleteParticle(Simulator* sim, int px, int py);
 void DeleteManyParticles(Simulator* sim, int px, int py, int rad);
 void SwapParticles(Simulator* sim, Particle* p1, Particle* p2);
 void WallBox(Simulator* sim);
-void ElementChange();
 
 void CreateShuffleIndexes(int rows, int cols);
 void DeleteSuffledIndexes();
@@ -324,11 +284,12 @@ int main(int argc, char* argv[]){
     // Inits
     if(InitWindow(&win, SCR_WIDTH, SCR_HEIGHT, WIN_TITLE)) return 1;
     if(InitSimulator(&sim, SCR_WIDTH, SCR_HEIGHT, PART_SIDE)) return 1;
+    InitTypes();
     WallBox(sim);
     Color color;
     ChangeColor(&color, BLACK);
     srand(time(NULL));
-    CreateGui(win, buttons, &buttonCount, partSeqSize);
+    CreateGui(win, buttons, &buttonCount, countTypes - 1);
 
     SDL_Surface* icon = SDL_LoadBMP(ICON_PATH);
     if(icon == NULL) printf("fail\n");
@@ -396,7 +357,7 @@ int main(int argc, char* argv[]){
 
 // Implementations
 
-void Inittypes(){
+void InitTypes(){
     Color c;
     ChangeColor(&c, YELLOW);
     AddType("sand", SAND_COLORS, c, 500, 0x88000000, SandBehave);
@@ -408,8 +369,6 @@ void Inittypes(){
     AddType("acid", ACID_COLORS, c, 190, 0x40000000, AcidBehave);
     ChangeColor(&c, GRAY);
     AddType("wall", WALL_COLORS, c, 1000000, 0x10000000, NULL);
-    ChangeColor(&c, WHITE);
-    AddType("air", WHITE, c, 50, 0x20000000, NULL);
     ChangeColor(&c, RED);
     AddType("fire", FIRE_COLORS, c, 80, 0x11000000, FireBehave);
     ChangeColor(&c, BLACK);
@@ -422,6 +381,8 @@ void Inittypes(){
     AddType("lava", ORANGE, c, 400, 0x41000000, WaterBehave);
     ChangeColor(&c, PINK);
     AddType("fungus", PINK, c, 250, 0x8C000000, FungusBehave);
+    ChangeColor(&c, WHITE);
+    AddType("air", WHITE, c, 50, 0x20000000, NULL);
 }
 
 int InitWindow(Window** win, int w, int h, const char* title){
@@ -479,7 +440,6 @@ int InitSimulator(Simulator** sim, int w, int h, int ps){
     (*sim)->rows = h/ps;
     (*sim)->cols = w/ps;
     (*sim)->partCount = 0;
-    bound = h - ps;
 
     (*sim)->pMap = (Particle**)Malloc2D((*sim)->rows, (*sim)->cols, sizeof(Particle));
 
@@ -505,10 +465,9 @@ void ClearMap(Simulator* sim){
     for(size_t i = 0; i < sim->rows; i++){
         for(size_t j = 0; j < sim->cols; j++){
             sim->pMap[i][j].id = -1;
-            sim->pMap[i][j].t = AIR;
-            sim->pMap[i][j].dens = AIR_DENSITY;
-            sim->pMap[i][j].flags = F_AIR;
             sim->pMap[i][j].heat = 0;
+            sim->pMap[i][j].type = AIR;
+
             sim->partCount = 0;
         }
     }
@@ -615,13 +574,13 @@ void SandBehave(Simulator* sim, int* x, int* y){
     Particle* ld = &sim->pMap[*y + 1][*x - 1];
     Particle* rd = &sim->pMap[*y + 1][*x + 1];
 
-    if((d->dens < p->dens) && !CHECK_FLAG(d, IS_DUST)){
+    if((typeDensityList[d->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[d->type], IS_DUST)){
         // Particle* l = &sim->pMap[*y][*x - 1];
         // if(l->id < 0) 
         (*y) += 1;
     }
-    else if((ld->dens < p->dens) && !CHECK_FLAG(ld, IS_DUST)){ (*y) += 1, (*x) -= 1; }
-    else if((rd->dens < p->dens) && !CHECK_FLAG(rd, IS_DUST)){ (*y) += 1, (*x) += 1;}
+    else if((typeDensityList[ld->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[ld->type], IS_DUST)){ (*y) += 1, (*x) -= 1; }
+    else if((typeDensityList[rd->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[rd->type], IS_DUST)){ (*y) += 1, (*x) += 1;}
 }
 
 void CoalBehave(Simulator* sim, int* x, int* y){
@@ -633,16 +592,16 @@ void CoalBehave(Simulator* sim, int* x, int* y){
     if(p->heat > COAL_TO_FIRE_TEMP){
         Color c;
         ChangeColor(&c, FIRE_COLORS);
-        CreateReplaceParticle(sim, *x, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
+        CreateReplaceParticle(sim, *x, *y, &c, FIRE);
     }
 
-    if((d->dens < p->dens) && !CHECK_FLAG(d, IS_DUST)){
+    if((typeDensityList[d->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[d->type], IS_DUST)){
         // Particle* l = &sim->pMap[*y][*x - 1];
         // if(l->id < 0)
         (*y) += 1;
     }
-    else if((ld->dens < p->dens) && !CHECK_FLAG(ld, IS_DUST)){ (*y) += 1, (*x) -= 1; }
-    else if((rd->dens < p->dens) && !CHECK_FLAG(rd, IS_DUST)){ (*y) += 1, (*x) += 1;}
+    else if((typeDensityList[ld->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[ld->type], IS_DUST)){ (*y) += 1, (*x) -= 1; }
+    else if((typeDensityList[rd->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[rd->type], IS_DUST)){ (*y) += 1, (*x) += 1;}
 }
 
 void WaterBehave(Simulator* sim, int* x, int* y)
@@ -651,60 +610,60 @@ void WaterBehave(Simulator* sim, int* x, int* y)
     if(p->heat > WATER_TO_STEAM_TEMP){
         Color c;
         ChangeColor(&c, LIGHT_BLUE);
-        CreateReplaceParticle(sim, *x, *y, &c, STEAM, STEAM_DENSITY, F_STEAM);
+        CreateReplaceParticle(sim, *x, *y, &c, STEAM);
     }
 
     Particle* d = &sim->pMap[*y + 1][*x];
     Particle* l = &sim->pMap[*y][*x - 1];
     Particle* r = &sim->pMap[*y][*x + 1];
 
-    if(d->heat > p->heat && !CHECK_FLAG(d, HEAT_STEALER)){
+    if(d->heat > p->heat && !CHECK_FLAG(typeFlagsList[d->type], HEAT_STEALER)){
         d->heat -= WATER_HEAT_STEAL;
         p->heat += WATER_HEAT_STEAL;
     }
-    if(l->heat > p->heat && !CHECK_FLAG(l, HEAT_STEALER)){
+    if(l->heat > p->heat && !CHECK_FLAG(typeFlagsList[l->type], HEAT_STEALER)){
         l->heat -= WATER_HEAT_STEAL;
         p->heat += WATER_HEAT_STEAL;
     }
-    if(r->heat > p->heat && !CHECK_FLAG(r, HEAT_STEALER)){
+    if(r->heat > p->heat && !CHECK_FLAG(typeFlagsList[r->type], HEAT_STEALER)){
         r->heat -= WATER_HEAT_STEAL;
         p->heat += WATER_HEAT_STEAL;
     }
 
 
 
-
-    if(d->dens < p->dens){
-        if(!CHECK_FLAG(d, IS_DUST) && !CHECK_FLAG(d, IS_SOLID)){
+    // printf("d:%d, p:%d\n", typeDensityList[d->type], typeDensityList[p->type]);
+    if(typeDensityList[d->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[d->type], IS_SOLID)){
             (*y) += 1;
             return;
         }
     }
 
     Particle* ld = &sim->pMap[*y + 1][*x - 1];
-    if(ld->dens < p->dens){
-        if(!CHECK_FLAG(ld, IS_SOLID)){
+    if(typeDensityList[ld->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[ld->type], IS_SOLID)){
             (*y) += 1, (*x) -= 1; 
             return;
         }
     }
     Particle* rd = &sim->pMap[*y + 1][*x + 1];
-    if(rd->dens < p->dens){
-        if(!CHECK_FLAG(rd, IS_SOLID)){
+    if(typeDensityList[rd->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[rd->type], IS_SOLID)){
             (*y) += 1, (*x) += 1; 
             return;
         }
     }
 
     if(p->xvel > 1){
-        if(l->dens < p->dens){
-            if(!CHECK_FLAG(l, IS_SOLID)){
+        if(typeDensityList[l->type] < typeDensityList[p->type]){
+            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
                 (*x) -= 1; 
                 return;
             }
         }
-        if(r->dens < p->dens){
-            if(!CHECK_FLAG(r, IS_SOLID)){
+        if(typeDensityList[r->type] < typeDensityList[p->type]){
+            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
                 (*x) += 1; 
                 if(p->xvel == 1)p->xvel -= 2; 
                 p->xvel -= 1; 
@@ -712,14 +671,14 @@ void WaterBehave(Simulator* sim, int* x, int* y)
             }
         }
     } else {
-        if(r->dens < p->dens){
-            if(!CHECK_FLAG(r, IS_SOLID)){
+        if(typeDensityList[r->type] < typeDensityList[p->type]){
+            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
                 (*x) += 1; 
                 return;
             }
         }
-        if(l->dens < p->dens){ 
-            if(!CHECK_FLAG(l, IS_SOLID)){
+        if(typeDensityList[l->type] < typeDensityList[p->type]){ 
+            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
                 (*x) -= 1; 
                 if(p->xvel == 1)p->xvel += 2; 
                 p->xvel += 1; 
@@ -735,27 +694,27 @@ void OilBehave(Simulator* sim, int* x, int* y)
     if(p->heat > OIL_TO_FIRE_TEMP){
         Color c;
         ChangeColor(&c, FIRE_COLORS);
-        CreateReplaceParticle(sim, *x, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
+        CreateReplaceParticle(sim, *x, *y, &c, FIRE);
     }
 
     Particle* d = &sim->pMap[*y + 1][*x];
-    if(d->dens < p->dens){
-        if(!CHECK_FLAG(d, IS_DUST) && !CHECK_FLAG(d, IS_SOLID)){
+    if(typeDensityList[d->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[d->type], IS_SOLID)){
             (*y) += 1;
             return;
         }
     }
 
     Particle* ld = &sim->pMap[*y + 1][*x - 1];
-    if(ld->dens < p->dens){
-        if(!CHECK_FLAG(ld, IS_SOLID)){
+    if(typeDensityList[ld->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[ld->type], IS_SOLID)){
             (*y) += 1, (*x) -= 1; 
             return;
         }
     }
     Particle* rd = &sim->pMap[*y + 1][*x + 1];
-    if(rd->dens < p->dens){
-        if(!CHECK_FLAG(rd, IS_SOLID)){
+    if(typeDensityList[rd->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[rd->type], IS_SOLID)){
             (*y) += 1, (*x) += 1; 
             return;
         }
@@ -763,15 +722,15 @@ void OilBehave(Simulator* sim, int* x, int* y)
 
     if(p->xvel > 1){
         Particle* l = &sim->pMap[*y][*x - 1];
-        if(l->dens < p->dens){
-        if(!CHECK_FLAG(l, IS_SOLID)){
+        if(typeDensityList[l->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
             (*x) -= 1; 
             return;
         }
     }
         Particle* r = &sim->pMap[*y][*x + 1];
-        if(r->dens < p->dens){
-            if(!CHECK_FLAG(r, IS_SOLID)){
+        if(typeDensityList[r->type] < typeDensityList[p->type]){
+            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
                 (*x) += 1; 
                 if(p->xvel == 1)p->xvel -= 2; 
                 p->xvel -= 1; 
@@ -780,15 +739,15 @@ void OilBehave(Simulator* sim, int* x, int* y)
         }
     } else {
         Particle* r = &sim->pMap[*y][*x + 1];
-        if(r->dens < p->dens){
-            if(!CHECK_FLAG(r, IS_SOLID)){
+        if(typeDensityList[r->type] < typeDensityList[p->type]){
+            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
                 (*x) += 1; 
                 return;
             }
         }
         Particle* l = &sim->pMap[*y][*x - 1];
-        if(l->dens < p->dens){ 
-            if(!CHECK_FLAG(l, IS_SOLID)){
+        if(typeDensityList[l->type] < typeDensityList[p->type]){ 
+            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
                 (*x) -= 1; 
                 if(p->xvel == 1)p->xvel += 2; 
                 p->xvel += 1; 
@@ -805,7 +764,7 @@ void AcidBehave(Simulator* sim, int* x, int* y)
     char del = 0;
 
     Particle* d = &sim->pMap[*y + 1][*x];
-    if(d->dens < p->dens || (del = CHECK_FLAG(d, ACID_HAS_AN_EFFECT))){ 
+    if(typeDensityList[d->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[d->type], ACID_HAS_AN_EFFECT))){ 
         if(del){
             if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
             else{
@@ -814,13 +773,13 @@ void AcidBehave(Simulator* sim, int* x, int* y)
             }
             return;
         }
-        if(!CHECK_FLAG(d, IS_DUST) && !CHECK_FLAG(d, IS_SOLID)){
+        if(!CHECK_FLAG(typeFlagsList[d->type], IS_SOLID)){
             (*y) += 1;
             return;
         }
     }
     Particle* u = &sim->pMap[*y - 1][*x];
-    if(CHECK_FLAG(u, ACID_HAS_AN_EFFECT)){ 
+    if(CHECK_FLAG(typeFlagsList[u->type], ACID_HAS_AN_EFFECT)){ 
         if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
         else{
             DeleteParticle(sim, *x, *y);
@@ -830,15 +789,15 @@ void AcidBehave(Simulator* sim, int* x, int* y)
     }
 
     Particle* ld = &sim->pMap[*y + 1][*x - 1];
-    if(ld->dens < p->dens){
-        if(!CHECK_FLAG(ld, IS_DUST) && !CHECK_FLAG(ld, IS_SOLID)){
+    if(typeDensityList[ld->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[ld->type], IS_SOLID)){
             (*y) += 1, (*x) -= 1; 
             return;
         }
     }
     Particle* rd = &sim->pMap[*y + 1][*x + 1];
-    if(rd->dens < p->dens){
-        if(!CHECK_FLAG(rd, IS_DUST) && !CHECK_FLAG(rd, IS_SOLID)){
+    if(typeDensityList[rd->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[rd->type], IS_SOLID)){
             (*y) += 1, (*x) += 1; 
             return;
         }
@@ -846,7 +805,7 @@ void AcidBehave(Simulator* sim, int* x, int* y)
 
     if(p->xvel > 1){
         Particle* l = &sim->pMap[*y][*x - 1];
-        if(l->dens < p->dens || (del = CHECK_FLAG(l, ACID_HAS_AN_EFFECT))){
+        if(typeDensityList[l->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[l->type], ACID_HAS_AN_EFFECT))){
             if(del){
                 if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
                 else{
@@ -855,13 +814,13 @@ void AcidBehave(Simulator* sim, int* x, int* y)
                 }
                 return;
             }
-            if(!CHECK_FLAG(l, IS_DUST) && !CHECK_FLAG(l, IS_SOLID)){
+            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
                 (*x) -= 1; 
                 return;
             }
         }
         Particle* r = &sim->pMap[*y][*x + 1];
-        if(r->dens < p->dens|| (del = CHECK_FLAG(r, ACID_HAS_AN_EFFECT))){ 
+        if(typeDensityList[r->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[r->type], ACID_HAS_AN_EFFECT))){ 
             if(del){
                 if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
                 else{
@@ -870,7 +829,7 @@ void AcidBehave(Simulator* sim, int* x, int* y)
                 }
                 return;
             }
-            if(!CHECK_FLAG(r, IS_DUST) && !CHECK_FLAG(r, IS_SOLID)){
+            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
                 (*x) += 1; 
                 if(p->xvel == 1)p->xvel -= 2; 
                 p->xvel -= 1; 
@@ -879,7 +838,7 @@ void AcidBehave(Simulator* sim, int* x, int* y)
         }
     } else {
         Particle* r = &sim->pMap[*y][*x + 1];
-        if(r->dens < p->dens || (del = CHECK_FLAG(r, ACID_HAS_AN_EFFECT))){
+        if(typeDensityList[r->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[r->type], ACID_HAS_AN_EFFECT))){
             if(del){
                 if(p->effect_t < ACID_EFFECT_TIME)p->effect_t++;
                 else{
@@ -888,13 +847,13 @@ void AcidBehave(Simulator* sim, int* x, int* y)
                 }
                 return;
             }
-            if(!CHECK_FLAG(r, IS_DUST) && !CHECK_FLAG(r, IS_SOLID)){
+            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
                 (*x) += 1; 
                 return;
             }
         }
         Particle* l = &sim->pMap[*y][*x - 1];
-        if(l->dens < p->dens|| (del = CHECK_FLAG(l, ACID_HAS_AN_EFFECT))){ 
+        if(typeDensityList[l->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[l->type], ACID_HAS_AN_EFFECT))){ 
             if(del){
                 if(p->effect_t < ACID_EFFECT_TIME)p->effect_t++;
                 else{
@@ -903,7 +862,7 @@ void AcidBehave(Simulator* sim, int* x, int* y)
                 }
                 return;
             }
-            if(!CHECK_FLAG(l, IS_DUST) && !CHECK_FLAG(l, IS_SOLID)){
+            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
                 (*x) -= 1; 
                 if(p->xvel == 1)p->xvel -= 2; 
                 p->xvel -= 1; 
@@ -920,19 +879,24 @@ void SteamBehave(Simulator* sim, int* x, int* y)
     if(p->life_t > STEAM_LIFE_TIME){DeleteParticle(sim, *x, *y); return;}
 
     Particle* u = &sim->pMap[*y - 1][*x];
-    if(u->dens > p->dens){ (*y) -= 1; return;}
+    if(typeDensityList[u->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[u->type], IS_SOLID)){ (*y) -= 1; return;}
 
     Particle* ru = &sim->pMap[*y - 1][*x + 1];  
-    if(ru->dens > p->dens){ (*y) -= 1, (*x) += 1; return;}
+    if(typeDensityList[ru->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[ru->type], IS_SOLID)){ (*y) -= 1, (*x) += 1; return;}
 
     Particle* lu = &sim->pMap[*y - 1][*x - 1];
-    if(lu->dens > p->dens){ (*y) -= 1, (*x) -= 1; return;}
+    if(typeDensityList[lu->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[lu->type], IS_SOLID)){ (*y) -= 1, (*x) -= 1; return;}
 
     Particle* r = &sim->pMap[*y][*x + 1];
-    if(r->dens > p->dens){ (*x) += 1; return;}
+    if(typeDensityList[r->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){ (*x) += 1; return;}
 
     Particle* l = &sim->pMap[*y][*x - 1];
-    if(l->dens > p->dens){ (*x) -= 1; return;}
+    if(typeDensityList[l->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){ (*x) -= 1; return;}
 }
 
 void FungusBehave(Simulator* sim, int* x, int* y)
@@ -940,7 +904,7 @@ void FungusBehave(Simulator* sim, int* x, int* y)
     Particle* p = &sim->pMap[*y][*x];
     Particle* d = &sim->pMap[*y + 1][*x];
 
-    if(d->dens < p->dens){ (*y) += 1; }
+    if(typeDensityList[d->type] < typeDensityList[p->type]){ (*y) += 1; }
 }
 
 void FireBehave(Simulator* sim, int* x, int* y){
@@ -950,6 +914,7 @@ void FireBehave(Simulator* sim, int* x, int* y){
     // sim->pMap[*y][*x]
     
     p->life_t++;
+    // printf("life:%d\n", p->life_t);
     if(p->effect_t < FIRE_EFFECT_TIME){
         p->effect_t++;
         return;
@@ -958,32 +923,32 @@ void FireBehave(Simulator* sim, int* x, int* y){
     if(p->heat <= 0){
         Color c;
         ChangeColor(&c, BLACK);
-        CreateReplaceParticle(sim, *x, *y, &c, SMOKE, SMOKE_DENSITY, F_SMOKE);
+        CreateReplaceParticle(sim, *x, *y, &c, SMOKE);
         return;
     }
 
     if(p->life_t > FIRE_LIFE_TIME){
         Color c;
         ChangeColor(&c, BLACK);
-        CreateReplaceParticle(sim, *x, *y, &c, SMOKE, SMOKE_DENSITY, F_SMOKE);
+        CreateReplaceParticle(sim, *x, *y, &c, SMOKE);
         return;
     }
 
     int fire;
     Particle* d = &sim->pMap[*y + 1][*x];
-    if(!CHECK_FLAG(d, HEAT_RELEASER)){
+    if(!CHECK_FLAG(typeFlagsList[d->type], HEAT_RELEASER)){
         d->heat += FIRE_HEAT_RELEASE_TEMP;
     }
     Particle* u = &sim->pMap[*y - 1][*x];
-    if(!CHECK_FLAG(u, HEAT_RELEASER)){
+    if(!CHECK_FLAG(typeFlagsList[u->type], HEAT_RELEASER)){
         u->heat += FIRE_HEAT_RELEASE_TEMP;
     }
     Particle* l = &sim->pMap[*y][*x - 1];
-    if(!CHECK_FLAG(l, HEAT_RELEASER)){
+    if(!CHECK_FLAG(typeFlagsList[l->type], HEAT_RELEASER)){
         l->heat += FIRE_HEAT_RELEASE_TEMP;
     }
     Particle* r = &sim->pMap[*y][*x + 1];
-    if(!CHECK_FLAG(r, HEAT_RELEASER)){
+    if(!CHECK_FLAG(typeFlagsList[r->type], HEAT_RELEASER)){
         r->heat += FIRE_HEAT_RELEASE_TEMP;
     }
 
@@ -1020,61 +985,59 @@ void Simulate(Simulator* sim){
             int oldy = i;
 
             if(sim->pMap[oldy][oldx].id > 0){
-                PartType type = sim->pMap[oldy][oldx].t;
-                if(sim->pMap[oldy][oldx].p.y >= sim->rows-1 || type == AIR || type == WALL) {continue;}
+                if(sim->pMap[oldy][oldx].p.y >= sim->rows-1 || typeFuncList[sim->pMap[oldy][oldx].type] == NULL) {continue;}
                 
                 int x = oldx;
                 int y = oldy;
 
                 // Particle logic
-                switch (type)
-                {
-                case SAND:
-                    SandBehave(sim, &x, &y);
-                    break;
-                case FUNGUS:
-                    FungusBehave(sim, &x, &y);
-                    break;
-                case WATER:
-                    WaterBehave(sim, &x, &y);
-                    break;
-                case ACID:
-                    AcidBehave(sim, &x, &y);
-                    break;
-                case STEAM:
-                    SteamBehave(sim, &x, &y);
-                    break;
-                case FIRE:
-                    FireBehave(sim, &x, &y);
-                    break;
-                case SMOKE:
-                    SteamBehave(sim, &x, &y);
-                    break;
-                case COAL:
-                    CoalBehave(sim, &x, &y);
-                    break;
-                case OIL:
-                    OilBehave(sim, &x, &y);
-                    break;
-                case LAVA:
-                    OilBehave(sim, &x, &y);
-                    break;
-                }
+                typeFuncList[sim->pMap[oldy][oldx].type](sim, &x, &y);
+
+                // switch (type)
+                // {
+                // case SAND:
+                //     SandBehave(sim, &x, &y);
+                //     break;
+                // case FUNGUS:
+                //     FungusBehave(sim, &x, &y);
+                //     break;
+                // case WATER:
+                //     WaterBehave(sim, &x, &y);
+                //     break;
+                // case ACID:
+                //     AcidBehave(sim, &x, &y);
+                //     break;
+                // case STEAM:
+                //     SteamBehave(sim, &x, &y);
+                //     break;
+                // case FIRE:
+                //     FireBehave(sim, &x, &y);
+                //     break;
+                // case SMOKE:
+                //     SteamBehave(sim, &x, &y);
+                //     break;
+                // case COAL:
+                //     CoalBehave(sim, &x, &y);
+                //     break;
+                // case OIL:
+                //     OilBehave(sim, &x, &y);
+                //     break;
+                // case LAVA:
+                //     OilBehave(sim, &x, &y);
+                //     break;
+                // }
 
 
                 // Particle swapping
                 if(y == oldy && x == oldx){
                     if(sim->pMap[y][x].id == -2){
-                        sim->pMap[y][x].t = AIR;
-                        sim->pMap[y][x].dens = AIR_DENSITY;
+                        sim->pMap[y][x].type = AIR;
                         sim->pMap[y][x].id = -1;
-                        continue;
                     }
                     continue;
                 }
                 if(x < 0 || x >= sim->cols) continue;
                 if(y < 0 || y >= sim->rows) continue;
-                if(sim->pMap[y][x].t == WALL) continue;
 
                 Particle temp = sim->pMap[y][x];
                 sim->pMap[y][x] = sim->pMap[oldy][oldx];
@@ -1186,27 +1149,27 @@ void DrawGui(Window* win, SDL_Rect* buttons, int buttonCount){
     SDL_RenderFillRect(win->renderer, &buttons[0]);
     SDL_SetRenderDrawColor(win->renderer, M_WATER_BUTTON_COLOR);
     SDL_RenderFillRect(win->renderer, &buttons[1]);
-    SDL_SetRenderDrawColor(win->renderer, M_FUNGUS_BUTTON_COLOR);
+    SDL_SetRenderDrawColor(win->renderer, M_STEAM_BUTTON_COLOR);
     SDL_RenderFillRect(win->renderer, &buttons[2]);
     SDL_SetRenderDrawColor(win->renderer, M_ACID_BUTTON_COLOR);
     SDL_RenderFillRect(win->renderer, &buttons[3]);
     SDL_SetRenderDrawColor(win->renderer, M_WALL_BUTTON_COLOR);
     SDL_RenderFillRect(win->renderer, &buttons[4]);
-    SDL_SetRenderDrawColor(win->renderer, M_STEAM_BUTTON_COLOR);
-    SDL_RenderFillRect(win->renderer, &buttons[5]);
     SDL_SetRenderDrawColor(win->renderer, M_FIRE_BUTTON_COLOR);
-    SDL_RenderFillRect(win->renderer, &buttons[6]);
+    SDL_RenderFillRect(win->renderer, &buttons[5]);
     SDL_SetRenderDrawColor(win->renderer, M_SMOKE_BUTTON_COLOR);
-    SDL_RenderFillRect(win->renderer, &buttons[7]);
+    SDL_RenderFillRect(win->renderer, &buttons[6]);
     SDL_SetRenderDrawColor(win->renderer, M_COAL_BUTTON_COLOR);
-    SDL_RenderFillRect(win->renderer, &buttons[8]);
+    SDL_RenderFillRect(win->renderer, &buttons[7]);
     SDL_SetRenderDrawColor(win->renderer, M_OIL_BUTTON_COLOR);
-    SDL_RenderFillRect(win->renderer, &buttons[9]);
+    SDL_RenderFillRect(win->renderer, &buttons[8]);
     SDL_SetRenderDrawColor(win->renderer, M_LAVA_BUTTON_COLOR);
+    SDL_RenderFillRect(win->renderer, &buttons[9]);
+    SDL_SetRenderDrawColor(win->renderer, M_FUNGUS_BUTTON_COLOR);
     SDL_RenderFillRect(win->renderer, &buttons[10]);
 
     SDL_SetRenderDrawColor(win->renderer, MWHITE);
-    SDL_RenderDrawRect(win->renderer, &buttons[currentPart]);
+    SDL_RenderDrawRect(win->renderer, &buttons[selectedType]);
 }
 
 
@@ -1222,45 +1185,9 @@ void ProcessInput(SDL_Event event, Window* win, Simulator* sim,Color* color)
         int px = ((mx) / sim->pSide);
         int py = ((my) / sim->pSide);
         if(mode == 0)
-            CreateParticle(sim, px, py, color, genType, WALL_DENSITY, F_WALL);
+            CreateParticle(sim, px, py, color, 4);
         if(mode == 1){
-
-            switch (genType)
-            {
-            case SAND:
-                CreateManyParticles(sim, px, py, RADIUS, SAND_COLORS, genType, SAND_DENSITY, F_SAND);
-                break;
-            case FUNGUS:
-                CreateManyParticles(sim, px, py, RADIUS, PINK, genType, FUNGUS_DENSITY, F_FUNGUS);
-                break;
-            case WATER:
-                CreateManyParticles(sim, px, py, RADIUS, WATER_COLORS, genType, WATER_DENSITY, F_WATER);
-                break;
-            case ACID:
-                CreateManyParticles(sim, px, py, RADIUS, ACID_COLORS, genType, ACID_DENSITY, F_ACID);
-                break;
-            case WALL:
-                CreateManyParticles(sim, px, py, RADIUS, WALL_COLORS, genType, WALL_DENSITY, F_WALL);
-                break;
-            case STEAM:
-                CreateManyParticles(sim, px, py, RADIUS, LIGHT_BLUE, genType, STEAM_DENSITY, F_STEAM);
-                break;
-            case FIRE:
-                CreateManyParticles(sim, px, py, RADIUS, FIRE_COLORS, genType, FIRE_DENSITY, F_FIRE);
-                break;
-            case SMOKE:
-                CreateManyParticles(sim, px, py, RADIUS, BLACK, genType, SMOKE_DENSITY, F_SMOKE);
-                break;
-            case COAL:
-                CreateManyParticles(sim, px, py, RADIUS, COAL_COLORS, genType, COAL_DENSITY, F_COAL);
-                break;
-            case OIL:
-                CreateManyParticles(sim, px, py, RADIUS, OIL_BROWN, genType, OIL_DENSITY, F_OIL);
-                break;
-            case LAVA:
-                CreateManyParticles(sim, px, py, RADIUS, ORANGE, genType, OIL_DENSITY, F_OIL);
-                break;
-            }
+            CreateManyParticles(sim, px, py, RADIUS, SAND_COLORS, selectedType);
         }
     }
 
@@ -1282,16 +1209,12 @@ void ProcessInput(SDL_Event event, Window* win, Simulator* sim,Color* color)
                 WallBox(sim);
             }
             if(PARTICLE_CHANGE_BUTTON){
-                ElementChange();
+                selectedType = (selectedType + 1) % countTypes;
             }
         }
     }
 }
 
-void ElementChange(){
-    currentPart = (currentPart + 1) % partSeqSize;
-    genType = PartSeq[currentPart];
-}
 
 
 void AddType(char* name, Colors color, Color buttonColor, int dens, uint32_t flags, void (*func)(Simulator* sim, int* x, int* y))
@@ -1306,7 +1229,7 @@ void AddType(char* name, Colors color, Color buttonColor, int dens, uint32_t fla
     countTypes++;
 }
 
-int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, int dens, PartFlags flags){
+int CreateParticle(Simulator* sim, int px, int py, Color* color, int t){
     if(px >= 0 && py >= 0 && px < sim->cols && py < sim->rows){
         //printf("works\n");
         // printf("px: %d, py: %d\n", px, py);
@@ -1316,14 +1239,12 @@ int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, 
         part.p.y = py;
         part.id = 1;
         CopyColor(&part.c, color);
-        part.t = type;
         part.xvel = 2;
         part.yvel = 1;
-        part.dens = dens;
         part.life_t = rand() % 30;
         part.effect_t = rand() % 30;
-        part.flags = flags;
-        part.heat = 0;
+        part.heat = (t == FIRE ? 400 : 0);
+        part.type = t;
         
 
         sim->pMap[py][px] = part;
@@ -1333,7 +1254,7 @@ int CreateParticle(Simulator* sim, int px, int py, Color* color, PartType type, 
     return 0;
 }
 
-void CreateReplaceParticle(Simulator* sim, int px, int py, Color* color, PartType type, int dens, PartFlags flags){
+void CreateReplaceParticle(Simulator* sim, int px, int py, Color* color, int t){
     if(sim->pMap[py][px].id < 0){
         sim->partCount++;
     }
@@ -1343,20 +1264,18 @@ void CreateReplaceParticle(Simulator* sim, int px, int py, Color* color, PartTyp
     part.p.y = py;
     part.id = 1;
     CopyColor(&part.c, color);
-    part.t = type;
     part.xvel = 2;
     part.yvel = 1;
-    part.dens = dens;
     part.life_t = rand() % 30;
     part.effect_t = rand() % 30;
-    part.flags = flags;
-    part.heat = (type == FIRE ? 400 : 0);
+    part.heat = (t == FIRE ? 400 : 0);
+    part.type = t;
     // printf("%d\n", (flags & IS_SOLID) ? 1 : 0);
 
     sim->pMap[py][px] = part;
 }
 
-void CreateManyParticles(Simulator* sim, int px, int py, int rad, Colors c, PartType type, int dens, PartFlags flags){
+void CreateManyParticles(Simulator* sim, int px, int py, int rad, Colors c, int t){
     int begy = py - rad;
     int begx = px - rad;
     int endy = py + rad;
@@ -1371,8 +1290,8 @@ void CreateManyParticles(Simulator* sim, int px, int py, int rad, Colors c, Part
             if(di*di + dj*dj < srad)
                 if(j >= 0 && i >= 0 && j < sim->cols && i < sim->rows)
                     if(sim->pMap[i][j].id < 0){
-                        ChangeColor(&color, c);
-                        CreateReplaceParticle(sim, j, i, &color, type, dens, flags);
+                        ChangeColor(&color, typeColorList[t]);
+                        CreateReplaceParticle(sim, j, i, &color, t);
                     }
         }
     }
@@ -1381,10 +1300,8 @@ void CreateManyParticles(Simulator* sim, int px, int py, int rad, Colors c, Part
 void DeleteParticle(Simulator* sim, int px, int py){
     if(sim->pMap[py][px].id > 0){
         sim->pMap[py][px].id = -1;
-        sim->pMap[py][px].t = AIR;
-        sim->pMap[py][px].dens = AIR_DENSITY;
-        sim->pMap[py][px].flags = F_AIR;
         sim->pMap[py][px].heat = 0;
+        sim->pMap[py][px].type = AIR;
 
         sim->partCount--;
     }
@@ -1423,68 +1340,24 @@ void WallBox(Simulator* sim){
     ChangeColor(&c, GRAY);
     
     for(int j = 0; j < sim->cols; j++){
-        CreateParticle(sim, j, 0, &c, WALL, WALL_DENSITY, F_WALL);
+        CreateParticle(sim, j, 0, &c, WALL);
     }
     for(int j = 0; j < sim->cols; j++){
-        CreateParticle(sim, j, sim->rows - 1, &c, WALL, WALL_DENSITY, F_WALL);
+        CreateParticle(sim, j, sim->rows - 1, &c, WALL);
     }
     for(int i = 1; i < sim->rows - 1; i++){
-        CreateParticle(sim, 0, i, &c, WALL, WALL_DENSITY, F_WALL);
-        CreateParticle(sim, sim->cols - 1, i, &c, WALL, WALL_DENSITY, F_WALL);
+        CreateParticle(sim, 0, i, &c, WALL);
+        CreateParticle(sim, sim->cols - 1, i, &c, WALL);
     }
 
 }
 
 void CheckGuiButtons(Window* win, int mx, int my){
-    if(mx > win->w - ELEMENT_BUTTON_MARGIN_W && mx <= win->w - ELEMENT_BUTTON_MARGIN_W + ELEMENT_BUTTON_SIZE){
 
-        int bd = ELEMENT_BUTTON_SIZE + ELEMENT_BUTTONS_MARGIN;
-        int bt = ELEMENT_BUTTON_MARGIN_H + ELEMENT_BUTTON_SIZE;
-
-        if(my > ELEMENT_BUTTON_MARGIN_H && my <= bt){
-            genType = SAND;
-            currentPart = 0;
-            return;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + bd && my <= (bt + bd)){
-            genType = WATER;
-            currentPart = 1;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + 2*bd && my <= (bt + 2*bd)){
-            genType = FUNGUS;
-            currentPart = 2;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + 3*bd && my <= (bt + 3*bd)){
-            genType = ACID;
-            currentPart = 3;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + 4*bd && my <= (bt + 4*bd)){
-            genType = WALL;
-            currentPart = 4;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + 5*bd && my <= (bt + 5*bd)){
-            genType = STEAM;
-            currentPart = 5;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + 6*bd && my <= (bt + 6*bd)){
-            genType = FIRE;
-            currentPart = 6;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + 7*bd && my <= (bt + 7*bd)){
-            genType = SMOKE;
-            currentPart = 7;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + 8*bd && my <= (bt + 8*bd)){
-            genType = COAL;
-            currentPart = 8;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + 9*bd && my <= (bt + 9*bd)){
-            genType = OIL;
-            currentPart = 9;
-        }
-        if(my > ELEMENT_BUTTON_MARGIN_H + 10*bd && my <= (bt + 10*bd)){
-            genType = LAVA;
-            currentPart = 10;
+    for(int i = 0; i < buttonCount; i++){
+        if(my > buttons[i].y && mx > buttons[i].x && 
+        my <= buttons[i].y + buttons[i].h && mx <= buttons[i].x + buttons[i].w){
+            selectedType = i;
         }
     }
 }
