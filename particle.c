@@ -250,6 +250,13 @@ void CopyColor(Color* dest, Color* src);
 int CompColors(Color* c1, Color* c2);
 
 // Simulation
+void BasicDustBehave(Simulator* sim, int* x, int* y);
+void BasicLiquidBehave(Simulator* sim, int* x, int* y);
+void BasicGasBehave(Simulator* sim, int* x, int* y);
+void BasicHeatAbsorberBehave(Simulator* sim, int* x, int* y);
+void BasicHeatReleaserBehave(Simulator* sim, int* x, int* y);
+void BasicAcidicBehave(Simulator* sim, int* x, int* y);
+
 void SandBehave(Simulator* sim, int* x, int* y);
 void WaterBehave(Simulator* sim, int* x, int* y);
 void OilBehave(Simulator* sim, int* x, int* y);
@@ -568,40 +575,206 @@ int CompColors(Color* c1, Color* c2){
 }
 
 
-void SandBehave(Simulator* sim, int* x, int* y){
+
+void BasicDustBehave(Simulator* sim, int* x, int* y){
     Particle* p = &sim->pMap[*y][*x];
     Particle* d = &sim->pMap[*y + 1][*x];
-    Particle* ld = &sim->pMap[*y + 1][*x - 1];
-    Particle* rd = &sim->pMap[*y + 1][*x + 1];
+    if((typeDensityList[d->type] < typeDensityList[p->type])
+     && !CHECK_FLAG(typeFlagsList[d->type], IS_DUST)){ (*y) += 1; return;}
 
-    if((typeDensityList[d->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[d->type], IS_DUST)){
-        // Particle* l = &sim->pMap[*y][*x - 1];
-        // if(l->id < 0) 
-        (*y) += 1;
+    Particle* ld = &sim->pMap[*y + 1][*x - 1];
+    if((typeDensityList[ld->type] < typeDensityList[p->type])
+     && !CHECK_FLAG(typeFlagsList[ld->type], IS_DUST)){ (*y) += 1, (*x) -= 1; return;}
+
+    Particle* rd = &sim->pMap[*y + 1][*x + 1];
+    if((typeDensityList[rd->type] < typeDensityList[p->type])
+     && !CHECK_FLAG(typeFlagsList[rd->type], IS_DUST)){ (*y) += 1, (*x) += 1; return;}
+}
+
+void BasicLiquidBehave(Simulator* sim, int* x, int* y){
+
+    Particle* p = &sim->pMap[*y][*x];
+    Particle* d = &sim->pMap[*y + 1][*x];
+
+    if(typeDensityList[d->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[d->type], IS_SOLID)){
+            (*y) += 1;
+            return;
+        }
     }
-    else if((typeDensityList[ld->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[ld->type], IS_DUST)){ (*y) += 1, (*x) -= 1; }
-    else if((typeDensityList[rd->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[rd->type], IS_DUST)){ (*y) += 1, (*x) += 1;}
+
+    Particle* ld = &sim->pMap[*y + 1][*x - 1];
+    if(typeDensityList[ld->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[ld->type], IS_SOLID)){
+            (*y) += 1, (*x) -= 1; 
+            return;
+        }
+    }
+    Particle* rd = &sim->pMap[*y + 1][*x + 1];
+    if(typeDensityList[rd->type] < typeDensityList[p->type]){
+        if(!CHECK_FLAG(typeFlagsList[rd->type], IS_SOLID)){
+            (*y) += 1, (*x) += 1; 
+            return;
+        }
+    }
+
+    Particle* l = &sim->pMap[*y][*x - 1];
+    Particle* r = &sim->pMap[*y][*x + 1];
+    if(p->xvel > 1){
+        if(typeDensityList[l->type] < typeDensityList[p->type]){
+            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
+                (*x) -= 1; 
+                return;
+            }
+        }
+        if(typeDensityList[r->type] < typeDensityList[p->type]){
+            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
+                (*x) += 1; 
+                if(p->xvel == 1)p->xvel -= 2; 
+                p->xvel -= 1; 
+                return;
+            }
+        }
+    } else {
+        if(typeDensityList[r->type] < typeDensityList[p->type]){
+            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
+                (*x) += 1; 
+                return;
+            }
+        }
+        if(typeDensityList[l->type] < typeDensityList[p->type]){ 
+            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
+                (*x) -= 1; 
+                if(p->xvel == 1)p->xvel += 2; 
+                p->xvel += 1; 
+                return;
+            }
+        }
+    }
+}
+
+void BasicGasBehave(Simulator* sim, int* x, int* y){
+
+    Particle* p = &sim->pMap[*y][*x];
+    Particle* u = &sim->pMap[*y - 1][*x];
+    if(typeDensityList[u->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[u->type], IS_SOLID)){ (*y) -= 1; return;}
+
+    Particle* ru = &sim->pMap[*y - 1][*x + 1];  
+    if(typeDensityList[ru->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[ru->type], IS_SOLID)){ (*y) -= 1, (*x) += 1; return;}
+
+    Particle* lu = &sim->pMap[*y - 1][*x - 1];
+    if(typeDensityList[lu->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[lu->type], IS_SOLID)){ (*y) -= 1, (*x) -= 1; return;}
+
+    Particle* r = &sim->pMap[*y][*x + 1];
+    if(typeDensityList[r->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){ (*x) += 1; return;}
+
+    Particle* l = &sim->pMap[*y][*x - 1];
+    if(typeDensityList[l->type] > typeDensityList[p->type] && 
+    !CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){ (*x) -= 1; return;}
+}
+
+void BasicHeatAbsorberBehave(Simulator* sim, int* x, int* y){
+    Particle* d = &sim->pMap[*y + 1][*x];
+    if(CHECK_FLAG(typeFlagsList[d->type], HEAT_RELEASER)){
+        d->heat -= FIRE_HEAT_RELEASE_TEMP;
+    }
+    Particle* u = &sim->pMap[*y - 1][*x];
+    if(CHECK_FLAG(typeFlagsList[u->type], HEAT_RELEASER)){
+        u->heat -= FIRE_HEAT_RELEASE_TEMP;
+    }
+    Particle* l = &sim->pMap[*y][*x - 1];
+    if(CHECK_FLAG(typeFlagsList[l->type], HEAT_RELEASER)){
+        l->heat -= FIRE_HEAT_RELEASE_TEMP;
+    }
+    Particle* r = &sim->pMap[*y][*x + 1];
+    if(CHECK_FLAG(typeFlagsList[r->type], HEAT_RELEASER)){
+        r->heat -= FIRE_HEAT_RELEASE_TEMP;
+    }
+}
+
+void BasicHeatReleaserBehave(Simulator* sim, int* x, int* y){
+    Particle* d = &sim->pMap[*y + 1][*x];
+    if(!CHECK_FLAG(typeFlagsList[d->type], HEAT_RELEASER)){
+        d->heat += FIRE_HEAT_RELEASE_TEMP;
+    }
+    Particle* u = &sim->pMap[*y - 1][*x];
+    if(!CHECK_FLAG(typeFlagsList[u->type], HEAT_RELEASER)){
+        u->heat += FIRE_HEAT_RELEASE_TEMP;
+    }
+    Particle* l = &sim->pMap[*y][*x - 1];
+    if(!CHECK_FLAG(typeFlagsList[l->type], HEAT_RELEASER)){
+        l->heat += FIRE_HEAT_RELEASE_TEMP;
+    }
+    Particle* r = &sim->pMap[*y][*x + 1];
+    if(!CHECK_FLAG(typeFlagsList[r->type], HEAT_RELEASER)){
+        r->heat += FIRE_HEAT_RELEASE_TEMP;
+    }
+}
+
+void BasicAcidicBehave(Simulator* sim, int* x, int* y){
+    Particle* p = &sim->pMap[*y][*x];
+
+    Particle* d = &sim->pMap[*y + 1][*x];
+    if(CHECK_FLAG(typeFlagsList[d->type], ACID_HAS_AN_EFFECT)){ 
+        if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
+        else{
+            DeleteParticle(sim, *x, *y);
+            DeleteParticle(sim, *x, *y + 1);
+        return;
+        }
+    }
+
+    Particle* l = &sim->pMap[*y][*x - 1];
+    if(CHECK_FLAG(typeFlagsList[l->type], ACID_HAS_AN_EFFECT)){
+        if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
+        else{
+            DeleteParticle(sim, *x, *y);
+            DeleteParticle(sim, *x - 1, *y);
+        return;
+        }
+    }
+    Particle* r = &sim->pMap[*y][*x + 1];
+    if(CHECK_FLAG(typeFlagsList[r->type], ACID_HAS_AN_EFFECT)){ 
+        if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
+        else{
+            DeleteParticle(sim, *x, *y);
+            DeleteParticle(sim, *x + 1, *y);
+        }
+        return;
+    }
+
+    Particle* u = &sim->pMap[*y - 1][*x];
+    if(CHECK_FLAG(typeFlagsList[u->type], ACID_HAS_AN_EFFECT)){ 
+        if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
+        else{
+            DeleteParticle(sim, *x, *y);
+            DeleteParticle(sim, *x, *y - 1);
+        }
+        return;
+    }
+}
+
+void SandBehave(Simulator* sim, int* x, int* y){
+    BasicDustBehave(sim, x, y);
 }
 
 void CoalBehave(Simulator* sim, int* x, int* y){
     Particle* p = &sim->pMap[*y][*x];
-    Particle* d = &sim->pMap[*y + 1][*x];
-    Particle* ld = &sim->pMap[*y + 1][*x - 1];
-    Particle* rd = &sim->pMap[*y + 1][*x + 1];
 
     if(p->heat > COAL_TO_FIRE_TEMP){
+
+        // printf("heat:%d\n", p->heat);
         Color c;
         ChangeColor(&c, FIRE_COLORS);
-        CreateReplaceParticle(sim, *x, *y, &c, FIRE);
+        p->c = c;
+        BasicHeatReleaserBehave(sim, x, y);
     }
 
-    if((typeDensityList[d->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[d->type], IS_DUST)){
-        // Particle* l = &sim->pMap[*y][*x - 1];
-        // if(l->id < 0)
-        (*y) += 1;
-    }
-    else if((typeDensityList[ld->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[ld->type], IS_DUST)){ (*y) += 1, (*x) -= 1; }
-    else if((typeDensityList[rd->type] < typeDensityList[p->type]) && !CHECK_FLAG(typeFlagsList[rd->type], IS_DUST)){ (*y) += 1, (*x) += 1;}
+    BasicDustBehave(sim, x, y);
 }
 
 void WaterBehave(Simulator* sim, int* x, int* y)
@@ -613,79 +786,8 @@ void WaterBehave(Simulator* sim, int* x, int* y)
         CreateReplaceParticle(sim, *x, *y, &c, STEAM);
     }
 
-    Particle* d = &sim->pMap[*y + 1][*x];
-    Particle* l = &sim->pMap[*y][*x - 1];
-    Particle* r = &sim->pMap[*y][*x + 1];
-
-    if(d->heat > p->heat && !CHECK_FLAG(typeFlagsList[d->type], HEAT_STEALER)){
-        d->heat -= WATER_HEAT_STEAL;
-        p->heat += WATER_HEAT_STEAL;
-    }
-    if(l->heat > p->heat && !CHECK_FLAG(typeFlagsList[l->type], HEAT_STEALER)){
-        l->heat -= WATER_HEAT_STEAL;
-        p->heat += WATER_HEAT_STEAL;
-    }
-    if(r->heat > p->heat && !CHECK_FLAG(typeFlagsList[r->type], HEAT_STEALER)){
-        r->heat -= WATER_HEAT_STEAL;
-        p->heat += WATER_HEAT_STEAL;
-    }
-
-
-
-    // printf("d:%d, p:%d\n", typeDensityList[d->type], typeDensityList[p->type]);
-    if(typeDensityList[d->type] < typeDensityList[p->type]){
-        if(!CHECK_FLAG(typeFlagsList[d->type], IS_SOLID)){
-            (*y) += 1;
-            return;
-        }
-    }
-
-    Particle* ld = &sim->pMap[*y + 1][*x - 1];
-    if(typeDensityList[ld->type] < typeDensityList[p->type]){
-        if(!CHECK_FLAG(typeFlagsList[ld->type], IS_SOLID)){
-            (*y) += 1, (*x) -= 1; 
-            return;
-        }
-    }
-    Particle* rd = &sim->pMap[*y + 1][*x + 1];
-    if(typeDensityList[rd->type] < typeDensityList[p->type]){
-        if(!CHECK_FLAG(typeFlagsList[rd->type], IS_SOLID)){
-            (*y) += 1, (*x) += 1; 
-            return;
-        }
-    }
-
-    if(p->xvel > 1){
-        if(typeDensityList[l->type] < typeDensityList[p->type]){
-            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
-                (*x) -= 1; 
-                return;
-            }
-        }
-        if(typeDensityList[r->type] < typeDensityList[p->type]){
-            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
-                (*x) += 1; 
-                if(p->xvel == 1)p->xvel -= 2; 
-                p->xvel -= 1; 
-                return;
-            }
-        }
-    } else {
-        if(typeDensityList[r->type] < typeDensityList[p->type]){
-            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
-                (*x) += 1; 
-                return;
-            }
-        }
-        if(typeDensityList[l->type] < typeDensityList[p->type]){ 
-            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
-                (*x) -= 1; 
-                if(p->xvel == 1)p->xvel += 2; 
-                p->xvel += 1; 
-                return;
-            }
-        }
-    }
+    BasicHeatAbsorberBehave(sim, x, y);
+    BasicLiquidBehave(sim, x, y);
 }
 
 void OilBehave(Simulator* sim, int* x, int* y)
@@ -697,179 +799,13 @@ void OilBehave(Simulator* sim, int* x, int* y)
         CreateReplaceParticle(sim, *x, *y, &c, FIRE);
     }
 
-    Particle* d = &sim->pMap[*y + 1][*x];
-    if(typeDensityList[d->type] < typeDensityList[p->type]){
-        if(!CHECK_FLAG(typeFlagsList[d->type], IS_SOLID)){
-            (*y) += 1;
-            return;
-        }
-    }
-
-    Particle* ld = &sim->pMap[*y + 1][*x - 1];
-    if(typeDensityList[ld->type] < typeDensityList[p->type]){
-        if(!CHECK_FLAG(typeFlagsList[ld->type], IS_SOLID)){
-            (*y) += 1, (*x) -= 1; 
-            return;
-        }
-    }
-    Particle* rd = &sim->pMap[*y + 1][*x + 1];
-    if(typeDensityList[rd->type] < typeDensityList[p->type]){
-        if(!CHECK_FLAG(typeFlagsList[rd->type], IS_SOLID)){
-            (*y) += 1, (*x) += 1; 
-            return;
-        }
-    }
-
-    if(p->xvel > 1){
-        Particle* l = &sim->pMap[*y][*x - 1];
-        if(typeDensityList[l->type] < typeDensityList[p->type]){
-        if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
-            (*x) -= 1; 
-            return;
-        }
-    }
-        Particle* r = &sim->pMap[*y][*x + 1];
-        if(typeDensityList[r->type] < typeDensityList[p->type]){
-            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
-                (*x) += 1; 
-                if(p->xvel == 1)p->xvel -= 2; 
-                p->xvel -= 1; 
-                return;
-            }
-        }
-    } else {
-        Particle* r = &sim->pMap[*y][*x + 1];
-        if(typeDensityList[r->type] < typeDensityList[p->type]){
-            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
-                (*x) += 1; 
-                return;
-            }
-        }
-        Particle* l = &sim->pMap[*y][*x - 1];
-        if(typeDensityList[l->type] < typeDensityList[p->type]){ 
-            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
-                (*x) -= 1; 
-                if(p->xvel == 1)p->xvel += 2; 
-                p->xvel += 1; 
-                return;
-            }
-        }
-    }
+    BasicLiquidBehave(sim, x, y);
 }
 
 void AcidBehave(Simulator* sim, int* x, int* y)
 {
-    Particle* p = &sim->pMap[*y][*x];
-
-    char del = 0;
-
-    Particle* d = &sim->pMap[*y + 1][*x];
-    if(typeDensityList[d->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[d->type], ACID_HAS_AN_EFFECT))){ 
-        if(del){
-            if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
-            else{
-                DeleteParticle(sim, *x, *y);
-                DeleteParticle(sim, *x, *y + 1);
-            }
-            return;
-        }
-        if(!CHECK_FLAG(typeFlagsList[d->type], IS_SOLID)){
-            (*y) += 1;
-            return;
-        }
-    }
-    Particle* u = &sim->pMap[*y - 1][*x];
-    if(CHECK_FLAG(typeFlagsList[u->type], ACID_HAS_AN_EFFECT)){ 
-        if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
-        else{
-            DeleteParticle(sim, *x, *y);
-            DeleteParticle(sim, *x, *y - 1);
-        }
-        return;
-    }
-
-    Particle* ld = &sim->pMap[*y + 1][*x - 1];
-    if(typeDensityList[ld->type] < typeDensityList[p->type]){
-        if(!CHECK_FLAG(typeFlagsList[ld->type], IS_SOLID)){
-            (*y) += 1, (*x) -= 1; 
-            return;
-        }
-    }
-    Particle* rd = &sim->pMap[*y + 1][*x + 1];
-    if(typeDensityList[rd->type] < typeDensityList[p->type]){
-        if(!CHECK_FLAG(typeFlagsList[rd->type], IS_SOLID)){
-            (*y) += 1, (*x) += 1; 
-            return;
-        }
-    }
-
-    if(p->xvel > 1){
-        Particle* l = &sim->pMap[*y][*x - 1];
-        if(typeDensityList[l->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[l->type], ACID_HAS_AN_EFFECT))){
-            if(del){
-                if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
-                else{
-                    DeleteParticle(sim, *x, *y);
-                    DeleteParticle(sim, *x - 1, *y);
-                }
-                return;
-            }
-            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
-                (*x) -= 1; 
-                return;
-            }
-        }
-        Particle* r = &sim->pMap[*y][*x + 1];
-        if(typeDensityList[r->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[r->type], ACID_HAS_AN_EFFECT))){ 
-            if(del){
-                if(p->effect_t < ACID_EFFECT_TIME) p->effect_t++;
-                else{
-                    DeleteParticle(sim, *x, *y);
-                    DeleteParticle(sim, *x + 1, *y);
-                }
-                return;
-            }
-            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
-                (*x) += 1; 
-                if(p->xvel == 1)p->xvel -= 2; 
-                p->xvel -= 1; 
-                return;
-            }
-        }
-    } else {
-        Particle* r = &sim->pMap[*y][*x + 1];
-        if(typeDensityList[r->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[r->type], ACID_HAS_AN_EFFECT))){
-            if(del){
-                if(p->effect_t < ACID_EFFECT_TIME)p->effect_t++;
-                else{
-                    DeleteParticle(sim, *x, *y);
-                    DeleteParticle(sim, *x + 1, *y);
-                }
-                return;
-            }
-            if(!CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){
-                (*x) += 1; 
-                return;
-            }
-        }
-        Particle* l = &sim->pMap[*y][*x - 1];
-        if(typeDensityList[l->type] < typeDensityList[p->type] || (del = CHECK_FLAG(typeFlagsList[l->type], ACID_HAS_AN_EFFECT))){ 
-            if(del){
-                if(p->effect_t < ACID_EFFECT_TIME)p->effect_t++;
-                else{
-                    DeleteParticle(sim, *x, *y);
-                    DeleteParticle(sim, *x - 1, *y);
-                }
-                return;
-            }
-            if(!CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){
-                (*x) -= 1; 
-                if(p->xvel == 1)p->xvel -= 2; 
-                p->xvel -= 1; 
-                return;
-            }
-        }
-    }
+    BasicAcidicBehave(sim, x, y);
+    BasicLiquidBehave(sim, x, y);
 }
 
 void SteamBehave(Simulator* sim, int* x, int* y)
@@ -921,57 +857,28 @@ void FireBehave(Simulator* sim, int* x, int* y){
     }
 
     if(p->heat <= 0){
-        Color c;
-        ChangeColor(&c, BLACK);
-        CreateReplaceParticle(sim, *x, *y, &c, SMOKE);
+        if(rand() % 10 > 5){
+            Color c;
+            ChangeColor(&c, BLACK);
+            CreateReplaceParticle(sim, *x, *y, &c, SMOKE);
+        } else {
+            DeleteParticle(sim, *x, *y);
+        }
         return;
     }
 
     if(p->life_t > FIRE_LIFE_TIME){
-        Color c;
-        ChangeColor(&c, BLACK);
-        CreateReplaceParticle(sim, *x, *y, &c, SMOKE);
+        if(rand() % 10 > 5){
+            Color c;
+            ChangeColor(&c, BLACK);
+            CreateReplaceParticle(sim, *x, *y, &c, SMOKE);
+        } else {
+            DeleteParticle(sim, *x, *y);
+        }
         return;
     }
 
-    int fire;
-    Particle* d = &sim->pMap[*y + 1][*x];
-    if(!CHECK_FLAG(typeFlagsList[d->type], HEAT_RELEASER)){
-        d->heat += FIRE_HEAT_RELEASE_TEMP;
-    }
-    Particle* u = &sim->pMap[*y - 1][*x];
-    if(!CHECK_FLAG(typeFlagsList[u->type], HEAT_RELEASER)){
-        u->heat += FIRE_HEAT_RELEASE_TEMP;
-    }
-    Particle* l = &sim->pMap[*y][*x - 1];
-    if(!CHECK_FLAG(typeFlagsList[l->type], HEAT_RELEASER)){
-        l->heat += FIRE_HEAT_RELEASE_TEMP;
-    }
-    Particle* r = &sim->pMap[*y][*x + 1];
-    if(!CHECK_FLAG(typeFlagsList[r->type], HEAT_RELEASER)){
-        r->heat += FIRE_HEAT_RELEASE_TEMP;
-    }
-
-    // Particle* u = &sim->pMap[*y - 1][*x];
-    // if(fire = (CHECK_FLAG(u, FIRE_HAS_AN_EFFECT))){
-    //     u->heat += FIRE_HEAT_RELEASE_TEMP;
-    // }
-
-    // Particle* l = &sim->pMap[*y][*x - 1];
-    // if(fire = (CHECK_FLAG(l, FIRE_HAS_AN_EFFECT))){
-    //     Color c;
-    //     ChangeColor(&c, FIRE_COLORS);
-    //     CreateReplaceParticle(sim, *x - 1, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
-    //     return;
-    // }
-
-    // Particle* r = &sim->pMap[*y][*x + 1];
-    // if(fire = (CHECK_FLAG(r, FIRE_HAS_AN_EFFECT))){
-    //     Color c;
-    //     ChangeColor(&c, FIRE_COLORS);
-    //     CreateReplaceParticle(sim, *x + 1, *y, &c, FIRE, FIRE_DENSITY, F_FIRE);
-    //     return;
-    // }
+    BasicHeatReleaserBehave(sim, x, y);
 }
 
 void Simulate(Simulator* sim){
@@ -992,41 +899,6 @@ void Simulate(Simulator* sim){
 
                 // Particle logic
                 typeFuncList[sim->pMap[oldy][oldx].type](sim, &x, &y);
-
-                // switch (type)
-                // {
-                // case SAND:
-                //     SandBehave(sim, &x, &y);
-                //     break;
-                // case FUNGUS:
-                //     FungusBehave(sim, &x, &y);
-                //     break;
-                // case WATER:
-                //     WaterBehave(sim, &x, &y);
-                //     break;
-                // case ACID:
-                //     AcidBehave(sim, &x, &y);
-                //     break;
-                // case STEAM:
-                //     SteamBehave(sim, &x, &y);
-                //     break;
-                // case FIRE:
-                //     FireBehave(sim, &x, &y);
-                //     break;
-                // case SMOKE:
-                //     SteamBehave(sim, &x, &y);
-                //     break;
-                // case COAL:
-                //     CoalBehave(sim, &x, &y);
-                //     break;
-                // case OIL:
-                //     OilBehave(sim, &x, &y);
-                //     break;
-                // case LAVA:
-                //     OilBehave(sim, &x, &y);
-                //     break;
-                // }
-
 
                 // Particle swapping
                 if(y == oldy && x == oldx){
