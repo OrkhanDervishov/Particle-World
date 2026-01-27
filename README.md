@@ -1,32 +1,28 @@
+<h2>BUTTONS</h2>
+
+1. Mouse left - Create partciles
+2. Mouse right - Delete partciles
+3. Screen clear - C
+4. Particle type change - V
+5. Explosion effect - R
+6. Heatmap ON/OFF - F
+7. Brush radius increase - 1
+8. Brush radius decrease - 2
+9. Delay increase - 3
+10. Delay decrease - 4
+11. Quit - Esc
+
 <h2>TODO</h2>
 
-
-1. ~~Port everything into partList~~
-2. ~~Add density~~
-3. Add velocity
-4. ~~Perform action without mouse movement~~
-5. ~~Make the code readable~~
-6. ~~Improve liquid movement~~
-7. ~~Improve particle deletion~~
-8. Add fire(1/2)
-9. ~~Add acid~~
-10. Add oil(1/2)
-11. Add lava
-12. Add water evaporation
-13. Add heat
-14. Add explosion
-15. Add powder
-16. Improve density checking
-17. Add some kind of gui(1/2)
-18. Add letters
-19. Add buttons(1/2)
-20. Use SDL_Surface for drawing
-21. Add heat map
-
-<h3>GOALS</h3>
-8. Add fire(1/2)
-11. Add lava
-12. Add water evaporation
-13. Add heat
-15. Add powder
-Additional: Add obsidian
+1. Add velocity
+2. Add powder(1/2)
+3. Improve density checking
+4. Add some kind of gui(1/2)
+5. Add letters
+6. Use SDL_Surface for drawing
+7. Add chunks
+8. Add dirty rectangles
+9. Add light
+10. Read particle data from a file
+11. Add engine api for modding
+12. Add viscosity

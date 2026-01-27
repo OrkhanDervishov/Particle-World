@@ -1,0 +1,172 @@
+#ifndef PARTICLE_DATA_H
+#define PARTICLE_DATA_H
+
+#include "../engine/engine_api.h"
+
+
+typedef enum{
+    SAND = 0,
+    WATER,
+    STEAM,
+    ACID,
+    WOOD,
+    WALL,
+    FIRE,
+    FIRE_SMOKE,
+    SMOKE,
+    COAL,
+    POWDER,
+    OIL,
+    LAVA,
+    FUNGUS,
+    OBSIDIAN,
+    PHANTOM,
+    SOURCE,
+    AIR
+} PartType;
+
+// Flags
+typedef enum{
+    IS_DUST = 0x80000000,
+    IS_LIQUID = 0x40000000,
+    IS_GAS = 0x20000000,
+    IS_SOLID = 0x10000000,
+
+    ACID_HAS_AN_EFFECT = 0x08000000,
+    FIRE_HAS_AN_EFFECT = 0x04000000,
+    HEAT_STEALER = 0x02000000,
+    HEAT_RELEASER = 0x01000000,
+
+    HEAT_KEEPER = 0x00800000,
+    EXPLOSIVE = 0x00400000
+} Flags;
+
+typedef enum{
+    BURNING = 0x80
+} iFlags;
+
+typedef enum{
+    SAND_FLAGS = 0x88000000,
+    WATER_FLAGS = 0x42000000,
+    STEAM_FLAGS = 0x20800000,
+    ACID_FLAGS = 0x40000000,
+    WOOD_FLAGS = 0x1C000000,
+    WALL_FLAGS = 0x10000000,
+    FIRE_FLAGS = 0x1000000,
+    FIRE_SMOKE_FLAGS = 0x2000000,
+    SMOKE_FLAGS = 0x20000000,
+    COAL_FLAGS = 0x8C000000,
+    POWDER_FLAGS = 0x8C000000,
+    OIL_FLAGS = 0x44000000,
+    LAVA_FLAGS = 0x41000000,
+    FUNGUS_FLAGS = 0x8C000000,
+    OBSIDIAN_FLAGS = 0x10000000,
+    PAHNTOM_FLAGS = 0x00400000,
+    SOURCE_FLAGS = 0x10000000,
+    AIR_FLAGS = 0x20000000
+} PartFlags;
+
+typedef enum{
+    SAND_HT = 100,
+    WATER_HT = 300,
+    STEAM_HT = 50,
+    ACID_HT = 200,
+    WOOD_HT = 100,
+    WALL_HT = 100,
+    FIRE_HT = 20,
+    FIRE_SMOKE_HT = 50,
+    SMOKE_HT = 50,
+    COAL_HT = 100,
+    POWDER_HT = 100,
+    OIL_HT = 200,
+    LAVA_HT = 20,
+    FUNGUS_HT = 150,
+    OBSIDIAN_HT = 40,
+    AIR_HT = 10
+} PartHeatTransfer;
+
+
+
+/* 
+Flags
+from left to right
+0 - dust, 1 - liquid, 2 - gas, 3 - solid
+4 - acid has an effect, 5 - flamable
+
+Flags are used to give some common 
+information about class particles
+*/
+
+/*
+iFlags
+from left to right
+0 - burning
+
+iFlags are used to give some information
+about individual particle
+*/
+
+
+typedef struct{
+    Pos p;
+    int8_t id;
+    Color c;
+    int type;
+    uint8_t xvel, yvel;
+    uint16_t effect_t;
+    uint16_t life_t;
+    int32_t heat;
+    uint8_t iflags;
+    uint32_t durability;
+} Particle;
+
+typedef struct{
+    int rows;
+    int cols;
+    int partCount;
+    Particle** map;
+} ParticleMap;
+
+typedef struct{
+    const char* name;
+    void (*func)(int x, int y);
+} PartFunc;
+
+
+typedef uint16_t ParticleType;
+
+
+#define CHECK_FLAG(p, f) ((p) & (f) ? 1 : 0)
+#define SET_FLAG(p, f) ((p) |= (f))
+#define CLEAR_FLAG(p, f) ((p) &= (f))
+#define TOGGLE_FLAG(p, f) ((p) ^= (f))
+
+// Particle type params
+// They store common data of particle types
+
+#define MAX_NUMBER_OF_TYPES 256
+extern int countParticleTypes;
+
+extern bool (*typeFuncList[MAX_NUMBER_OF_TYPES])(int x, int y);
+extern Color typeButtonColorList[MAX_NUMBER_OF_TYPES];
+extern Colors typeColorList[MAX_NUMBER_OF_TYPES];
+extern int typeDensityList[MAX_NUMBER_OF_TYPES];
+extern uint32_t typeFlagsList[MAX_NUMBER_OF_TYPES];
+extern uint8_t typeIFlagsList[MAX_NUMBER_OF_TYPES];
+extern char* typeNameList[MAX_NUMBER_OF_TYPES];
+extern int32_t typeHeatTransferList[MAX_NUMBER_OF_TYPES];
+extern uint32_t typeDurabilityList[MAX_NUMBER_OF_TYPES];
+
+
+extern int LIQUID_OPACITY;
+
+
+// Particle map
+int CreateParticleMap(ParticleMap* pmap, int rows, int cols);
+int DeleteParticleMap(ParticleMap* pmap);
+
+// Color
+void ChangeColor(Color* c, Colors cs);
+
+
+#endif
