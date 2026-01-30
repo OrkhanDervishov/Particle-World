@@ -42,6 +42,9 @@ int CreateChunk(Chunk* chunk, int w, int h, Pos worldPos){
     p += chunk->size*sizeof(PFLAGS_DT);     chunk->durability = (DURABILITY_DT*)p;
     p += chunk->size*sizeof(DURABILITY_DT); chunk->custom = (CUSTOM_DT*)p;
 
+    // Can be used in the future.
+    //memset(chunk->data_block, 0, chunk->full_size);
+
     for(int i = 0; i < w*h; i++){
         chunk->type[i] = AIR;
     }
@@ -78,12 +81,6 @@ void ClearChunk(Chunk* chunk){
 void ActivateChunk(Chunk* chunk){
     chunk->active = TRUE;
 }
-
-void SimulateChunk(Chunk* c){
-    // printf("%s\n", typeNameList[CHUNK_GET_PARTICLE(c, 100, 32).type]);
-    // SimulateRects(&c->pmap, c->dirty_rect_list);
-}
-
 
 
 

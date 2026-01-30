@@ -4,7 +4,7 @@
 #include "../engine/engine_api.h"
 #include "../partsim/particle_data.h"
 #include "../partsim/dirtyrect.h"
-// #include "../partsim/simulator.h"
+
 
 
 #define STATE_DT        byte
@@ -53,8 +53,33 @@ typedef struct{
 
 // #define CHUNK_GET_PARTICLE(c, x, y)      (c)->pmap.map[y][x]
 // #define CHUNK_GET_PARTICLE_REF(c, x, y)  &(c)->pmap.map[y][x]
-#define CHUNK_GET(chunk_param, x, y)        (chunk_param)[(y)*(chunk).w + (x)]
+// #define CHUNK_GET(chunk_param, x, y)        (chunk_param)[(y)*(chunk).w + (x)]
 #define CHUNK_GET2(chunk, param, x, y)      (chunk).(param)[(y)*(chunk).w + (x)]
+
+#define CHUNK_GET_STATE(chunk, x, y)        (chunk).state[(y)*(chunk).w + (x)]
+#define CHUNK_GET_TYPE(chunk, x, y)         (chunk).type[(y)*(chunk).w + (x)]
+#define CHUNK_GET_XVEL(chunk, x, y)         (chunk).xvel[(y)*(chunk).w + (x)]
+#define CHUNK_GET_YVEL(chunk, x, y)         (chunk).yvel[(y)*(chunk).w + (x)]
+#define CHUNK_GET_COLOR(chunk, x, y)        (chunk).c[(y)*(chunk).w + (x)]
+#define CHUNK_GET_EFFECT_T(chunk, x, y)     (chunk).effect_t[(y)*(chunk).w + (x)]
+#define CHUNK_GET_LIFE_T(chunk, x, y)       (chunk).life_t[(y)*(chunk).w + (x)]
+#define CHUNK_GET_HEAT(chunk, x, y)         (chunk).heat[(y)*(chunk).w + (x)]
+#define CHUNK_GET_PFLAGS(chunk, x, y)       (chunk).pflags[(y)*(chunk).w + (x)]
+#define CHUNK_GET_DURAB(chunk, x, y)        (chunk).durability[(y)*(chunk).w + (x)]
+#define CHUNK_GET_CUSTOM(chunk, x, y)       (chunk).custom[(y)*(chunk).w + (x)]
+
+
+#define CHUNK_GETI_STATE(chunk, index)        (chunk).state[(index)]
+#define CHUNK_GETI_TYPE(chunk, index)         (chunk).type[(index)]
+#define CHUNK_GETI_XVEL(chunk, index)         (chunk).xvel[(index)]
+#define CHUNK_GETI_YVEL(chunk, index)         (chunk).yvel[(index)]
+#define CHUNK_GETI_COLOR(chunk, index)        (chunk).c[(index)]
+#define CHUNK_GETI_EFFECT_T(chunk, index)     (chunk).effect_t[(index)]
+#define CHUNK_GETI_LIFE_T(chunk, index)       (chunk).life_t[(index)]
+#define CHUNK_GETI_HEAT(chunk, index)         (chunk).heat[(index)]
+#define CHUNK_GETI_PFLAGS(chunk, index)       (chunk).pflags[(index)]
+#define CHUNK_GETI_DURAB(chunk, index)        (chunk).durability[(index)]
+#define CHUNK_GETI_CUSTOM(chunk, index)       (chunk).custom[(index)]
 
 // Chunk functions
 int CreateChunk(Chunk* chunk, int w, int h, Pos worldPos);
@@ -62,7 +87,6 @@ void DeleteChunk(Chunk* chunk);
 void ClearChunk(Chunk* chunk);
 
 void ActivateChunk(Chunk* chunk);
-void SimulateChunk(Chunk* c);
 
 void ChunkWallBox(Chunk* chunk);
 void ColorChunk(Chunk* chunk, Color color);

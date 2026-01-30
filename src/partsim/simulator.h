@@ -4,7 +4,7 @@
 #include "../engine/engine_api.h"
 #include "dirtyrect.h"
 #include "particle_data.h"
-#include "../structs/chunk.h"
+#include "../structs/chunk_space.h"
 
 extern int PART_SIDE;
 extern int DELAY;
@@ -41,6 +41,8 @@ void ClearMap(ParticleMap* pmap);
 void SimulateAll(ParticleMap* pmap);
 Rect SimulateRect(ParticleMap* pmap, Rect rect);
 void SimulateRects(Chunk* chunk, LinkedList* list);
+
+void SimulateChunkSpace(ChunkSpace *cs);
 
 // TODO: Create new file for heat simulation
 // void SimulateHeatMap(ParticleSimulator* sim);

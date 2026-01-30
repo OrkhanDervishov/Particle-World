@@ -26,6 +26,23 @@ int CreateChunkSpace
     cs->chunk_width = chunk_width > 0 ? chunk_width : DEFAULT_CHUNK_SIZE;
     cs->chunk_height = chunk_height > 0 ? chunk_height : DEFAULT_CHUNK_SIZE;
 
+    // cs->chunk_width_mo = cs->chunk_width - 1;
+    // cs->chunk_height_mo = cs->chunk_height - 1;
+    cs->width_power = 0;
+    cs->height_power = 0;
+
+    size_t cwidth = cs->chunk_width;
+    while(cwidth != 1){
+        cwidth /= 2;
+        cs->width_power++;
+    }
+
+    size_t cheight = cs->chunk_height;
+    while(cheight != 1){
+        cheight /= 2;
+        cs->height_power++;
+    }
+
     
     Pos wp = {0,0};
     for(int i = 0; i < cs->size_r; i++){
@@ -58,9 +75,6 @@ void ArrangeChunks(ChunkSpace *cs){
     }
 }
 
-void SimulateChunkSpace(ChunkSpace* cs){
-    
-}
 
 Color getRandomColor2(){
     Color c = {

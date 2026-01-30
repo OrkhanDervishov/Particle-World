@@ -107,6 +107,12 @@ about individual particle
 */
 
 
+typedef enum{
+    P_IGNORED = -1,
+    P_USED = 0,
+    P_FRESH = 1
+} PartStates;
+
 typedef struct{
     Pos p;
     int8_t id;

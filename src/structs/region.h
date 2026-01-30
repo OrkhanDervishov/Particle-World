@@ -3,8 +3,8 @@
 
 #include "chunk.h"
 
-#define DEFAULT_REGION_WIDTH 2
-#define DEFAULT_REGION_HEIGHT 2
+#define DEFAULT_REGION_WIDTH 1
+#define DEFAULT_REGION_HEIGHT 1
 
 #define REGION_GET_CHUNK(r, x, y) (r).chunks[(y)*(r).w + (x)]
 
@@ -25,7 +25,6 @@ int ClearRegion(Region* region);
 int FillRegion(Region* region);
 
 void ActivateRegion(Region* region);
-void SimulateRegion(Region* region);
 
 void ColorRegion(Region* region, Color color);
 

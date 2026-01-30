@@ -2,7 +2,7 @@
 #define TESTS_H
 
 #include "engine/engine_api.h"
-// #include "partsim/particle_load.h"
+#include "partsim/particle_load.h"
 #include "structs/chunk.h"
 #include "structs/region.h"
 #include "structs/chunk_space.h"
@@ -11,6 +11,7 @@
 #include "chunk_renderer.h"
 #include "partsim/dirtyrect.h"
 #include "partsim/particle_data.h"
+#include "partsim/simulator.h"
 
 
 int WindowTest(){
@@ -294,6 +295,7 @@ void ChunkSpaceTest(){
     
     srand(time(NULL));
     Window* window;
+    InitParticles();
 
     CONSOLE("Chunk render test started\n");
 
@@ -319,12 +321,24 @@ void ChunkSpaceTest(){
 
     ChunkSpace cs;
     CONSOLE("Chunk Space create test\n");
-    CreateChunkSpace(&cs, 3, 2, DEFAULT_REGION_WIDTH, DEFAULT_REGION_HEIGHT);
-    ColorChunkSpace(&cs);
+    CreateChunkSpace(&cs, 3, 3, DEFAULT_REGION_WIDTH, DEFAULT_REGION_HEIGHT, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE);
+    // ColorChunkSpace(&cs);
     CONSOLE("Chunk Space arrange test\n");
     ArrangeChunks(&cs);
-    //----------------------------
+    CONSOLE("Chunk Space particle create test\n");
+    CreateParticlesRectCS(&cs, 40, 40, 50, 50, SAND);
+    // int type = CS_GET_TYPE(&cs, 10, 10);
+    SetChunkSpace(&cs);
 
+    clock_t start = GetTimeNano();
+    for(int i = 0; i < 100; i++)
+        SimulateChunkSpace(&cs);
+    clock_t end = GetTimeNano();
+    printf("%ldms\n", (end-start)/1000000);
+    int x = 100;
+    int y = 100;
+    //----------------------------
+    CONSOLE("Chunk Space render test\n");
 
     StartRenderer(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
     // ColorChunkSpace(&cs);

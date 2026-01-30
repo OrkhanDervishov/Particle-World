@@ -121,6 +121,8 @@ typedef enum{
 #define COPY_COLOR(dest, src) (dest)->rgba = (src)->rgba;
 #define COMP_COLORS(c1, c2) ((c1)->rgba == (c2)->rgba ? 0 : 1)
 #define SWAP(a, b, t) t = a, a = b, b = t
+#define A_SWAP(a, b) {typeof((a)) (t) = (a); (a) = (b); (b) = (t);}
+
 
 // Flag operations
 #define CHECK_FLAG(p, f) ((p) & (f) ? 1 : 0)

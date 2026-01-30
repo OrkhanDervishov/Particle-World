@@ -57,16 +57,6 @@ void ActivateRegion(Region* region){
     region->active = region->active == TRUE ? FALSE : TRUE;
 }
 
-// Not used very much
-void SimulateRegion(Region* region){
-    
-    size_t size = region->w*region->h;
-    for(size_t i = 0; i < size; i++){
-        SimulateChunk(&region->chunks[i]);
-    }
-}
-
-
 void ColorRegion(Region* region, Color color){
     for(int i = 0; i < region->h*region->w; i++){
         ColorChunk(&region->chunks[i], color);
