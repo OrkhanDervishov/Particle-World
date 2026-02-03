@@ -420,7 +420,7 @@ int ParticleGameTest(){
 
 
     CONSOLE("Game draw test\n");
-    CreateParticlesRectCS(&(game->cs), 70, 70, 70, 70, SAND);
+    CreateParticlesRectCS(&(game->cs), 70, 70, 70, 70, WATER);
     // LoadChunks(game->w);
     // CONSOLE("works000\n");
     // DrawSceneWithoutTexture(game);

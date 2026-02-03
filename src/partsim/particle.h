@@ -57,28 +57,28 @@ void SetChunkSpace(ChunkSpace* cs);
 
 // Simulation
 bool BasicDustBehave(int x, int y);
-// bool BasicLiquidBehave(int x, int y);
-// bool BasicGasBehave(int x, int y);
+bool BasicLiquidBehave(int x, int y);
+bool BasicGasBehave(int x, int y);
 // bool BasicHeatAbsorberBehave(int x, int y);
 // bool BasicHeatReleaserBehave(int x, int y);
-// bool BasicAcidicBehave(int x, int y);
+bool BasicAcidicBehave(int x, int y);
 
 bool SandBehave(int x, int y);
-// bool WaterBehave(int x, int y);
-// bool OilBehave(int x, int y);
-// bool AcidBehave(int x, int y);
-// bool SteamBehave(int x, int y);
-// bool FungusBehave(int x, int y);
-// bool FireBehave(int x, int y);
-// bool CoalBehave(int x, int y);
-// bool SmokeBehave(int x, int y);
-// bool LavaBehave(int x, int y);
-// bool WoodBehave(int x, int y);
-// bool FireSmokeBehave(int x, int y);
-// bool PowderBehave(int x, int y);
-// bool ObsidianBehave(int x, int y);
-// bool PhantomBehave(int x, int y);
-// bool SourceBehave(int x, int y);
+bool WaterBehave(int x, int y);
+bool OilBehave(int x, int y);
+bool AcidBehave(int x, int y);
+bool SteamBehave(int x, int y);
+bool FungusBehave(int x, int y);
+bool FireBehave(int x, int y);
+bool CoalBehave(int x, int y);
+bool SmokeBehave(int x, int y);
+bool LavaBehave(int x, int y);
+bool WoodBehave(int x, int y);
+bool FireSmokeBehave(int x, int y);
+bool PowderBehave(int x, int y);
+bool ObsidianBehave(int x, int y);
+bool PhantomBehave(int x, int y);
+bool SourceBehave(int x, int y);
 
 // extern void (*CreateParticle)(Chunk* chunk, ParticleType type, int px, int py);
 // extern void (*CreateReplaceParticle)(Chunk* chunk, ParticleType type, int px, int py);

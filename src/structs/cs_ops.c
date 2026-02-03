@@ -31,23 +31,9 @@ void SwapParticlesCS(ChunkSpace* cs, int x0, int y0, int x1, int y1){
     ];
 
 
-    // printf("x0:%d y0:%d\n", x0, y0);
-    // printf("x1:%d y1:%d\n", x1, y1);
-
-    // printf("cx0:%d cy0:%d\n", x0&(cs->chunk_width-1), y0&(cs->chunk_height-1));
-    // printf("cx1:%d cy1:%d\n", x1&(cs->chunk_width-1), y1&(cs->chunk_height-1));
-
-    // printf("c0.w:%d\n", c0.w);
-    // printf("c1.w:%d\n", c1.w);
-
     int i0 = (y0&(cs->chunk_height-1)) * c0.w + (x0&(cs->chunk_width-1));
     int i1 = (y1&(cs->chunk_height-1)) * c1.w + (x1&(cs->chunk_width-1));
-    // printf("i0:%d i1:%d\n", i0, i1);
 
-    // printf("works1000\n");
-
-    int temp;
-    // printf("swap: %d %d\n", CHUNK_GETI_TYPE(c0, i0), CHUNK_GETI_TYPE(c1, i1));
     A_SWAP(CHUNK_GETI_STATE(c0, i0),    CHUNK_GETI_STATE(c1, i1)); 
     A_SWAP(CHUNK_GETI_TYPE(c0, i0),     CHUNK_GETI_TYPE(c1, i1)); 
     A_SWAP(CHUNK_GETI_XVEL(c0, i0),     CHUNK_GETI_XVEL(c1, i1)); 
