@@ -7,7 +7,7 @@ LINKER_LIBS = -lmingw32 -lSDL2main -lSDL2 -lm
 
 C_TEST_FILES = src/main.c src/engine/core.c src/list.c src/engine/window.c
 
-SRC = $(wildcard src/*.c src/engine/*.c src/engine/ds/*.c src/partsim/*.c src/structs/*.c)
+SRC = $(wildcard src/*.c src/engine/*.c src/engine/ds/*.c src/partsim/*.c src/structs/*.c src/rendering/*.c)
 TEST = $(wildcard chunk_test/*.c chunk_test/engine/*.c chunk_test/engine/ds/*.c)
 # CNK_TEST = $(wildcard src/*.c src/engine/*.c src/engine/ds/*.c src/structs/*.c src/partsim/d)
 

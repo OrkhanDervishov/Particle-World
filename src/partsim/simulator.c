@@ -91,7 +91,7 @@ void SimulateChunkComplete(Chunk* chunk, int cs_x, int cs_y){
     int mov = 0;
     
     // CONSOLE("works10\n");
-    for(int i = rows-1; i >= 0; i--){
+    for(int i = 0; i < rows; i++){
         mov = mov ? 0 : 1;
         int nj = mov ? cols-1 : 0;
         int add = mov ? -1 : 1;
@@ -107,7 +107,7 @@ void SimulateChunkComplete(Chunk* chunk, int cs_x, int cs_y){
             // printf("ctype:%d\n", CHUNK_GET_TYPE(*chunk, x, y));
             // printf("cx:%d cy:%d\n", x, y);
             // printf("csx:%d csy:%d\n", x + cs_x, y + cs_y);
-            // // CONSOLE("works12\n");
+            // CONSOLE("works1234\n");
             typeFuncList[CHUNK_GET_TYPE(*chunk, j, i)](x + cs_x, y + cs_y);
             // CONSOLE("works13\n");
         }

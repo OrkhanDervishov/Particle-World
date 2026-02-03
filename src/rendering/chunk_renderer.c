@@ -180,6 +180,7 @@ void DrawChunkSpace(Window* window, ChunkSpace* cs, int x, int y){
                 x + j*reqChunkWidth*reqParticleSize, 
                 y + i*reqChunkHeight*reqParticleSize
             );
+            // printf("works10000");
         }
     }
 }

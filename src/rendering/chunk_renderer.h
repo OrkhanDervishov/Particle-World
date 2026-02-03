@@ -1,10 +1,10 @@
 #ifndef CHUNK_RENDERER_H
 #define CHUNK_RENDERER_H
 
-#include "engine/engine_api.h"
-#include "structs/chunk.h"
-#include "structs/region.h"
-#include "structs/chunk_space.h"
+#include "../engine/engine_api.h"
+#include "../structs/chunk.h"
+#include "../structs/region.h"
+#include "../structs/chunk_space.h"
 
 //System
 int StartRenderer(int chunk_w, int chunk_h, int partSize);

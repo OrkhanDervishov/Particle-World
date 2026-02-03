@@ -4,8 +4,11 @@
 #include "chunk.h"
 #include "region.h"
 
-#define DEFAULT_CS_WIDTH 3
-#define DEFAULT_CS_HEIGHT 2
+#define DEFAULT_CS_WIDTH 5
+#define DEFAULT_CS_HEIGHT 4
+
+#define CS_WIDTH    DEFAULT_CS_WIDTH
+#define CS_HEIGHT   DEFAULT_CS_HEIGHT
 
 typedef struct{
     // Sizes with regions
@@ -96,5 +99,7 @@ void DeleteChunkSpace(ChunkSpace* cs);
 void ArrangeChunks(ChunkSpace *cs);
 
 void ColorChunkSpace(ChunkSpace* cs);
+
+void WallBox(ChunkSpace *cs, int chunkOffset);
 
 #endif

@@ -7,8 +7,8 @@
 #include "structs/region.h"
 #include "structs/chunk_space.h"
 // #include "world.h"
-// #include "particle_game.h"
-#include "chunk_renderer.h"
+#include "particle_game.h"
+#include "rendering/chunk_renderer.h"
 #include "partsim/dirtyrect.h"
 #include "partsim/particle_data.h"
 #include "partsim/simulator.h"
@@ -291,6 +291,22 @@ void ChunkRenderTest(){
 //     return c;
 // }
 
+#define US_PER_SEC 1000000LL
+
+static inline int64_t time_us(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (int64_t)ts.tv_sec * US_PER_SEC + ts.tv_nsec / 1000;
+}
+
+static inline int64_t time_us_nano(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (int64_t)ts.tv_sec * US_PER_SEC + ts.tv_nsec;
+}
+
 void ChunkSpaceTest(){
     
     srand(time(NULL));
@@ -319,22 +335,31 @@ void ChunkSpaceTest(){
     CONSOLE("region1\n");
     ColorRegion(&region, c);
 
+    int64_t start = 0, end = 1;
     ChunkSpace cs;
     CONSOLE("Chunk Space create test\n");
-    CreateChunkSpace(&cs, 3, 3, DEFAULT_REGION_WIDTH, DEFAULT_REGION_HEIGHT, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE);
+    CreateChunkSpace(&cs, 4, 4, DEFAULT_REGION_WIDTH, DEFAULT_REGION_HEIGHT, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE);
     // ColorChunkSpace(&cs);
     CONSOLE("Chunk Space arrange test\n");
     ArrangeChunks(&cs);
     CONSOLE("Chunk Space particle create test\n");
-    CreateParticlesRectCS(&cs, 40, 40, 50, 50, SAND);
+    // CreateParticlesRectCS(&cs, 40, 40, 500, 500, SAND);
     // int type = CS_GET_TYPE(&cs, 10, 10);
     SetChunkSpace(&cs);
 
-    clock_t start = GetTimeNano();
-    for(int i = 0; i < 100; i++)
-        SimulateChunkSpace(&cs);
-    clock_t end = GetTimeNano();
-    printf("%ldms\n", (end-start)/1000000);
+    long long var = 0;
+    start = time_us_nano();
+    for(int i = 0; i < 50; i++)
+    for(int j = 0; j < 50; j++){
+        // var += CHUNK_GET_DURAB(cs.chunks[0], j, i);
+        var += CS_GET_DURAB(&cs, j, i);
+    }
+    end = time_us_nano();
+    printf("%lldns\n", (end-start));
+
+
+    // for(int i = 0; i < 1000; i++)
+    //     SimulateChunkSpace(&cs);
     int x = 100;
     int y = 100;
     //----------------------------
@@ -385,24 +410,36 @@ void ParticleInitTest(){
 
 int ParticleGameTest(){
 
-    // CONSOLE("ParticleGame test started\n");
-    // ParticleGame* game;
+    // Window* window;
+    // CreateWindow(&window, SCR_WIDTH, SCR_HEIGHT, WIN_TITLE, FALSE);
+    CONSOLE("ParticleGame test started\n");
+    ParticleGame* game;
 
-    // CONSOLE("ParticleGame creation test\n");
-    // CreateParticleGame(&game);
+    CONSOLE("ParticleGame creation test\n");
+    if(CreateParticleGame(&game)) printf("failed\n");
 
 
-    // CONSOLE("Game draw test\n");
+    CONSOLE("Game draw test\n");
+    CreateParticlesRectCS(&(game->cs), 70, 70, 70, 70, SAND);
     // LoadChunks(game->w);
     // CONSOLE("works000\n");
     // DrawSceneWithoutTexture(game);
     // CONSOLE("works001\n");
     // SDL_RenderPresent(game->win->renderer);
+    CONSOLE("Game run test\n");
+    RunParticleGame(game);
 
-    // CONSOLE("ParticleGame deletion test\n");
-    // DeleteParticleGame(&game);
+    // StartRenderer(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
+    // DrawChunkSpace(game->win, &(game->cs), 0, 0);
+    // SDL_UpdateWindowSurface(game->win->window);
+    // SDL_Delay(5000);
+    // EndRenderer();
 
-    // CONSOLE("ParticleGame test success\n\n");
+    CONSOLE("ParticleGame deletion test\n");
+    DeleteParticleGame(&game);
+    // DestroyWindow(&window);
+
+    CONSOLE("ParticleGame test success\n\n");
     return 0;
 }
 
@@ -414,9 +451,9 @@ void RunTests(){
     // WorldTest();
     // DrawerTest();
     // ParticleInitTest();
-    // ParticleGameTest();
+    ParticleGameTest();
     // ChunkRenderTest();
-    ChunkSpaceTest();
+    // ChunkSpaceTest();
 }
 
 

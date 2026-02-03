@@ -46,9 +46,9 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
 }
 
 void DestroyWindow(Window** win){
-    // printf("works01\n");
+    printf("works01\n");
     SDL_DestroyRenderer((*win)->renderer);
-    // printf("works02\n");
+    printf("works02\n");
     if((*win)->window == NULL) printf("Window deletion error\n");
 
 
@@ -56,15 +56,15 @@ void DestroyWindow(Window** win){
 
 
     
-    // printf("works03\n");
+    printf("works03\n");
     SDL_DestroyWindow((*win)->window);
-    // printf("works04\n");
+    printf("works04\n");
     SDL_Quit();
     if((*win) == NULL) printf("Window is null\n");
-    // printf("works05\n");
+    printf("works05\n");
     free(*win);
     (*win) = NULL;
-    // printf("works06\n");
+    printf("works06\n");
 }
 
 void Clear(Window* win){
