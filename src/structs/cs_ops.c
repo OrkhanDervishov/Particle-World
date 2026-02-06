@@ -11,6 +11,7 @@ void CreateParticleCS(ChunkSpace *cs, int x, int y, int type){
     }
     CS_GET_STATE(cs, x, y) = P_FRESH;
     CS_GET_TYPE(cs, x, y) = type;
+    CS_GET_COLOR(cs, x, y) = typeColorList[WALL][0];
 }
 
 void DeleteParticleCS(ChunkSpace *cs, int x, int y){

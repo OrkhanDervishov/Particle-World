@@ -9,10 +9,10 @@
 
 
 #define SCR_WIDTH 1080
-#define SCR_HEIGHT 720
+#define SCR_HEIGHT 800
 
 #define WIN_TITLE "SDL Playground"
-#define MAX_TITLE_LEN 64
+#define MAX_TITLE_LEN 256
 
 
 typedef struct{

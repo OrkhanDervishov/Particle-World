@@ -119,7 +119,7 @@ int RunParticleGame(ParticleGame* game){
         // Rendering
         draw_start = GetTimeNano()/1000;
         ClearWindow(game->win, game->bg_color);
-        DrawChunkSpace(win, cs, -DEFAULT_CHUNK_SIZE, -DEFAULT_CHUNK_SIZE);
+        DrawChunkSpace(win, cs, 0, 0);
         SDL_UpdateWindowSurface(win->window);
         draw_end = GetTimeNano()/1000;
 

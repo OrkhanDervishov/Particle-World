@@ -3,8 +3,8 @@
 
 #include "chunk.h"
 
-#define DEFAULT_REGION_WIDTH 1
-#define DEFAULT_REGION_HEIGHT 1
+#define DEFAULT_REGION_WIDTH 3
+#define DEFAULT_REGION_HEIGHT 3
 
 #define REGION_GET_CHUNK(r, x, y) (r).chunks[(y)*(r).w + (x)]
 
