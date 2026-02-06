@@ -1,6 +1,7 @@
 #include "cs_ops.h"
 
 
+
 // TODO: Clever rect creation and deletion, using individual chunks
 
 
@@ -15,6 +16,7 @@ void CreateParticleCS(ChunkSpace *cs, int x, int y, int type){
 void DeleteParticleCS(ChunkSpace *cs, int x, int y){
     CS_GET_STATE(cs, x, y) = P_IGNORED;
     CS_GET_TYPE(cs, x, y) = AIR;
+    CS_GET_COLOR(cs, x, y).a = 0;
 }
 
 // NOTE: I need to ensure that chunk coordinates will stay in registers,
@@ -55,20 +57,45 @@ void ReplaceParticleCS(ChunkSpace *cs, int x, int y, int type){
 //======================================================
 
 void CreateParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, int height, int type){
-    int endX = startX + width;
-    int endY = startY + height;
+    Rect r = {.x = startX, .y = startY, .w = width, .h = height};
+    // CorrectRect(r, cs->width, cs->height);
+    startX = r.x;
+    startY = r.y;
+
+    int endX = startX + r.w;
+    int endY = startY + r.h;
     
     for(int i = startY; i < endY; i++)
     for(int j = startX; j < endX; j++){
         CS_GET_STATE(cs, j, i) = P_FRESH;
         CS_GET_TYPE(cs, j, i) = type;
-        ChangeColor(&CS_GET_COLOR(cs, j, i), typeColorList[type]);
+        CS_GET_COLOR(cs, j, i) = typeColorList[type][0];
         // TODO: Init particle data.
     }
 }
 
 void CreateParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad, int type){
-    
+    int starty = cY - rad;
+    int startx = cX - rad;
+    int endy = cY + rad;
+    int endx = cX + rad;
+    int srad = rad * rad;
+
+    for(int i = starty; i < endy; i++){
+        int di = abs(cY - i);
+        for(int j = startx; j < endx; j++){
+            int dj = abs(cX - j);
+            if(di*di + dj*dj < srad){
+                if(j >= 0 && i >= 0 && j < cs->width_p && i < cs->height_p){
+                    // if(sim->pMap[i][j].id < 0)
+                    CS_GET_STATE(cs, j, i) = P_FRESH;
+                    CS_GET_TYPE(cs, j, i) = type;
+                    CS_GET_COLOR(cs, j, i) = typeColorList[type][0];
+                }
+            }
+        }
+    }
+
 }
 
 void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, int height){
@@ -84,6 +111,21 @@ void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
 
 void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad){
     
+}
+
+//======================================================
+
+void WallBoxCS(ChunkSpace *cs){
+
+    for(int j = 0; j < cs->width_p; j++){
+        CreateParticleCS(cs, j, 0, WALL);
+        CreateParticleCS(cs, j, cs->height_p-1, WALL);
+    }
+
+    for(int i = 1; i < cs->height_p - 1; i++){
+        CreateParticleCS(cs, 0, i, WALL);
+        CreateParticleCS(cs, cs->width_p-1, i, WALL);
+    }   
 }
 
 

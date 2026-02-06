@@ -2,10 +2,11 @@
 
 
 int countParticleTypes = 0;
+int countParticleFuncs = 0;
 
 bool (*typeFuncList[MAX_NUMBER_OF_TYPES])(int x, int y);
 Color typeButtonColorList[MAX_NUMBER_OF_TYPES];
-Colors typeColorList[MAX_NUMBER_OF_TYPES];
+Color typeColorList[MAX_NUMBER_OF_TYPES][MAX_COLOR_COUNT];
 int typeDensityList[MAX_NUMBER_OF_TYPES];
 uint32_t typeFlagsList[MAX_NUMBER_OF_TYPES];
 uint8_t typeIFlagsList[MAX_NUMBER_OF_TYPES];
@@ -15,6 +16,14 @@ uint32_t typeDurabilityList[MAX_NUMBER_OF_TYPES];
 
 
 int LIQUID_OPACITY = 100;
+
+
+PartFunc partFuncList[MAX_NUMBER_OF_FUNCS];
+bool (*GetFunc(const char* funcName))(int x, int y){
+    for(int i = 0; i < MAX_NUMBER_OF_FUNCS; i++){
+        
+    }
+}
 
 
 int CreateParticleMap(ParticleMap* pmap, int rows, int cols){

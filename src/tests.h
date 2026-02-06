@@ -420,12 +420,15 @@ int ParticleGameTest(){
 
 
     CONSOLE("Game draw test\n");
-    CreateParticlesRectCS(&(game->cs), 70, 70, 70, 70, WATER);
+    CreateParticlesRectCS(&(game->cs), 100, 80, 30, 30, WATER);
+    CreateParticlesRectCS(&(game->cs), 160, 80, 30, 30, SAND);
+    CreateParticlesRectCS(&(game->cs), 140, 120, 30, 30, STEAM);
     // LoadChunks(game->w);
     // CONSOLE("works000\n");
     // DrawSceneWithoutTexture(game);
     // CONSOLE("works001\n");
     // SDL_RenderPresent(game->win->renderer);
+    BuildLabEnv(game);
     CONSOLE("Game run test\n");
     RunParticleGame(game);
 

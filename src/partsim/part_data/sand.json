@@ -1,11 +1,11 @@
 {
     "name": "sand",
-    "color_count": 4,
-    "color": "0xFF",
     "button_color": "0xFF00FFFF",
-    "density": 700,
+    "color_count": 4,
+    "color": ["0xFF000000", "0xFF202020", "0xFF404040", "0xFF606060"],
     "flags": "0x88000000",
     "p_flags": "0x00",
     "heat_transfer": 100,
-    "base_durability": 100
+    "density": 700,
+    "durability": 100
 }

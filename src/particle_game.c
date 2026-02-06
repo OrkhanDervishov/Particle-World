@@ -27,7 +27,7 @@ int CreateParticleGame(ParticleGame** game){
     InitParticles();
     srand(time(NULL));
     
-    (*game)->bg_color.rgba = 0xFFFFFFFF;
+    (*game)->bg_color.rgba = 0xFF181818;
     (*game)->hm_mode = FALSE;
     (*game)->paused = FALSE;
     return 0;
@@ -60,7 +60,14 @@ SDL_Texture* GetTexture(SDL_Renderer* renderer, SDL_Texture* bgt, char* path){
 }
 
 
+int BuildLabEnv(ParticleGame* game){
+    ChunkSpace* cs = &(game->cs);
 
+    WallBoxCS(cs);
+    SetSimEndpointsChunkSpace(cs, 0, cs->width_c, 0, cs->height_c);
+
+    return 0;
+}
 
 
 int RunParticleGame(ParticleGame* game){
@@ -76,7 +83,6 @@ int RunParticleGame(ParticleGame* game){
     clock_t simh_start = 0, simh_end = 0;
     // Loop
 
-    Color clearColor = {.rgba = 0xFF181818};
     SetChunkSpace(&(game->cs));
     StartRenderer(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
     while(win->isrunning){
@@ -112,15 +118,15 @@ int RunParticleGame(ParticleGame* game){
 
         // Rendering
         draw_start = GetTimeNano()/1000;
-        ClearWindow(game->win, clearColor);
+        ClearWindow(game->win, game->bg_color);
         DrawChunkSpace(win, cs, -DEFAULT_CHUNK_SIZE, -DEFAULT_CHUNK_SIZE);
         SDL_UpdateWindowSurface(win->window);
         draw_end = GetTimeNano()/1000;
 
-
         
         // Simulations
         if(!game->paused){
+            WallBoxCS(cs);
 
             // Particle simulation
             sim_start = GetTimeNano()/1000;

@@ -56,6 +56,9 @@ extern int WATER_HEAT_ABSORB;
 void SetChunkSpace(ChunkSpace* cs);
 
 // Simulation
+bool BasicDistributiveFalling(int x, int y, int prob);
+bool BasicDistributiveFlying(int x, int y, int prob);
+bool BasicFallingBehave(int x, int y);
 bool BasicDustBehave(int x, int y);
 bool BasicLiquidBehave(int x, int y);
 bool BasicGasBehave(int x, int y);

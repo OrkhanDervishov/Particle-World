@@ -106,12 +106,25 @@ iFlags are used to give some information
 about individual particle
 */
 
-
 typedef enum{
     P_IGNORED = -1,
     P_USED = 0,
     P_FRESH = 1
 } PartStates;
+
+#define MAX_COLOR_COUNT 32
+typedef struct{
+    char* name;
+    Color buttonColor;
+    int colorCount;
+    Color color[MAX_COLOR_COUNT];
+    uint32_t flags;
+    uint8_t pflags;
+    int32_t heatTransfer;
+    int density;
+    uint32_t durability;
+    bool (*func)(int x, int y);
+} PartData;
 
 typedef struct{
     Pos p;
@@ -135,7 +148,7 @@ typedef struct{
 
 typedef struct{
     const char* name;
-    void (*func)(int x, int y);
+    bool (*func)(int x, int y);
 } PartFunc;
 
 
@@ -151,17 +164,22 @@ typedef uint16_t ParticleType;
 // They store common data of particle types
 
 #define MAX_NUMBER_OF_TYPES 256
+#define MAX_NUMBER_OF_FUNCS MAX_NUMBER_OF_TYPES
 extern int countParticleTypes;
 
 extern bool (*typeFuncList[MAX_NUMBER_OF_TYPES])(int x, int y);
 extern Color typeButtonColorList[MAX_NUMBER_OF_TYPES];
-extern Colors typeColorList[MAX_NUMBER_OF_TYPES];
+extern Color typeColorList[MAX_NUMBER_OF_TYPES][MAX_COLOR_COUNT];
 extern int typeDensityList[MAX_NUMBER_OF_TYPES];
 extern uint32_t typeFlagsList[MAX_NUMBER_OF_TYPES];
 extern uint8_t typeIFlagsList[MAX_NUMBER_OF_TYPES];
 extern char* typeNameList[MAX_NUMBER_OF_TYPES];
 extern int32_t typeHeatTransferList[MAX_NUMBER_OF_TYPES];
 extern uint32_t typeDurabilityList[MAX_NUMBER_OF_TYPES];
+
+extern int countParticleFuncs;
+bool (*GetFunc(const char* funcName))(int x, int y);
+extern PartFunc partFuncList[MAX_NUMBER_OF_TYPES];
 
 
 extern int LIQUID_OPACITY;

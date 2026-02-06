@@ -2,7 +2,6 @@
 #define CS_OPS_H
 
 #include "chunk_space.h"
-#include "../partsim/simulator.h"
 
 
 void CreateParticleCS(ChunkSpace *cs, int x, int y, int type);
@@ -16,6 +15,6 @@ void CreateParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad, int type);
 void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int endX, int endY);
 void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad);
 
-// void SimulateChunkSpace(ChunkSpace *cs);
+void WallBoxCS(ChunkSpace *cs);
 
 #endif

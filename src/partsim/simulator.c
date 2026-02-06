@@ -91,7 +91,7 @@ void SimulateChunkComplete(Chunk* chunk, int cs_x, int cs_y){
     int mov = 0;
     
     // CONSOLE("works10\n");
-    for(int i = 0; i < rows; i++){
+    for(int i = rows-1; i >= 0; i--){
         mov = mov ? 0 : 1;
         int nj = mov ? cols-1 : 0;
         int add = mov ? -1 : 1;
@@ -318,12 +318,8 @@ void SimulateChunk(Chunk* chunk){
 
 void SimulateChunkSpace(ChunkSpace *cs){
 
-    for(int i = 1; i < cs->height_c-1; i++)
-    for(int j = 1; j < cs->width_c-1; j++){
-        // printf("cx:%d cy:%d\n", j, i);
-        // SimulateChunk(&CS_GET_ARRAY_CHUNK(cs, j, i));
-        // printf("cs_type:%d\n", CS_GET_TYPE(cs, j*cs->chunk_width-40, i*cs->chunk_height-40));
-        // printf("cs_type:%d\n", CS_GET_TYPE(cs, j*cs->chunk_width, i*cs->chunk_height));
+    for(int i = cs->simEndY-1; i >= cs->simStartY; i--)
+    for(int j = cs->simStartX; j < cs->simEndX; j++){
         SimulateChunkComplete(&CS_GET_ARRAY_CHUNK(cs, j, i), j*cs->chunk_width, i*cs->chunk_height);
     }
 }

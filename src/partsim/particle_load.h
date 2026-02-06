@@ -12,7 +12,7 @@ void InitParticles();
 void AddType(
     char* name, 
     PartType type, 
-    Colors color, 
+    Color color, 
     Color buttonColor, 
     int dens, 
     uint32_t flags, 

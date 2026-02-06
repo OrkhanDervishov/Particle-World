@@ -54,10 +54,78 @@ void SetChunkSpace(ChunkSpace* cs){
 #define GET_PART_CUSTOM(x, y)   CS_GET_CUSTOM(currentCS, (x), (y))
 
 
+#define SAND_DISTRIBUTION 84
+#define WATER_DISTRIBUTION 0
+#define STEAM_DISTRIBUTION 100
+
+bool BasicDistributiveFalling(int x, int y, int prob){
+    TYPE_DT p_type = GET_PART_TYPE(x, y);
+    TYPE_DT d_type = GET_PART_TYPE(x, y+1);
+    TYPE_DT ld_type = GET_PART_TYPE(x-1, y+1);
+    TYPE_DT rd_type = GET_PART_TYPE(x+1, y+1);
+
+    int val = rand()%100;
+    if(val > 100-prob){
+        if((typeDensityList[d_type] < typeDensityList[p_type])
+            && !CHECK_FLAG(typeFlagsList[d_type], IS_DUST)){
+            SWAP_PARTS(x, y, x, y+1);
+            return TRUE;
+        }
+    }
+    else if(val > (100-prob)/2){
+        if((typeDensityList[ld_type] < typeDensityList[p_type])
+        && !CHECK_FLAG(typeFlagsList[ld_type], IS_DUST)){
+            SWAP_PARTS(x, y, x-1, y+1);
+            return TRUE;
+        }
+    }
+    else{
+        if((typeDensityList[rd_type] < typeDensityList[p_type])
+        && !CHECK_FLAG(typeFlagsList[rd_type], IS_DUST)){ 
+            SWAP_PARTS(x, y, x+1, y+1);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+
+bool BasicDistributiveFlying(int x, int y, int prob){
+    TYPE_DT p_type = GET_PART_TYPE(x, y);
+    TYPE_DT u_type = GET_PART_TYPE(x, y-1);
+    TYPE_DT lu_type = GET_PART_TYPE(x-1, y-1);
+    TYPE_DT ru_type = GET_PART_TYPE(x+1, y-1);
+
+    int val = rand()%100;
+    if(val > 100-prob){
+        if((typeDensityList[u_type] > typeDensityList[p_type])
+            && !CHECK_FLAG(typeFlagsList[u_type], IS_DUST)){
+            SWAP_PARTS(x, y, x, y-1);
+            return TRUE;
+        }
+    }
+    else if(val > (100-prob)/2){
+        if((typeDensityList[lu_type] > typeDensityList[p_type])
+        && !CHECK_FLAG(typeFlagsList[lu_type], IS_DUST)){
+            SWAP_PARTS(x, y, x-1, y-1);
+            return TRUE;
+        }
+    }
+    else{
+        if((typeDensityList[ru_type] > typeDensityList[p_type])
+        && !CHECK_FLAG(typeFlagsList[ru_type], IS_DUST)){ 
+            SWAP_PARTS(x, y, x+1, y-1);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
 
 bool BasicFallingBehave(int x, int y){
-    int p_type = GET_PART_TYPE(x, y);
-    int d_type = GET_PART_TYPE(x, y+1);
+    TYPE_DT p_type = GET_PART_TYPE(x, y);
+    TYPE_DT d_type = GET_PART_TYPE(x, y+1);
 
     if(typeDensityList[d_type] < typeDensityList[p_type]){
         SWAP_PARTS(x, y, x, y + 1);
@@ -68,23 +136,24 @@ bool BasicFallingBehave(int x, int y){
 
 bool BasicDustBehave(int x, int y){
 
-    int p_type = GET_PART_TYPE(x, y);
-    int d_type = GET_PART_TYPE(x, y+1);
+    TYPE_DT p_type = GET_PART_TYPE(x, y);
+    TYPE_DT d_type = GET_PART_TYPE(x, y+1);
 
     if((typeDensityList[d_type] < typeDensityList[p_type])
      && !CHECK_FLAG(typeFlagsList[d_type], IS_DUST)){
-        SWAP_PARTS(x, y, x, y+1);
+        // SWAP_PARTS(x, y, x, y+1);
+        BasicDistributiveFalling(x, y, SAND_DISTRIBUTION);
         return TRUE;
     }
 
-    int ld_type = GET_PART_TYPE(x-1, y+1);
+    TYPE_DT ld_type = GET_PART_TYPE(x-1, y+1);
     if((typeDensityList[ld_type] < typeDensityList[p_type])
      && !CHECK_FLAG(typeFlagsList[ld_type], IS_DUST)){
         SWAP_PARTS(x, y, x-1, y+1);
         return TRUE;
     }
 
-    int rd_type = GET_PART_TYPE(x+1, y+1);
+    TYPE_DT rd_type = GET_PART_TYPE(x+1, y+1);
     if((typeDensityList[rd_type] < typeDensityList[p_type])
      && !CHECK_FLAG(typeFlagsList[rd_type], IS_DUST)){ 
         SWAP_PARTS(x, y, x+1, y+1);
@@ -96,26 +165,27 @@ bool BasicDustBehave(int x, int y){
 
 bool BasicLiquidBehave(int x, int y){
 
-    int p_type = GET_PART_TYPE(x, y);
-    int d_type = GET_PART_TYPE(x, y+1);
+    TYPE_DT p_type = GET_PART_TYPE(x, y);
+    TYPE_DT d_type = GET_PART_TYPE(x, y+1);
 
-    int* p_xvel = &GET_PART_XVEL(x, y);
+    XVEL_DT* p_xvel = &GET_PART_XVEL(x, y);
 
     if(typeDensityList[d_type] < typeDensityList[p_type]){
         if(!CHECK_FLAG(typeFlagsList[d_type], IS_SOLID)){
-            SWAP_PARTS(x, y, x, y+1);
+            // SWAP_PARTS(x, y, x, y+1);
+            BasicDistributiveFalling(x, y, WATER_DISTRIBUTION);
             return TRUE;
         }
     }
 
-    int ld_type = GET_PART_TYPE(x-1, y+1);
+    TYPE_DT ld_type = GET_PART_TYPE(x-1, y+1);
     if(typeDensityList[ld_type] < typeDensityList[p_type]){
         if(!CHECK_FLAG(typeFlagsList[ld_type], IS_SOLID)){
             SWAP_PARTS(x, y, x-1, y+1);
             return TRUE;
         }
     }
-    int rd_type = GET_PART_TYPE(x+1, y+1);
+    TYPE_DT rd_type = GET_PART_TYPE(x+1, y+1);
     if(typeDensityList[rd_type] < typeDensityList[p_type]){
         if(!CHECK_FLAG(typeFlagsList[rd_type], IS_SOLID)){
             SWAP_PARTS(x, y, x+1, y+1);
@@ -138,8 +208,8 @@ bool BasicLiquidBehave(int x, int y){
     //     return TRUE;
     // }
 
-    int l_type = GET_PART_TYPE(x-1, y);
-    int r_type = GET_PART_TYPE(x+1, y);
+    TYPE_DT l_type = GET_PART_TYPE(x-1, y);
+    TYPE_DT r_type = GET_PART_TYPE(x+1, y);
 
     if(*p_xvel > 1){
         if(typeDensityList[l_type] < typeDensityList[p_type]){
@@ -178,8 +248,8 @@ bool BasicLiquidBehave(int x, int y){
 
 bool BasicGasBehave(int x, int y){
 
-    int p_type = GET_PART_TYPE(x, y);
-    int *p_xvel = &GET_PART_XVEL(x, y);
+    TYPE_DT p_type = GET_PART_TYPE(x, y);
+    XVEL_DT *p_xvel = &GET_PART_XVEL(x, y);
     // Particle* u = GET_PARTICLE_AT(w, x, y - 1);
     // if(typeDensityList[u->type] > typeDensityList[p->type] && 
     // !CHECK_FLAG(typeFlagsList[u->type], IS_SOLID)){ 
@@ -201,44 +271,45 @@ bool BasicGasBehave(int x, int y){
     //     return TRUE;
     // }
 
+    if(BasicDistributiveFlying(x, y, STEAM_DISTRIBUTION) == TRUE) return TRUE;
 
-    int lu_type = GET_PART_TYPE(x-1, y-1);
-    int ru_type = GET_PART_TYPE(x+1, y-1);
-    if(*p_xvel > 1){
-        if(typeDensityList[lu_type] > typeDensityList[p_type]){
-            if(!CHECK_FLAG(typeFlagsList[lu_type], IS_SOLID)){
-                SWAP_PARTS(x, y, x - 1, y - 1);
-                // if(p->xvel == 1)p->xvel -= 2; 
-                *p_xvel -= 1; 
-                return TRUE;
-            }
-        }
-        if(typeDensityList[ru_type] > typeDensityList[p_type]){
-            if(!CHECK_FLAG(typeFlagsList[ru_type], IS_SOLID)){
-                SWAP_PARTS(x, y, x + 1, y - 1);
-                // if(p->xvel == 1)p->xvel -= 2; 
-                *p_xvel -= 1; 
-                return TRUE;
-            }
-        }
-    } else {
-        if(typeDensityList[ru_type] > typeDensityList[p_type]){
-            if(!CHECK_FLAG(typeFlagsList[ru_type], IS_SOLID)){
-                SWAP_PARTS(x, y, x + 1, y - 1);
-                // if(p->xvel == 1)p->xvel += 2; 
-                *p_xvel += 1; 
-                return TRUE;
-            }
-        }
-        if(typeDensityList[lu_type] > typeDensityList[p_type]){ 
-            if(!CHECK_FLAG(typeFlagsList[lu_type], IS_SOLID)){
-                SWAP_PARTS(x, y, x - 1, y - 1);
-                // if(p->xvel == 1)p->xvel += 2; 
-                *p_xvel += 1; 
-                return TRUE;
-            }
-        }
-    }
+    // TYPE_DT lu_type = GET_PART_TYPE(x-1, y-1);
+    // TYPE_DT ru_type = GET_PART_TYPE(x+1, y-1);
+    // if(*p_xvel > 1){
+    //     if(typeDensityList[lu_type] > typeDensityList[p_type]){
+    //         if(!CHECK_FLAG(typeFlagsList[lu_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x - 1, y - 1);
+    //             // if(p->xvel == 1)p->xvel -= 2; 
+    //             *p_xvel -= 1; 
+    //             return TRUE;
+    //         }
+    //     }
+    //     if(typeDensityList[ru_type] > typeDensityList[p_type]){
+    //         if(!CHECK_FLAG(typeFlagsList[ru_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x + 1, y - 1);
+    //             // if(p->xvel == 1)p->xvel -= 2; 
+    //             *p_xvel -= 1; 
+    //             return TRUE;
+    //         }
+    //     }
+    // } else {
+    //     if(typeDensityList[ru_type] > typeDensityList[p_type]){
+    //         if(!CHECK_FLAG(typeFlagsList[ru_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x + 1, y - 1);
+    //             // if(p->xvel == 1)p->xvel += 2; 
+    //             *p_xvel += 1; 
+    //             return TRUE;
+    //         }
+    //     }
+    //     if(typeDensityList[lu_type] > typeDensityList[p_type]){ 
+    //         if(!CHECK_FLAG(typeFlagsList[lu_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x - 1, y - 1);
+    //             // if(p->xvel == 1)p->xvel += 2; 
+    //             *p_xvel += 1; 
+    //             return TRUE;
+    //         }
+    //     }
+    // }
 
 
     // Particle* r = GET_PARTICLE_AT(w, x + 1, y);
@@ -255,8 +326,8 @@ bool BasicGasBehave(int x, int y){
     //     return TRUE;
     // }
 
-    int l_type = GET_PART_TYPE(x-1, y);
-    int r_type = GET_PART_TYPE(x+1, y);
+    TYPE_DT l_type = GET_PART_TYPE(x-1, y);
+    TYPE_DT r_type = GET_PART_TYPE(x+1, y);
     if(*p_xvel > 1){
         if(typeDensityList[l_type] > typeDensityList[p_type]){
             if(!CHECK_FLAG(typeFlagsList[l_type], IS_SOLID)){
@@ -343,10 +414,10 @@ bool BasicGasBehave(int x, int y){
 
 bool BasicAcidicBehave(int x, int y){
     
-    int p_type = GET_PART_TYPE(x, y);
-    int *p_efft = &GET_PART_EFFECT_T(x, y);
+    TYPE_DT p_type = GET_PART_TYPE(x, y);
+    EFFECTT_DT *p_efft = &GET_PART_EFFECT_T(x, y);
 
-    int d_type = GET_PART_TYPE(x, y+1);
+    TYPE_DT d_type = GET_PART_TYPE(x, y+1);
     if(CHECK_FLAG(typeFlagsList[d_type], ACID_HAS_AN_EFFECT)){ 
         if(*p_efft < ACID_EFFECT_TIME) *p_efft++;
         else{
@@ -356,7 +427,7 @@ bool BasicAcidicBehave(int x, int y){
         return TRUE;
     }
 
-    int l_type = GET_PART_TYPE(x-1, y);
+    TYPE_DT l_type = GET_PART_TYPE(x-1, y);
     if(CHECK_FLAG(typeFlagsList[l_type], ACID_HAS_AN_EFFECT)){
         if(*p_efft < ACID_EFFECT_TIME) *p_efft++;
         else{
@@ -366,7 +437,7 @@ bool BasicAcidicBehave(int x, int y){
         return TRUE;
     }
 
-    int r_type = GET_PART_TYPE(x+1, y);
+    TYPE_DT r_type = GET_PART_TYPE(x+1, y);
     if(CHECK_FLAG(typeFlagsList[r_type], ACID_HAS_AN_EFFECT)){ 
         if(*p_efft < ACID_EFFECT_TIME) *p_efft++;
         else{
@@ -376,7 +447,7 @@ bool BasicAcidicBehave(int x, int y){
         return TRUE;
     }
 
-    int u_type = GET_PART_TYPE(x, y-1);
+    TYPE_DT u_type = GET_PART_TYPE(x, y-1);
     if(CHECK_FLAG(typeFlagsList[u_type], ACID_HAS_AN_EFFECT)){ 
         if(*p_efft < ACID_EFFECT_TIME) *p_efft++;
         else{
@@ -390,11 +461,11 @@ bool BasicAcidicBehave(int x, int y){
 }
 
 bool BasicBurningBehave(int x, int y, PartType type){
-    int p_type = GET_PART_TYPE(x, y);
-    int *p_lifet = &GET_PART_LIFE_T(x, y);
-    int p_heat = GET_PART_HEAT(x, y);
-    Color *p_color = &GET_PART_COLOR(x, y);
-    int *p_pf = &GET_PART_PFLAGS(x, y);
+    TYPE_DT p_type = GET_PART_TYPE(x, y);
+    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
+    HEAT_DT p_heat = GET_PART_HEAT(x, y);
+    COLOR_DT *p_color = &GET_PART_COLOR(x, y);
+    PFLAGS_DT *p_pf = &GET_PART_PFLAGS(x, y);
 
     if(p_heat > COAL_TO_FIRE_TEMP){
         *p_lifet++;
@@ -402,12 +473,12 @@ bool BasicBurningBehave(int x, int y, PartType type){
             REPLACE_PART(x, y, SMOKE);
             return TRUE;
         }
-        ChangeColor(&p_color, FIRE_COLORS);
+        // ChangeColor(&p_color, FIRE_COLORS);
         SET_FLAG(*p_pf, BURNING);
         return TRUE;
     } else {
         if(CHECK_FLAG(*p_pf, BURNING)){
-            ChangeColor(&p_color, COAL_COLORS);
+            // ChangeColor(&p_color, COAL_COLORS);
         }
         CLEAR_FLAG(*p_pf, BURNING);
     }
@@ -428,7 +499,7 @@ bool CoalBehave(int x, int y){
 
 bool WaterBehave(int x, int y)
 {
-    int p_heat = GET_PART_HEAT(x, y);
+    HEAT_DT p_heat = GET_PART_HEAT(x, y);
     bool changed = FALSE;
     if(p_heat > WATER_TO_STEAM_TEMP){
         REPLACE_PART(x, y, STEAM);
@@ -459,7 +530,7 @@ bool AcidBehave(int x, int y)
 
 bool SteamBehave(int x, int y)
 {
-    int *p_lifet = &GET_PART_LIFE_T(x, y);
+    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
     (*p_lifet)++;
     if(*p_lifet > STEAM_LIFE_TIME){DELETE_PART(x, y);}
 
@@ -479,9 +550,9 @@ bool FungusBehave(int x, int y)
 
 bool FireBehave(int x, int y){
 
-    int *p_lifet = GET_PART_LIFE_T(x, y);
-    int *p_effectt = GET_PART_EFFECT_T(x, y);
-    int p_heat = GET_PART_HEAT(x, y);
+    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
+    EFFECTT_DT *p_effectt = &GET_PART_EFFECT_T(x, y);
+    HEAT_DT p_heat = GET_PART_HEAT(x, y);
     
     (*p_lifet)++;
     if((*p_effectt) < FIRE_EFFECT_TIME){
@@ -512,7 +583,7 @@ bool FireBehave(int x, int y){
 
 bool SmokeBehave(int x, int y){
 
-    int *p_lifet = &GET_PART_LIFE_T(x, y);
+    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
     (p_lifet)++;
     if(*p_lifet > STEAM_LIFE_TIME){DELETE_PART(x, y);}
 
@@ -523,7 +594,7 @@ bool SmokeBehave(int x, int y){
 
 bool LavaBehave(int x, int y){
     
-    int p_heat = GET_PART_HEAT(x, y);
+    HEAT_DT p_heat = GET_PART_HEAT(x, y);
     bool changed = FALSE;
 
     if(p_heat < 500){
@@ -573,8 +644,8 @@ bool PowderBehave(int x, int y){
 bool ObsidianBehave(int x, int y){
     
     bool changed = FALSE;
-    int p_heat = GET_PART_HEAT(x, y);
-    Color* p_color = &GET_PART_COLOR(x, y);
+    HEAT_DT p_heat = GET_PART_HEAT(x, y);
+    COLOR_DT* p_color = &GET_PART_COLOR(x, y);
 
     if(p_heat > 1500){
         ChangeColor(p_color, ORANGE);
@@ -587,7 +658,7 @@ bool ObsidianBehave(int x, int y){
 
 bool PhantomBehave(int x, int y){
     
-    int *p_lifet = &GET_PART_LIFE_T(x, y);
+    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
     (*p_lifet)++;
     if(*p_lifet > PHANTOM_LIFE_TIME){DELETE_PART(x, y);}
 
@@ -598,10 +669,10 @@ bool SourceBehave(int x, int y){
     
     PartType genType = ACID;
 
-    int d_type = GET_PART_TYPE(x, y+1);
-    int u_type = GET_PART_TYPE(x, y-1);
-    int l_type = GET_PART_TYPE(x-1, y);
-    int r_type = GET_PART_TYPE(x+1, y);
+    TYPE_DT d_type = GET_PART_TYPE(x, y+1);
+    TYPE_DT u_type = GET_PART_TYPE(x, y-1);
+    TYPE_DT l_type = GET_PART_TYPE(x-1, y);
+    TYPE_DT r_type = GET_PART_TYPE(x+1, y);
 
     if(d_type == AIR){
         REPLACE_PART(x, y+1, genType);

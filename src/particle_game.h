@@ -43,6 +43,8 @@ typedef struct{
 
 int CreateParticleGame(ParticleGame** game);
 void DeleteParticleGame(ParticleGame** game);
+
+int BuildLabEnv(ParticleGame* game);
 int RunParticleGame(ParticleGame* game);
 
 // Particle Inits

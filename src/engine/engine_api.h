@@ -8,5 +8,6 @@
 #include "gui.h"
 #include "./ds/list.h"
 #include "constants.h"
+#include "helper.h"
 
 #endif

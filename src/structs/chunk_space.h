@@ -4,13 +4,17 @@
 #include "chunk.h"
 #include "region.h"
 
-#define DEFAULT_CS_WIDTH 5
-#define DEFAULT_CS_HEIGHT 4
+#define DEFAULT_CS_WIDTH 4
+#define DEFAULT_CS_HEIGHT 3
 
 #define CS_WIDTH    DEFAULT_CS_WIDTH
 #define CS_HEIGHT   DEFAULT_CS_HEIGHT
 
 typedef struct{
+    // Sizes with particles
+    size_t width_p;
+    size_t height_p;
+    size_t size_p;
     // Sizes with regions
     size_t width_r;
     size_t height_r;
@@ -36,6 +40,12 @@ typedef struct{
     // Arrays
     Region *regions;
     Chunk *chunks;
+
+    // Other params
+    int simStartX;
+    int simEndX;
+    int simStartY;
+    int simEndY;
 } ChunkSpace;
 
 // Useless (Not working. delete it)
@@ -100,6 +110,6 @@ void ArrangeChunks(ChunkSpace *cs);
 
 void ColorChunkSpace(ChunkSpace* cs);
 
-void WallBox(ChunkSpace *cs, int chunkOffset);
+void SetSimEndpointsChunkSpace(ChunkSpace* cs, int startX, int endX, int startY, int endY);
 
 #endif
