@@ -1,7 +1,7 @@
 #ifndef DIRTYRECT_H
 #define DIRTYRECT_H
 
-#include "../engine/engine_api.h"
+#include "../engine/engine_lib.h"
 
 void InitDirtyRectList(LinkedList** list);
 void DestroyDirtyRectList(LinkedList** list);

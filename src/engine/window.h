@@ -16,12 +16,12 @@
 
 
 typedef struct{
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    bool isrunning;
-    char title[MAX_TITLE_LEN];
     int w;
     int h;
+    char title[MAX_TITLE_LEN];
+    bool isrunning;
+    SDL_Window* window;
+    SDL_Renderer* renderer;
 } Window;
 
 

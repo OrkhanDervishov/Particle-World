@@ -1,7 +1,7 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 
-#include "../engine/engine_api.h"
+#include "../engine/engine_lib.h"
 #include "../partsim/particle_data.h"
 #include "../partsim/dirtyrect.h"
 

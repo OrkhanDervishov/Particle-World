@@ -55,7 +55,7 @@ void SetChunkSpace(ChunkSpace* cs){
 
 
 #define SAND_DISTRIBUTION 84
-#define WATER_DISTRIBUTION 0
+#define WATER_DISTRIBUTION 40
 #define STEAM_DISTRIBUTION 100
 
 bool BasicDistributiveFalling(int x, int y, int prob){
@@ -100,21 +100,21 @@ bool BasicDistributiveFlying(int x, int y, int prob){
     int val = rand()%100;
     if(val > 100-prob){
         if((typeDensityList[u_type] > typeDensityList[p_type])
-            && !CHECK_FLAG(typeFlagsList[u_type], IS_DUST)){
+            && !CHECK_FLAG(typeFlagsList[u_type], IS_SOLID)){
             SWAP_PARTS(x, y, x, y-1);
             return TRUE;
         }
     }
     else if(val > (100-prob)/2){
         if((typeDensityList[lu_type] > typeDensityList[p_type])
-        && !CHECK_FLAG(typeFlagsList[lu_type], IS_DUST)){
+        && !CHECK_FLAG(typeFlagsList[lu_type], IS_SOLID)){
             SWAP_PARTS(x, y, x-1, y-1);
             return TRUE;
         }
     }
     else{
         if((typeDensityList[ru_type] > typeDensityList[p_type])
-        && !CHECK_FLAG(typeFlagsList[ru_type], IS_DUST)){ 
+        && !CHECK_FLAG(typeFlagsList[ru_type], IS_SOLID)){ 
             SWAP_PARTS(x, y, x+1, y-1);
             return TRUE;
         }

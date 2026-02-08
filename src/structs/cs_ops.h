@@ -1,5 +1,5 @@
-#ifndef CS_OPS_H
-#define CS_OPS_H
+#ifndef CHUNK_SPACE_OPERATIONS_H
+#define CHUNK_SPACE_OPERATIONS_H
 
 #include "chunk_space.h"
 

@@ -1,5 +1,5 @@
-#ifndef ENGINE_API_H
-#define ENGINE_API_H
+#ifndef ENGINE_LIB_H
+#define ENGINE_LIB_H
 
 #include "core.h"
 #include "window.h"
@@ -8,6 +8,6 @@
 #include "gui.h"
 #include "./ds/list.h"
 #include "constants.h"
-#include "helper.h"
+#include "geometry.h"
 
 #endif

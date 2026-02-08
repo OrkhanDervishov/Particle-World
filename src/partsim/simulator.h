@@ -1,7 +1,7 @@
 #ifndef SIMULATOR_H
 #define SIMULATOR_H
 
-#include "../engine/engine_api.h"
+#include "../engine/engine_lib.h"
 #include "dirtyrect.h"
 #include "particle_data.h"
 #include "../structs/chunk_space.h"

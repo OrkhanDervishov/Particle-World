@@ -59,13 +59,13 @@ void ReplaceParticleCS(ChunkSpace *cs, int x, int y, int type){
 
 void CreateParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, int height, int type){
     Rect r = {.x = startX, .y = startY, .w = width, .h = height};
-    // CorrectRect(r, cs->width, cs->height);
+    r = CorrectRect(r, cs->width_p-1, cs->height_p-1);
     startX = r.x;
     startY = r.y;
 
     int endX = startX + r.w;
     int endY = startY + r.h;
-    
+
     for(int i = startY; i < endY; i++)
     for(int j = startX; j < endX; j++){
         CS_GET_STATE(cs, j, i) = P_FRESH;
@@ -100,13 +100,19 @@ void CreateParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad, int type){
 }
 
 void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, int height){
-    int endX = startX + width;
-    int endY = startY + height;
+    Rect r = {.x = startX, .y = startY, .w = width, .h = height};
+    r = CorrectRect(r, cs->width_p, cs->height_p);
+    startX = r.x;
+    startY = r.y;
+
+    int endX = startX + r.w;
+    int endY = startY + r.h;
     
     for(int i = startY; i < endY; i++)
     for(int j = startX; j < endX; j++){
         CS_GET_STATE(cs, j, i) = P_IGNORED;
         CS_GET_TYPE(cs, j, i) = AIR;
+        CS_GET_COLOR(cs, j, i).a = 0;
     }    
 }
 

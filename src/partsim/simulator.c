@@ -1,6 +1,6 @@
 #include "simulator.h"
 
-int selectedType = 0;
+int selectedType = SAND;
 
 int PART_SIDE = 4;
 int DELAY = 11;

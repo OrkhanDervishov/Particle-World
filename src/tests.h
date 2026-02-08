@@ -1,13 +1,14 @@
 #ifndef TESTS_H
 #define TESTS_H
 
-#include "engine/engine_api.h"
+#include "engine/engine_lib.h"
 #include "partsim/particle_load.h"
 #include "structs/chunk.h"
 #include "structs/region.h"
 #include "structs/chunk_space.h"
 // #include "world.h"
 #include "particle_game.h"
+#include "game_loop.h"
 #include "rendering/chunk_renderer.h"
 #include "partsim/dirtyrect.h"
 #include "partsim/particle_data.h"

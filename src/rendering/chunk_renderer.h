@@ -1,7 +1,7 @@
 #ifndef CHUNK_RENDERER_H
 #define CHUNK_RENDERER_H
 
-#include "../engine/engine_api.h"
+#include "../engine/engine_lib.h"
 #include "../structs/chunk.h"
 #include "../structs/region.h"
 #include "../structs/chunk_space.h"
