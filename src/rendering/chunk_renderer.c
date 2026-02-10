@@ -143,6 +143,10 @@ void RegionRender(Window* window, Region* region, int x, int y){
 
 // Rendering with SDL_Surface
 
+void ShowChunks(Window* window, Chunk* chunk, int x, int y){
+    SDL_Rect rect = {.x = x, .y = y, .w = chunk->w, .h = chunk->h};
+}
+
 void ChunkDraw(Window* window, Chunk* chunk, int x, int y){
     ChunkToStoreSurface(chunk);
     Surface* winSurface = SDL_GetWindowSurface(window->window);

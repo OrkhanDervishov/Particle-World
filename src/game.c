@@ -1,4 +1,4 @@
-#include "game_loop.h"
+#include "game.h"
 
 // Time
 clock_t sumTime = 0;
@@ -64,7 +64,7 @@ int RunParticleGame(ParticleGame* game){
         draw_start = GetTimeNano()/1000;
         ClearWindow(game->win, game->s_params.bg_color);
         DrawChunkSpace(win, cs, 0, 0);
-        BasicTextRender(game->win, "hello world", 10, 10, 3, textColor);
+        BasicTextRender(game->win, typeNameList[selectedType], 10, 10, 2, textColor);
         SDL_UpdateWindowSurface(win->window);
         draw_end = GetTimeNano()/1000;
 

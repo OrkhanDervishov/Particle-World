@@ -23,6 +23,7 @@ void RenderFrame(Window* window);
 
 
 // Software rendering
+void ShowChunk(Window* window, Chunk* chunk, int x, int y);
 void ChunkDraw(Window* window, Chunk* chunk, int x, int y);
 void RegionDraw(Window* window, Region* region, int x, int y);
 void DrawImageInWindowSW(Window* window, Image* img, int x, int y, int scale);
