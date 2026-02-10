@@ -26,6 +26,7 @@ int RunParticleGame(ParticleGame* game){
 
     SetChunkSpace(&(game->cs));
     StartRenderer(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
+    InitBasicTextRenderer();
     while(win->isrunning){
         deltaTime = end - start;
         sumTime += deltaTime;
@@ -59,15 +60,19 @@ int RunParticleGame(ParticleGame* game){
 
 
         // Rendering
+        Color textColor = {.rgba = 0xFF0000FF};
         draw_start = GetTimeNano()/1000;
-        ClearWindow(game->win, game->params.bg_color);
+        ClearWindow(game->win, game->s_params.bg_color);
         DrawChunkSpace(win, cs, 0, 0);
+        BasicTextRender(game->win, "hello world", 10, 10, 3, textColor);
         SDL_UpdateWindowSurface(win->window);
         draw_end = GetTimeNano()/1000;
 
+        // RenderText
+
         
         // Simulations
-        if(!game->params.paused){
+        if(!game->s_params.paused){
             WallBoxCS(cs);
 
             // Particle simulation
@@ -85,6 +90,7 @@ int RunParticleGame(ParticleGame* game){
 
         end = clock();
     }
+    EndBasicTextRenderer();
     EndRenderer();
 
     // Destroy

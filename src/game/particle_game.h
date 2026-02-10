@@ -58,29 +58,5 @@ int CreateParticleGame(ParticleGame** game);
 void DeleteParticleGame(ParticleGame** game);
 
 int BuildLabEnv(ParticleGame* game);
-int RunParticleGame(ParticleGame* game);
-
-// Particle Inits
-void InitParticles();
-void InitParticleSimulator();
-
-// TODO: Rigid Inits
-
-
-// TODO: Entity Inits
-
-
-// TODO: Alphabet Inits
-
-
-// Gameplay
-// void CreateManyParticles(World* world, int px, int py, int rad, int t);
-// void CreateManyParticlesWithRarity(World* world, int px, int py, int rad, int t, int rarity);
-// // void DeleteParticle(World* world, int px, int py);
-// void DeleteManyParticles(World* world, int px, int py, int rad);
-// // void SwapParticles(World* world, Particle* p1, Particle* p2);
-// void WallBox(World* world);
-// void Explosion(World* world, int px, int py, int rad, int power, int replaceWith);
-// void DestructionLine(World* world, int px0, int py0, int px1, int py1, int power, int replaceWith);
 
 #endif //PARTICLE_GAME_H

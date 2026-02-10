@@ -7,7 +7,7 @@
 #include "structs/region.h"
 #include "structs/chunk_space.h"
 // #include "world.h"
-#include "particle_game.h"
+#include "game/particle_game.h"
 #include "game_loop.h"
 #include "rendering/chunk_renderer.h"
 #include "partsim/dirtyrect.h"

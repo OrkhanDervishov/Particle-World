@@ -42,10 +42,10 @@ void ProcessInput(ParticleGame* game)
                 selectedType = (selectedType + 1) % countParticleTypes;
             }
             if(PAUSE_OF_BUTTON){
-                game->params.paused = game->params.paused ? 0 : 1;
+                game->s_params.paused = game->s_params.paused ? 0 : 1;
             }
             if(HEATMAP_OF_BUTTON){
-                game->params.hm_mode = game->params.hm_mode ? 0 : 1;
+                game->s_params.hm_mode = game->s_params.hm_mode ? 0 : 1;
             }
             if(EXPLOSION_BUTTON){
                 int px = ((mx) / PART_SIDE);
@@ -70,7 +70,7 @@ void function1(ParticleGame* game){
         int px = ((mx) / DEFAULT_PARTICLE_SIZE);
         int py = ((my) / DEFAULT_PARTICLE_SIZE);
 
-        int bs = game->params.brush_size;
+        int bs = game->g_params.brush_size;
 
         CreateParticlesRectCS(&(game->cs), px - bs, py - bs, 2*bs, 2*bs, selectedType);
         // AddDirtyRect(sim, px, py, RADIUS);
@@ -83,7 +83,7 @@ void function2(ParticleGame* game){
     int px = ((mx) / DEFAULT_PARTICLE_SIZE);
     int py = ((my) / DEFAULT_PARTICLE_SIZE);
 
-    int bs = game->params.brush_size;
+    int bs = game->g_params.brush_size;
     DeleteParticlesRectCS(&(game->cs), px - bs, py - bs, 2*bs, 2*bs);
     // AddDirtyRect(sim, px, py, RADIUS);
 }
