@@ -32,8 +32,10 @@ void ProcessInput(ParticleGame* game)
     // Other events
     while(SDL_PollEvent(&event)){
         if(event.type == SDL_QUIT) win->isrunning = 0;
-        if(QUIT_BUTTON) win->isrunning = 0;
+        
         if(event.type == SDL_KEYUP){
+            if(QUIT_BUTTON) win->isrunning = 0;
+            
             if(SCREEN_CLEAR_BUTTON){
                 cButtonEvent(game);
             }

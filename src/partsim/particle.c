@@ -56,7 +56,7 @@ void SetChunkSpace(ChunkSpace* cs){
 
 #define SAND_DISTRIBUTION 84
 #define WATER_DISTRIBUTION 40
-#define STEAM_DISTRIBUTION 100
+#define STEAM_DISTRIBUTION 50
 
 bool BasicDistributiveFalling(int x, int y, int prob){
     TYPE_DT p_type = GET_PART_TYPE(x, y);
@@ -98,14 +98,14 @@ bool BasicDistributiveFlying(int x, int y, int prob){
     TYPE_DT ru_type = GET_PART_TYPE(x+1, y-1);
 
     int val = rand()%100;
+    // if(val > 100-prob){
+    //     if((typeDensityList[u_type] > typeDensityList[p_type])
+    //         && !CHECK_FLAG(typeFlagsList[u_type], IS_SOLID)){
+    //         SWAP_PARTS(x, y, x, y-1);
+    //         return TRUE;
+    //     }
+    // }
     if(val > 100-prob){
-        if((typeDensityList[u_type] > typeDensityList[p_type])
-            && !CHECK_FLAG(typeFlagsList[u_type], IS_SOLID)){
-            SWAP_PARTS(x, y, x, y-1);
-            return TRUE;
-        }
-    }
-    else if(val > (100-prob)/2){
         if((typeDensityList[lu_type] > typeDensityList[p_type])
         && !CHECK_FLAG(typeFlagsList[lu_type], IS_SOLID)){
             SWAP_PARTS(x, y, x-1, y-1);
@@ -193,21 +193,6 @@ bool BasicLiquidBehave(int x, int y){
         }
     }
 
-    
-    // Particle* r = GET_PARTICLE_AT(WORLD, x + 1, y);
-    // if(typeDensityList[r->type] < typeDensityList[p->type] && 
-    // !CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){ 
-    //     SwapParticles(WORLD, x, y, x + 1, y);
-    //     return TRUE;
-    // }
-
-    // Particle* l = GET_PARTICLE_AT(WORLD, x - 1, y);
-    // if(typeDensityList[l->type] < typeDensityList[p->type] && 
-    // !CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){ 
-    //     SwapParticles(WORLD, x, y, x - 1, y);
-    //     return TRUE;
-    // }
-
     TYPE_DT l_type = GET_PART_TYPE(x-1, y);
     TYPE_DT r_type = GET_PART_TYPE(x+1, y);
 
@@ -250,81 +235,8 @@ bool BasicGasBehave(int x, int y){
 
     TYPE_DT p_type = GET_PART_TYPE(x, y);
     XVEL_DT *p_xvel = &GET_PART_XVEL(x, y);
-    // Particle* u = GET_PARTICLE_AT(w, x, y - 1);
-    // if(typeDensityList[u->type] > typeDensityList[p->type] && 
-    // !CHECK_FLAG(typeFlagsList[u->type], IS_SOLID)){ 
-    //     (*y) -= 1; 
-    //     return TRUE;
-    // }
-
-    // Particle* ru = GET_PARTICLE_AT(w, x + 1, y - 1);  
-    // if(typeDensityList[ru->type] > typeDensityList[p->type] && 
-    // !CHECK_FLAG(typeFlagsList[ru->type], IS_SOLID)){ 
-    //     (*y) -= 1, (*x) += 1; 
-    //     return TRUE;
-    // }
-
-    // Particle* lu = GET_PARTICLE_AT(map, *\x - 1, *y - 1);
-    // if(typeDensityList[lu->type] > typeDensityList[p->type] && 
-    // !CHECK_FLAG(typeFlagsList[lu->type], IS_SOLID)){ 
-    //     (*y) -= 1, (*x) -= 1; 
-    //     return TRUE;
-    // }
 
     if(BasicDistributiveFlying(x, y, STEAM_DISTRIBUTION) == TRUE) return TRUE;
-
-    // TYPE_DT lu_type = GET_PART_TYPE(x-1, y-1);
-    // TYPE_DT ru_type = GET_PART_TYPE(x+1, y-1);
-    // if(*p_xvel > 1){
-    //     if(typeDensityList[lu_type] > typeDensityList[p_type]){
-    //         if(!CHECK_FLAG(typeFlagsList[lu_type], IS_SOLID)){
-    //             SWAP_PARTS(x, y, x - 1, y - 1);
-    //             // if(p->xvel == 1)p->xvel -= 2; 
-    //             *p_xvel -= 1; 
-    //             return TRUE;
-    //         }
-    //     }
-    //     if(typeDensityList[ru_type] > typeDensityList[p_type]){
-    //         if(!CHECK_FLAG(typeFlagsList[ru_type], IS_SOLID)){
-    //             SWAP_PARTS(x, y, x + 1, y - 1);
-    //             // if(p->xvel == 1)p->xvel -= 2; 
-    //             *p_xvel -= 1; 
-    //             return TRUE;
-    //         }
-    //     }
-    // } else {
-    //     if(typeDensityList[ru_type] > typeDensityList[p_type]){
-    //         if(!CHECK_FLAG(typeFlagsList[ru_type], IS_SOLID)){
-    //             SWAP_PARTS(x, y, x + 1, y - 1);
-    //             // if(p->xvel == 1)p->xvel += 2; 
-    //             *p_xvel += 1; 
-    //             return TRUE;
-    //         }
-    //     }
-    //     if(typeDensityList[lu_type] > typeDensityList[p_type]){ 
-    //         if(!CHECK_FLAG(typeFlagsList[lu_type], IS_SOLID)){
-    //             SWAP_PARTS(x, y, x - 1, y - 1);
-    //             // if(p->xvel == 1)p->xvel += 2; 
-    //             *p_xvel += 1; 
-    //             return TRUE;
-    //         }
-    //     }
-    // }
-
-
-    // Particle* r = GET_PARTICLE_AT(w, x + 1, y);
-    // if(typeDensityList[r->type] > typeDensityList[p->type] && 
-    // !CHECK_FLAG(typeFlagsList[r->type], IS_SOLID)){ 
-    //     (*x) += 1; 
-    //     return TRUE;
-    // }
-
-    // Particle* l = GET_PARTICLE_AT(w, x - 1, y);
-    // if(typeDensityList[l->type] > typeDensityList[p->type] && 
-    // !CHECK_FLAG(typeFlagsList[l->type], IS_SOLID)){ 
-    //     (*x) -= 1; 
-    //     return TRUE;
-    // }
 
     TYPE_DT l_type = GET_PART_TYPE(x-1, y);
     TYPE_DT r_type = GET_PART_TYPE(x+1, y);
@@ -419,7 +331,7 @@ bool BasicAcidicBehave(int x, int y){
 
     TYPE_DT d_type = GET_PART_TYPE(x, y+1);
     if(CHECK_FLAG(typeFlagsList[d_type], ACID_HAS_AN_EFFECT)){ 
-        if(*p_efft < ACID_EFFECT_TIME) *p_efft++;
+        if(*p_efft < ACID_EFFECT_TIME) (*p_efft)++;
         else{
             DELETE_PART(x, y);
             DELETE_PART(x, y+1);
@@ -429,7 +341,7 @@ bool BasicAcidicBehave(int x, int y){
 
     TYPE_DT l_type = GET_PART_TYPE(x-1, y);
     if(CHECK_FLAG(typeFlagsList[l_type], ACID_HAS_AN_EFFECT)){
-        if(*p_efft < ACID_EFFECT_TIME) *p_efft++;
+        if(*p_efft < ACID_EFFECT_TIME) (*p_efft)++;
         else{
             DELETE_PART(x, y);
             DELETE_PART(x-1, y);
@@ -439,7 +351,7 @@ bool BasicAcidicBehave(int x, int y){
 
     TYPE_DT r_type = GET_PART_TYPE(x+1, y);
     if(CHECK_FLAG(typeFlagsList[r_type], ACID_HAS_AN_EFFECT)){ 
-        if(*p_efft < ACID_EFFECT_TIME) *p_efft++;
+        if(*p_efft < ACID_EFFECT_TIME) (*p_efft)++;
         else{
             DELETE_PART(x, y);
             DELETE_PART(x+1, y);
@@ -449,7 +361,7 @@ bool BasicAcidicBehave(int x, int y){
 
     TYPE_DT u_type = GET_PART_TYPE(x, y-1);
     if(CHECK_FLAG(typeFlagsList[u_type], ACID_HAS_AN_EFFECT)){ 
-        if(*p_efft < ACID_EFFECT_TIME) *p_efft++;
+        if(*p_efft < ACID_EFFECT_TIME) (*p_efft)++;
         else{
             DELETE_PART(x, y);
             DELETE_PART(x, y-1);

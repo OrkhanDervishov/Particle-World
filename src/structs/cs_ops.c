@@ -15,9 +15,11 @@ void CreateParticleCS(ChunkSpace *cs, int x, int y, int type){
 }
 
 void DeleteParticleCS(ChunkSpace *cs, int x, int y){
+    // printf("works\n");
     CS_GET_STATE(cs, x, y) = P_IGNORED;
     CS_GET_TYPE(cs, x, y) = AIR;
     CS_GET_COLOR(cs, x, y).a = 0;
+    // CS_GET_COLOR(cs, x, y).rgba = 0xFFAAAAAA;
 }
 
 // NOTE: I need to ensure that chunk coordinates will stay in registers,
@@ -71,6 +73,8 @@ void CreateParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
         CS_GET_STATE(cs, j, i) = P_FRESH;
         CS_GET_TYPE(cs, j, i) = type;
         CS_GET_COLOR(cs, j, i) = typeColorList[type][0];
+        CS_GET_LIFE_T(cs, j, i) = 0;
+        CS_GET_EFFECT_T(cs, j, i) = 0;
         // TODO: Init particle data.
     }
 }

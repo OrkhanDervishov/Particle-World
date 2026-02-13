@@ -3,7 +3,7 @@
 int selectedType = SAND;
 
 int PART_SIDE = 4;
-int DELAY = 11;
+int DELAY = 0;
 int RADIUS = 1;
 int CSIDE = 6;
 

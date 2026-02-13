@@ -93,6 +93,8 @@ int RunParticleGame(ParticleGame* game){
     EndBasicTextRenderer();
     EndRenderer();
 
+    printf("game running: %d\n", game->win->isrunning);
+
     // Destroy
     // SDL_DestroyTexture(bgt);
     // DeleteParticleGame(&game);
