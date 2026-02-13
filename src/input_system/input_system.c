@@ -4,24 +4,25 @@
 void function1(ParticleGame* game);
 void function2(ParticleGame* game);
 void ClearFunction(ParticleGame* game);
+void ChangeParticleType(ParticleGame* game);
 
 void (*MouseLeftEvent)(ParticleGame* game) = function1;
 void (*MouseRightEvent)(ParticleGame* game) = function2;
-void (*MouseScrollEvent)(ParticleGame* game) = ClearFunction;
+void (*MouseScrollEvent)(ParticleGame* game) = NULL;
 void (*SpaceButtonEvent)(ParticleGame* game) = ClearFunction;
 void (*cButtonEvent)(ParticleGame* game) = ClearFunction;
-void (*vButtonEvent)(ParticleGame* game) = ClearFunction;
+void (*vButtonEvent)(ParticleGame* game) = ChangeParticleType;
 void (*xButtonEvent)(ParticleGame* game) = ClearFunction;
 void (*zButtonEvent)(ParticleGame* game) = ClearFunction;
 
 void ProcessInput(ParticleGame* game)
 {
+    SDL_StopTextInput();
+
     Window* win = game->win;
-    SDL_Event event = game->event;
+    SDL_Event event;
     int mx, my;
     int state = SDL_GetMouseState(&mx, &my);
-    // int px = ((mx) / sim->pSide);
-    // int py = ((my) / sim->pSide);
 
     // Particle generation and GUI Interraction
     if(state & SDL_BUTTON(SDL_BUTTON_LEFT)) MouseLeftEvent(game);
@@ -31,15 +32,13 @@ void ProcessInput(ParticleGame* game)
     // Other events
     while(SDL_PollEvent(&event)){
         if(event.type == SDL_QUIT) win->isrunning = 0;
-
-        if(event.type == SDL_KEYDOWN){
-            // printf("works\n");
-            if(QUIT_BUTTON) win->isrunning = 0;
+        if(QUIT_BUTTON) win->isrunning = 0;
+        if(event.type == SDL_KEYUP){
             if(SCREEN_CLEAR_BUTTON){
-                
+                cButtonEvent(game);
             }
             if(PARTICLE_CHANGE_BUTTON){
-                selectedType = (selectedType + 1) % countParticleTypes;
+                vButtonEvent(game);
             }
             if(PAUSE_OF_BUTTON){
                 game->s_params.paused = game->s_params.paused ? 0 : 1;
@@ -72,7 +71,7 @@ void function1(ParticleGame* game){
 
         int bs = game->g_params.brush_size;
 
-        CreateParticlesRectCS(&(game->cs), px - bs, py - bs, 2*bs, 2*bs, selectedType);
+        CreateParticlesRectCS(&(game->cs), px - bs, py - bs, 2*bs, 2*bs, game->g_params.selectedParticleType);
         // AddDirtyRect(sim, px, py, RADIUS);
     // }
 }
@@ -91,4 +90,9 @@ void function2(ParticleGame* game){
 
 void ClearFunction(ParticleGame* game){
 
+}
+
+void ChangeParticleType(ParticleGame* game){
+    game->g_params.selectedParticleType++;
+    game->g_params.selectedParticleType %= GetParticleTypeCount();
 }

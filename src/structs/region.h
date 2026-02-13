@@ -9,17 +9,17 @@
 #define REGION_GET_CHUNK(r, x, y) (r).chunks[(y)*(r).w + (x)]
 
 typedef struct{
-    Pos region_world_pos;
 
     bool active;
     size_t w, h;
+    size_t chunk_width, chunk_height;
     Chunk* chunks;
 } Region;
 
 
 
 // Region functions
-int CreateRegion(Region* region, size_t w, size_t h, Pos worldPos);
+int CreateRegion(Region* region, size_t region_w, size_t region_h, size_t chunk_w, size_t chunk_h);
 void DeleteRegion(Region* region);
 int ClearRegion(Region* region);
 int FillRegion(Region* region);

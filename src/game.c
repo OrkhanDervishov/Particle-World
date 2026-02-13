@@ -52,9 +52,9 @@ int RunParticleGame(ParticleGame* game){
         // Input handling
         int mx, my;
         SDL_GetMouseState(&mx, &my);
-        SDL_Event event;
-        SDL_PollEvent(&event);
-        if(event.type == SDL_QUIT) win->isrunning = FALSE;
+        // SDL_Event event; 
+        // SDL_PollEvent(&event);
+        // if(event.type == SDL_QUIT) win->isrunning = FALSE;
         
         ProcessInput(game);
 
@@ -64,7 +64,7 @@ int RunParticleGame(ParticleGame* game){
         draw_start = GetTimeNano()/1000;
         ClearWindow(game->win, game->s_params.bg_color);
         DrawChunkSpace(win, cs, 0, 0);
-        BasicTextRender(game->win, typeNameList[selectedType], 10, 10, 2, textColor);
+        BasicTextRender(game->win, typeNameList[game->g_params.selectedParticleType], 10, 10, 1, textColor);
         SDL_UpdateWindowSurface(win->window);
         draw_end = GetTimeNano()/1000;
 

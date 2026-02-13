@@ -1,16 +1,13 @@
 #include "chunk.h"
 
 
-int CreateChunk(Chunk* chunk, int w, int h, Pos worldPos){
+int CreateChunk(Chunk* chunk, int w, int h){
 
     chunk->w = w;
     chunk->h = h;
     chunk->size = w*h;
     chunk->active = TRUE;
-    chunk->chunk_world_pos = worldPos;
-    chunk->chunk_pos.x = 0;
-    chunk->chunk_pos.y = 0;
-
+    
     InitDirtyRectList(&chunk->dirty_rect_list);
 
     

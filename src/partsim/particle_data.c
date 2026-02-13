@@ -26,6 +26,24 @@ bool (*GetFunc(const char* funcName))(int x, int y){
 }
 
 
+int GetParticleTypeCount(){
+    return countParticleTypes;
+}
+
+int GetParticleFuncCount(){
+    return countParticleFuncs;
+}
+
+void SetParticleTypeCount(int count){
+    countParticleTypes = count;
+}
+
+void SetParticleFuncCount(int count){
+    countParticleFuncs = count;
+}
+
+
+
 int CreateParticleMap(ParticleMap* pmap, int rows, int cols){
     pmap->rows = rows;
     pmap->cols = cols;

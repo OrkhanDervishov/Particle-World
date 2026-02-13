@@ -37,13 +37,12 @@ typedef struct{
 
 typedef struct{
     int brush_size;
-    int selectedType;
+    int selectedParticleType;
 } GameParameters;
 
 typedef struct{
     Window* win;
     ChunkSpace cs;
-    SDL_Event event;
     GameSystemParameters s_params;
     GameParameters g_params;
 } ParticleGame;
@@ -53,6 +52,7 @@ typedef struct{
 #define CONTINUE_GAME(g) (*g)->s_params.pause = FALSE
 #define ENABLE_HEATMAP_MOD(g) (*g)->s_params.hm_mode = TRUE
 #define DISABLE_HEATMAP_MOD(g) (*g)->s_params.hm_mode = FALSE
+
 
 int CreateParticleGame(ParticleGame** game);
 void DeleteParticleGame(ParticleGame** game);

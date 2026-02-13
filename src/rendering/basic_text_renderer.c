@@ -46,11 +46,17 @@ void BasicSymbolRender(Window* window, char sym, int x, int y, int scale, Color 
 void BasicTextRender(Window* window, const char* text, int x, int y, int scale, Color color){
     int len = strlen(text);
 
-    for(int i = 0; i < len; i++){
+    for(int i = 0, k = 0; i < len; i++){
+        if(text[i] == '\n'){
+            y += fontHeight*scale + 4*DEFAULT_FONT_OFFSET;
+            k = 0;
+            continue;
+        }
         BasicSymbolRender(
             window, text[i], 
-            x + i*fontWidth*scale+DEFAULT_FONT_OFFSET,
+            x + k*fontWidth*scale+DEFAULT_FONT_OFFSET,
             y, scale, color
         );
+        k++;
     }
 }

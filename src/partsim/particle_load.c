@@ -172,5 +172,5 @@ void AddType(
     typeIFlagsList[type] = iflags;
     typeDurabilityList[type] = durability;
 
-    countParticleTypes++;
+    SetParticleTypeCount(GetParticleTypeCount()+1);
 }

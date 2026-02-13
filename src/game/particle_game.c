@@ -1,15 +1,15 @@
 #include "particle_game.h"
 
 
-// // Time
-// clock_t sumTime = 0;
-// clock_t deltaTime = 0;
 
-// //Pragram params
-// int Delay = 20;
-// int RAD = 6;
-// int fps = 0;
-// int drawlines = 0;
+#define CS_WIDTH    DEFAULT_CS_WIDTH
+#define CS_HEIGHT   DEFAULT_CS_HEIGHT
+
+#define REGION_WIDTH DEFAULT_REGION_WIDTH
+#define REGION_HEIGHT DEFAULT_REGION_HEIGHT
+
+#define DEFAULT_CHUNK_SIZE 64
+#define DEFAULT_PARTICLE_SIZE 4
 
 int CreateParticleGame(ParticleGame** game){
     (*game) = (ParticleGame*)malloc(sizeof(ParticleGame));
@@ -36,16 +36,13 @@ int CreateParticleGame(ParticleGame** game){
 
 
     (*game)->g_params.brush_size = 3;
-    (*game)->g_params.selectedType = 0;
+    (*game)->g_params.selectedParticleType = 0;
     return 0;
 }
 
 void DeleteParticleGame(ParticleGame** game){
-    CONSOLE("delete world\n");
     DeleteChunkSpace(&(*game)->cs);
-    CONSOLE("delete window\n");
     DestroyWindow(&((*game)->win));
-    CONSOLE("delete game\n");
     free(*game);
 }
 

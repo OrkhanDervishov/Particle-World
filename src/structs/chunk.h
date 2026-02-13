@@ -24,8 +24,6 @@ typedef struct{
     // "chunk_world_pos" Position of a chunk in the game world and 
     // "chunk_pos" its position in the array of loaded chunks
     // This data has to be used for saving
-    Pos chunk_world_pos;
-    Pos chunk_pos;
 
     // Core
     int     w, h;  
@@ -82,7 +80,7 @@ typedef struct{
 #define CHUNK_GETI_CUSTOM(chunk, index)       (chunk).custom[(index)]
 
 // Chunk functions
-int CreateChunk(Chunk* chunk, int w, int h, Pos worldPos);
+int CreateChunk(Chunk* chunk, int w, int h);
 void DeleteChunk(Chunk* chunk);
 void ClearChunk(Chunk* chunk);
 

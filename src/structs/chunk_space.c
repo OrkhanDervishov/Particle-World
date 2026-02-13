@@ -70,7 +70,7 @@ int CreateChunkSpace
     
     Pos wp = {0,0};
     for(int i = 0; i < cs->size_r; i++){
-        CreateRegion(&cs->regions[i], cs->region_width, cs->region_height, wp); 
+        CreateRegion(&cs->regions[i], cs->region_width, cs->region_height, cs->chunk_width, cs->chunk_height); 
     }
 
     return 0;

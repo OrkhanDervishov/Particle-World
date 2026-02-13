@@ -165,7 +165,6 @@ typedef uint16_t ParticleType;
 
 #define MAX_NUMBER_OF_TYPES 256
 #define MAX_NUMBER_OF_FUNCS MAX_NUMBER_OF_TYPES
-extern int countParticleTypes;
 
 extern bool (*typeFuncList[MAX_NUMBER_OF_TYPES])(int x, int y);
 extern Color typeButtonColorList[MAX_NUMBER_OF_TYPES];
@@ -184,6 +183,11 @@ extern PartFunc partFuncList[MAX_NUMBER_OF_TYPES];
 
 extern int LIQUID_OPACITY;
 
+
+int GetParticleTypeCount();
+int GetParticleFuncCount();
+void SetParticleTypeCount(int count);
+void SetParticleFuncCount(int count);
 
 // Particle map
 int CreateParticleMap(ParticleMap* pmap, int rows, int cols);

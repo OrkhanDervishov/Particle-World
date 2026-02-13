@@ -118,7 +118,7 @@ int ChunkTest(){
     CONSOLE("Chunk test started\n");
 
     CONSOLE("Chunk creation test\n");
-    CreateChunk(&chunk, chunk_size, chunk_size, world_pos);
+    CreateChunk(&chunk, chunk_size, chunk_size);
 
     CONSOLE("Chunk deletion test\n");
     DeleteChunk(&chunk);
@@ -324,12 +324,12 @@ void ChunkSpaceTest(){
     Color c = {.rgba = 0xFF0000FF};
 
     Chunk chunk;
-    CreateChunk(&chunk, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, wp);
+    CreateChunk(&chunk, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE);
     ClearChunk(&chunk);
     ColorChunk(&chunk, c);
 
     Region region;
-    CreateRegion(&region, 3, 2, wp);
+    CreateRegion(&region, 3, 2, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE);
     // FillRegion(&region);
     CONSOLE("region\n");
     ClearRegion(&region);
@@ -421,27 +421,16 @@ int ParticleGameTest(){
 
 
     CONSOLE("Game draw test\n");
-    CreateParticlesRectCS(&(game->cs), 100, 80, 30, 30, WATER);
-    CreateParticlesRectCS(&(game->cs), 160, 80, 30, 30, SAND);
-    CreateParticlesRectCS(&(game->cs), 140, 120, 30, 30, STEAM);
-    // LoadChunks(game->w);
-    // CONSOLE("works000\n");
-    // DrawSceneWithoutTexture(game);
-    // CONSOLE("works001\n");
-    // SDL_RenderPresent(game->win->renderer);
+    // CreateParticlesRectCS(&(game->cs), 100, 80, 30, 30, WATER);
+    // CreateParticlesRectCS(&(game->cs), 160, 80, 30, 30, SAND);
+    // CreateParticlesRectCS(&(game->cs), 140, 120, 30, 30, STEAM);
+
     BuildLabEnv(game);
     CONSOLE("Game run test\n");
     RunParticleGame(game);
 
-    // StartRenderer(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
-    // DrawChunkSpace(game->win, &(game->cs), 0, 0);
-    // SDL_UpdateWindowSurface(game->win->window);
-    // SDL_Delay(5000);
-    // EndRenderer();
-
     CONSOLE("ParticleGame deletion test\n");
     DeleteParticleGame(&game);
-    // DestroyWindow(&window);
 
     CONSOLE("ParticleGame test success\n\n");
     return 0;
