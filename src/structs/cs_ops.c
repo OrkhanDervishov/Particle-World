@@ -12,6 +12,9 @@ void CreateParticleCS(ChunkSpace *cs, int x, int y, int type){
     CS_GET_STATE(cs, x, y) = P_FRESH;
     CS_GET_TYPE(cs, x, y) = type;
     CS_GET_COLOR(cs, x, y) = typeColorList[WALL][0];
+    CS_GET_LIFE_T(cs, x, y) = 0;
+    CS_GET_EFFECT_T(cs, x, y) = 0;
+    CS_GET_HEAT(cs, x, y) = 1100;
 }
 
 void DeleteParticleCS(ChunkSpace *cs, int x, int y){
@@ -53,7 +56,12 @@ void SwapParticlesCS(ChunkSpace* cs, int x0, int y0, int x1, int y1){
 }
 
 void ReplaceParticleCS(ChunkSpace *cs, int x, int y, int type){
-    
+    if(CS_GET_CUSTOM(cs, x, y) != NULL){
+        free(CS_GET_CUSTOM(cs, x, y));
+    }
+    CS_GET_STATE(cs, x, y) = P_FRESH;
+    CS_GET_TYPE(cs, x, y) = type;
+    CS_GET_COLOR(cs, x, y) = typeColorList[type][0];
 }
 
 
@@ -75,6 +83,7 @@ void CreateParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
         CS_GET_COLOR(cs, j, i) = typeColorList[type][0];
         CS_GET_LIFE_T(cs, j, i) = 0;
         CS_GET_EFFECT_T(cs, j, i) = 0;
+        CS_GET_HEAT(cs, j, i) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;
         // TODO: Init particle data.
     }
 }
@@ -96,11 +105,13 @@ void CreateParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad, int type){
                     CS_GET_STATE(cs, j, i) = P_FRESH;
                     CS_GET_TYPE(cs, j, i) = type;
                     CS_GET_COLOR(cs, j, i) = typeColorList[type][0];
+                    CS_GET_LIFE_T(cs, j, i) = 0;
+                    CS_GET_EFFECT_T(cs, j, i) = 0;
+                    CS_GET_HEAT(cs, j, i) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;
                 }
             }
         }
     }
-
 }
 
 void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, int height){
@@ -121,7 +132,25 @@ void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
 }
 
 void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad){
-    
+        int starty = cY - rad;
+    int startx = cX - rad;
+    int endy = cY + rad;
+    int endx = cX + rad;
+    int srad = rad * rad;
+
+    for(int i = starty; i < endy; i++){
+        int di = abs(cY - i);
+        for(int j = startx; j < endx; j++){
+            int dj = abs(cX - j);
+            if(di*di + dj*dj < srad){
+                if(j >= 0 && i >= 0 && j < cs->width_p && i < cs->height_p){
+                    CS_GET_STATE(cs, j, i) = P_IGNORED;
+                    CS_GET_TYPE(cs, j, i) = AIR;
+                    CS_GET_COLOR(cs, j, i).a = 0;
+                }
+            }
+        }
+    }
 }
 
 //======================================================
@@ -139,12 +168,18 @@ void WallBoxCS(ChunkSpace *cs){
     }   
 }
 
+void ClearFullCS(ChunkSpace* cs){
+
+    for(int i = 0; i < cs->size_c; i++){
+        ClearChunkFull(&cs->chunks[i]);
+    }
+}
+
+void ClearPartCS(ChunkSpace* cs){
+
+    for(int i = 0; i < cs->size_c; i++){
+        ClearChunkFull(&cs->chunks[i]);
+    }
+}
 
 //======================================================
-
-// void SimulateChunkSpace(ChunkSpace *cs){
-//     for(int i = 1; i < cs->height_c-1; i++)
-//     for(int j = 1; j < cs->width_c-1; j++){
-//         SimulateChunk(&CS_GET_CHUNK(cs, j, i));
-//     }
-// }

@@ -89,6 +89,9 @@ void ActivateChunk(Chunk* chunk);
 void ChunkWallBox(Chunk* chunk);
 void ColorChunk(Chunk* chunk, Color color);
 
+void ClearChunkFull(Chunk* chunk);
+void ClearChunkPart(Chunk* chunk, int x, int y, int w, int h);
+
 // void ChunkCreateParticle(Chunk* chunk, ParticleType type, int chunk_x, int chunk_y);
 // void ChunkCreateReplaceParticle(Chunk* chunk, ParticleType type, int chunk_x, int chunk_y);
 // void ChunkReplaceParticle(Chunk* chunk, int sx, int sy, int dx, int dy);

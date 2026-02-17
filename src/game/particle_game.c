@@ -8,12 +8,12 @@
 #define REGION_WIDTH DEFAULT_REGION_WIDTH
 #define REGION_HEIGHT DEFAULT_REGION_HEIGHT
 
-#define DEFAULT_CHUNK_SIZE 64
-#define DEFAULT_PARTICLE_SIZE 4
+// #define DEFAULT_CHUNK_SIZE 64
+// #define DEFAULT_PARTICLE_SIZE 2
 
 int CreateParticleGame(ParticleGame** game){
     (*game) = (ParticleGame*)malloc(sizeof(ParticleGame));
-    if(CreateWindow(&((*game)->win), SCR_WIDTH, SCR_HEIGHT, WIN_TITLE, FALSE)) return 1;
+    if(CreateWindow(&((*game)->win), SCR_WIDTH, SCR_HEIGHT, WIN_TITLE, TRUE)) return 1;
 
     ChunkSpace* cs = &((*game)->cs);
     if(CreateChunkSpace(
@@ -32,7 +32,7 @@ int CreateParticleGame(ParticleGame** game){
     (*game)->s_params.paused = FALSE;
     (*game)->s_params.delay = 11;
     (*game)->s_params.frameKeepEnabled = TRUE;
-    (*game)->s_params.frameKeep = 60;
+    (*game)->s_params.frameKeep = 90;
 
 
     (*game)->g_params.brush_size = 3;

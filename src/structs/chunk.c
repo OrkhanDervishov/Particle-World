@@ -102,3 +102,16 @@ void ColorChunk(Chunk* chunk, Color color){
         chunk->c[i] = color;
     }
 }
+
+void ClearChunkFull(Chunk* chunk){
+
+    for(int i = 0; i < chunk->size; i++){
+        chunk->state[i] = P_IGNORED;
+        chunk->type[i] = AIR;
+        chunk->c[i].a = 0;
+    }
+}
+
+void ClearChunkPart(Chunk* chunk, int x, int y, int w, int h){
+
+}

@@ -16,5 +16,6 @@ void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int endX, int
 void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad);
 
 void WallBoxCS(ChunkSpace *cs);
+void ClearFullCS(ChunkSpace* cs);
 
 #endif

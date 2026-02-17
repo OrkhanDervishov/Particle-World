@@ -36,6 +36,7 @@
 #define M_LAVA_BUTTON_COLOR 255, 69, 0, 255
 #define M_OBSIDIAN_BUTTON_COLOR 20, 20, 20, 255
 
+extern int gravity;
 
 extern int STEAM_LIFE_TIME;
 extern int SMOKE_LIFE_TIME;

@@ -84,6 +84,48 @@ int CSIDE = 6;
 //     }
 // }
 
+
+void SimulateChunkHeatMapComplete(ChunkSpace* cs, Chunk* chunk, int cs_x, int cs_y){
+    int rows = chunk->h;
+    int cols = chunk->w;
+
+    for(int i = 0; i < rows; i++){
+        for(int j = 0; j < cols; j++){ 
+
+            TYPE_DT p_type = CHUNK_GET_TYPE(*chunk, j, i);
+
+            if(p_type == AIR || p_type == WALL) continue;
+
+            HEAT_DT *p_heat = &CS_GET_HEAT(cs, j + cs_x, i + cs_y);
+
+            TYPE_DT neighbor_types[] = {
+                CS_GET_TYPE(cs, j + cs_x - 1, i + cs_y),
+                CS_GET_TYPE(cs, j + cs_x + 1, i + cs_y),
+                CS_GET_TYPE(cs, j + cs_x, i + cs_y - 1),
+                CS_GET_TYPE(cs, j + cs_x, i + cs_y + 1)
+            };
+
+            HEAT_DT *neighbor_heats[] = {
+                &CS_GET_HEAT(cs, j + cs_x - 1, i + cs_y),
+                &CS_GET_HEAT(cs, j + cs_x + 1, i + cs_y),
+                &CS_GET_HEAT(cs, j + cs_x, i + cs_y - 1),
+                &CS_GET_HEAT(cs, j + cs_x, i + cs_y + 1)
+            };
+
+
+
+            for(int i = 0; i < 4; i++){
+                TYPE_DT other_type = neighbor_types[i];
+                HEAT_DT* other_heat = neighbor_heats[i];
+                if(other_type == AIR || other_type == WALL) continue;
+                int h = ((*p_heat) + (*other_heat)) / 2;
+                *p_heat = h;
+                *other_heat = h;
+            }
+        }
+    }
+}
+
 void SimulateChunkComplete(Chunk* chunk, int cs_x, int cs_y){
     int rows = chunk->h;
     int cols = chunk->w;
@@ -101,15 +143,9 @@ void SimulateChunkComplete(Chunk* chunk, int cs_x, int cs_y){
 
             if(CHUNK_GET_STATE(*chunk, j, i) <= P_USED) continue;
             CHUNK_GET_STATE(*chunk, j, i) = P_USED;
-            
-            // CONSOLE("works11\n");
+
             if(typeFuncList[CHUNK_GET_TYPE(*chunk, j, i)] == NULL) {continue;}
-            // printf("ctype:%d\n", CHUNK_GET_TYPE(*chunk, x, y));
-            // printf("cx:%d cy:%d\n", x, y);
-            // printf("csx:%d csy:%d\n", x + cs_x, y + cs_y);
-            // CONSOLE("works1234\n");
             typeFuncList[CHUNK_GET_TYPE(*chunk, j, i)](x + cs_x, y + cs_y);
-            // CONSOLE("works13\n");
         }
     }
 
@@ -321,7 +357,11 @@ void SimulateChunkSpace(ChunkSpace *cs){
     for(int i = cs->simEndY-1; i >= cs->simStartY; i--)
     for(int j = cs->simStartX; j < cs->simEndX; j++){
         SimulateChunkComplete(&CS_GET_ARRAY_CHUNK(cs, j, i), j*cs->chunk_width, i*cs->chunk_height);
+        SimulateChunkHeatMapComplete(cs, &CS_GET_ARRAY_CHUNK(cs, j, i), j*cs->chunk_width, i*cs->chunk_height);
     }
+    // for(int i = cs->simEndY-2; i >= cs->simStartY+1; i--)
+    // for(int j = cs->simStartX+1; j < cs->simEndX-1; j++){
+    // }
 }
 
 
