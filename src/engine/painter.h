@@ -21,29 +21,34 @@ typedef struct{
 } Image;
 
 
-void createImage(Image* img, size_t w, size_t h);
-void deleteImage(Image* img);
+void CreateImage(Image* img, size_t w, size_t h);
+void DeleteImage(Image* img);
 
-void fillImage(Image* img, Color color);
-Color getRandomColor();
+void FillImage(Image* img, Color color);
+void PutPixel(Image* img, int x, int y, Color color);
+Color GetRandomColor();
+
+Rect CorrectRectImage(Image* img, Rect rect);
 
 // TODO: Add fill option
-void drawCircle(Image* img, vec2 p, int radius, Color color);
-void drawRect(Image* img, Rect rect, Color color);
+void DrawCircle(Image* img, int x, int y, int radius, Color color);
+void DrawRect(Image* img, Rect rect, Color color);
+void DrawFilledCircle(Image* img, int x, int y, int radius, Color color);
+void DrawFilledRect(Image* img, Rect rect, Color color);
 
-void drawTriangle(Image* img, Triangle t, Color color);
-void drawMesh(Image* img, Triangle* triangles, int triangleCount, Color color);
+void DrawTriangle(Image* img, Triangle t, Color color);
+void DrawMesh(Image* img, Triangle* triangles, int triangleCount, Color color);
 // Bresenham
-void drawLine(Image* img, Color c, int x0, int y0, int x1, int y1);
+void DrawLine(Image* img, Color c, int x0, int y0, int x1, int y1);
 
 // Xiaolin Wu
-void drawLineAntiAliased(Image* img, Color c, int x0, int y0, int x1, int y1);
+void DrawLineAntiAliased(Image* img, Color c, int x0, int y0, int x1, int y1);
 
 #define POINT_RADIUS 3
-void drawLineFromPoints(Image* img, vec2* points, int count, Color color, int drawPoints);
+void DrawLineFromPoints(Image* img, vec2* points, int count, Color color, int drawPoints);
 
-int saveImagePPM(Image* img, char* filename);
-int saveImagePNG(Image* img, char* filename);
-int loadPNG(Image* img, char* filename);
+int SaveImagePPM(Image* img, char* filename);
+int SaveImagePNG(Image* img, char* filename);
+int LoadPNG(Image* img, char* filename);
 
 #endif

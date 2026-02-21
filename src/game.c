@@ -12,8 +12,6 @@ int drawlines = 0;
 
 int RunParticleGame(ParticleGame* game){
 
-    // ParticleGame* pgame;
-    // CreateParticleGame(&pgame);
     Window* win = game->win;
     ChunkSpace* cs = &(game->cs);
 
@@ -28,6 +26,13 @@ int RunParticleGame(ParticleGame* game){
     clock_t simh_start = 0, simh_end = 0;
     // Loop
 
+    Color buttonColor = {.rgba = 0xFF0000FF};
+    vec2 pos = {0, 0};
+    vec2 sizes = {25, 10};
+    Button* button;
+    CreateButton(&button, "Hello", buttonColor, TRUE, pos, sizes, NULL);
+    PrintButtonParams(button);
+
     SetChunkSpace(&(game->cs));
     StartRenderer(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
     InitBasicTextRenderer();
@@ -35,18 +40,8 @@ int RunParticleGame(ParticleGame* game){
         iter_start = clock();
         start = clock();
         
-        
-        
-        // Input handling
-        int mx, my;
-        SDL_GetMouseState(&mx, &my);
-        // SDL_Event event; 
-        // SDL_PollEvent(&event);
-        // if(event.type == SDL_QUIT) win->isrunning = FALSE;
-        
         ProcessInput(game);
-        
-        
+
         // Rendering
         Color textColor = {.rgba = 0xFF0000FF};
         ClearWindow(game->win, game->s_params.bg_color);
@@ -54,15 +49,29 @@ int RunParticleGame(ParticleGame* game){
         DrawChunkSpace(win, cs, 0, 0);
         draw_end = GetTimeNano()/1000;
         
+        // RenderText
         char fpsStr[16];
         sprintf(fpsStr, "fps: %d", fps);
         BasicTextRender(game->win, typeNameList[game->g_params.selectedParticleType], 10, 10, 2, textColor);
         BasicTextRender(game->win, fpsStr, 10, 40, 2, textColor);
+        
+        Rect rect1 = {10, 30, 100, 100};
+        Rect rect2 = {110, 30, 100, 100};
+        Rect rect3 = {210, 30, 100, 100};
+        Rect rect4 = {310, 30, 100, 100};
+        Color color1 = {.rgba = 0xFF000000};
+        Color color2 = {.rgba = 0xFFFF0000};
+        Color color3 = {.rgba = 0xFF00FF00};
+        Color color4 = {.rgba = 0xFFFFFFFF};
+        DrawFilledRect(&(win->screen), rect1, color1);
+        DrawFilledRect(&(win->screen), rect2, color2);
+        DrawFilledRect(&(win->screen), rect3, color3);
+        DrawFilledRect(&(win->screen), rect4, color4);
+        DrawButton(win, button, 10, 200);
         SDL_UpdateWindowSurface(win->window);
         
-        // RenderText
-        
-        
+
+
         // Simulations
         if(!game->s_params.paused){
             WallBoxCS(cs);
@@ -114,6 +123,8 @@ int RunParticleGame(ParticleGame* game){
     EndBasicTextRenderer();
     EndRenderer();
     
+    DeleteButton(&button);
+
     printf("game running: %d\n", game->win->isrunning);
 
     // Destroy

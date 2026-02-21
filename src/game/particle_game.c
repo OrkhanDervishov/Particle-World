@@ -30,7 +30,7 @@ int CreateParticleGame(ParticleGame** game){
     (*game)->s_params.bg_color.rgba = 0xFF181818;
     (*game)->s_params.hm_mode = FALSE;
     (*game)->s_params.paused = FALSE;
-    (*game)->s_params.delay = 11;
+    (*game)->s_params.delay = 0;
     (*game)->s_params.frameKeepEnabled = TRUE;
     (*game)->s_params.frameKeep = 90;
 

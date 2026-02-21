@@ -3,6 +3,6 @@
 
 #include "../engine/engine_lib.h"
 
-void DrawGenerationCircle(Window* window, int x, int y, int rad);
+void DrawGenerationCircle(Window* window, int x, int y, int rad, Color color);
 
 #endif

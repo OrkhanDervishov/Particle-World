@@ -2,7 +2,7 @@
 #define GUI_H
 
 #include "../engine/engine_lib.h"
-#include "../game/particle_game.h"
+// #include "../game/particle_game.h"
 
 typedef enum{
     BUTTON = 0,
@@ -30,6 +30,7 @@ typedef struct{
     GuiElement* elements;
 } GuiBox;
 
+#define MAX_BUTTON_TEXT_LEN 64
 typedef struct{
     char* text;
     Color color;
@@ -37,7 +38,7 @@ typedef struct{
     bool bg_draw;
     vec2 pos;
     vec2 sizes;
-    void (*func)(ParticleGame* game);
+    void* func;
 } Button;
 
 void CreateGuiBox(
@@ -46,11 +47,11 @@ void CreateGuiBox(
 );
 void DeleteGuiBox(GuiBox* box);
 void CreateButton(
-    Button* button, const char *text, Color color,
-    bool bg_draw, vec2 pos, vec2 sizes, 
-    void (*func)(ParticleGame* game)
+    Button** button, const char *text, Color color,
+    bool bg_draw, vec2 pos, vec2 sizes, void* func
 );
-void DeleteButton(Button* button);
+void PrintButtonParams(Button* button);
+void DeleteButton(Button** button);
 void AddButton(GuiBox *box, Button *button);
 
 // void DrawGuiBox(Window* window, GuiBox* box);

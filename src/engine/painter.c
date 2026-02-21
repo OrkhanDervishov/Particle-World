@@ -3,29 +3,35 @@
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+#include "geometry.h"
 
 
-void createImage(Image* img, size_t w, size_t h){
+void CreateImage(Image* img, size_t w, size_t h){
     img->buffer = (Color*)malloc(w * h * sizeof(Color));
     img->width = w;
     img->height = h;
 }
 
-void deleteImage(Image* img){
+void DeleteImage(Image* img){
     free(img->buffer);
 }
 
 
 
 
-void fillImage(Image* img, Color color){
+void FillImage(Image* img, Color color){
     for(int i = 0; i < img->height; i++)
     for(int j = 0; j < img->width; j++){
         img->buffer[i * img->width + j] = color;
     }
 }
 
-Color getRandomColor(){
+void PutPixel(Image* img, int x, int y, Color color){
+    if(x >= img->width || x < 0 || y >= img->height || y < 0) return;
+    IMG_GET(img, x, y) = color;
+}
+
+Color GetRandomColor(){
     Color c = {
         .r = rand() % 256,
         .g = rand() % 256,
@@ -36,7 +42,8 @@ Color getRandomColor(){
     return c;
 }
 
-Rect correctRect(Image* img, Rect rect){
+
+Rect CorrectRectImage(Image* img, Rect rect){
     // x, y correction
     if(rect.x < 0) rect.x = 0;
     else if(rect.x > img->width) rect.x = img->width;
@@ -53,28 +60,70 @@ Rect correctRect(Image* img, Rect rect){
 }
 
 // TODO: Add fill option
-void drawCircle(Image* img, vec2 p, int radius, Color color){
+void DrawCircle(Image* img, int x, int y, int radius, Color color){
+    x = radius - 1;
+    y = 0;
+    int dx = 1;
+    int dy = 1;
+    int err = dx - (radius << 1);
+
+    while(x >= y){
+        int cx = x;
+        int cy = y;
+        // PutPixel(img, x + rad, y + rad, color);
+        // PutPixel(img, x + rad, y + rad, color);
+        // PutPixel(img, x + rad, y + rad, color);
+        // PutPixel(img, x + rad, y + rad, color);
+        // PutPixel(img, x + rad, y + rad, color);
+        // PutPixel(img, x + rad, y + rad, color);
+        // PutPixel(img, x + rad, y + rad, color);
+        // PutPixel(img, x + rad, y + rad, color);
+
+        if(err <= 0){
+            y++;
+            err += dy;
+            dy += 2;  
+        }
+        if(err > 0){
+            x--;
+            dx += 2;
+            err += dx - (radius << 1);
+        }
+    }
+}
+
+void DrawRect(Image* img, Rect rect, Color color){
+    rect = CorrectRectImage(img, rect);
+
+    for(int i = rect.y; i < rect.h; i++)
+    for(int j = rect.x; j < rect.w; j++){
+        IMG_GET(img, j, i) = color;
+    }
+}
+
+void DrawFilledCircle(Image* img, int x, int y, int radius, Color color){
     Rect rect = {
-        .x = p.x - radius,
-        .y = p.y - radius,
+        .x = x - radius,
+        .y = y - radius,
         .w = radius*2,
         .h = radius*2
     };
 
-    rect = correctRect(img, rect);
+    rect = CorrectRectImage(img, rect);
 
     for(int i = rect.y; i < rect.h + rect.y; i++)
     for(int j = rect.x; j < rect.w + rect.x; j++){
-        int dx = j - p.x;
-        int dy = i - p.y;
+        int dx = j - x;
+        int dy = i - y;
         if(dx*dx + dy*dy <= radius*radius)
             img->buffer[i * img->width + j] = color;
     }
 }
 
-void drawRect(Image* img, Rect rect, Color color){
-
-    rect = correctRect(img, rect);
+void DrawFilledRect(Image* img, Rect rect, Color color){
+    
+    // rect = CorrectRectImage(img, rect);
+    rect = CorrectRect(rect, img->width, img->height);
 
     for(int i = rect.y; i < rect.h + rect.y; i++)
     for(int j = rect.x; j < rect.w + rect.x; j++){
@@ -82,20 +131,23 @@ void drawRect(Image* img, Rect rect, Color color){
     }
 }
 
-void drawTriangle(Image* img, Triangle t, Color color){
-    drawLine(img, color, t.x0, t.y0, t.x1, t.y1);
-    drawLine(img, color, t.x1, t.y1, t.x2, t.y2);
-    drawLine(img, color, t.x0, t.y0, t.x2, t.y2);
+void DrawTriangle(Image* img, Triangle t, Color color){
+    DrawLine(img, color, t.x0, t.y0, t.x1, t.y1);
+    DrawLine(img, color, t.x1, t.y1, t.x2, t.y2);
+    DrawLine(img, color, t.x0, t.y0, t.x2, t.y2);
 }
 
-void drawMesh(Image* img, Triangle* triangles, int triangleCount, Color color){
+void DrawMesh(Image* img, Triangle* triangles, int triangleCount, Color color){
     for(int i = 0; i < triangleCount; i++){
-        drawTriangle(img, triangles[i], color);
+        DrawTriangle(img, triangles[i], color);
     }
 }
 
+
+
+
 // Correct line endpoints when they are out of frame size
-vec2 correctLineEnd(int x, int y, int dx, int dy, int width, int height){
+vec2 CorrectLineEnd(int x, int y, int dx, int dy, int width, int height){
     if(x > width - 1){
         y -= dy*(x - (width - 1))/dx;
         x = width - 1;
@@ -120,7 +172,7 @@ vec2 correctLineEnd(int x, int y, int dx, int dy, int width, int height){
 }
 
 
-void bresenhamHorizontal(Image* img, Color c, int x0, int y0, int x1, int y1){
+void BresenhamHorizontal(Image* img, Color c, int x0, int y0, int x1, int y1){
     int dx = abs(x1 - x0);
     int dy = abs(y1 - y0);
     
@@ -148,7 +200,7 @@ void bresenhamHorizontal(Image* img, Color c, int x0, int y0, int x1, int y1){
     }
 }
 
-void bresenhamVertical(Image* img, Color c, int x0, int y0, int x1, int y1){
+void BresenhamVertical(Image* img, Color c, int x0, int y0, int x1, int y1){
     if(y0 > y1){
         int temp;
         SWAP(x0, x1, temp);
@@ -178,26 +230,26 @@ void bresenhamVertical(Image* img, Color c, int x0, int y0, int x1, int y1){
 }
 
 // Bresenham
-void drawLine(Image* img, Color c, int x0, int y0, int x1, int y1){
+void DrawLine(Image* img, Color c, int x0, int y0, int x1, int y1){
     int dx = abs(x1 - x0);
     int dy = abs(y1 - y0);
 
-    vec2 p0 = correctLineEnd(x0, y0, dx, dy, img->width, img->height);
-    vec2 p1 = correctLineEnd(x1, y1, dx, dy, img->width, img->height);
+    vec2 p0 = CorrectLineEnd(x0, y0, dx, dy, img->width, img->height);
+    vec2 p1 = CorrectLineEnd(x1, y1, dx, dy, img->width, img->height);
     x0 = p0.x;
     y0 = p0.y;
     x1 = p1.x;
     y1 = p1.y;
 
     if(dx > dy){
-        bresenhamHorizontal(img, c, x0, y0, x1, y1);
+        BresenhamHorizontal(img, c, x0, y0, x1, y1);
     } else {
-        bresenhamVertical(img, c, x0, y0, x1, y1);
+        BresenhamVertical(img, c, x0, y0, x1, y1);
     }
 }
 
 
-void drawLineAAHorizontal(Image* img, Color c, int x0, int y0, int x1, int y1){
+void DrawLineAAHorizontal(Image* img, Color c, int x0, int y0, int x1, int y1){
     if(x0 > x1){
         int temp;
         SWAP(x0, x1, temp);
@@ -225,7 +277,7 @@ void drawLineAAHorizontal(Image* img, Color c, int x0, int y0, int x1, int y1){
     }
 }
 
-void drawLineAAVertical(Image* img, Color c, int x0, int y0, int x1, int y1){
+void DrawLineAAVertical(Image* img, Color c, int x0, int y0, int x1, int y1){
     if(y0 > y1){
         int temp;
         SWAP(x0, x1, temp);
@@ -254,27 +306,27 @@ void drawLineAAVertical(Image* img, Color c, int x0, int y0, int x1, int y1){
 }
 
 // Xiaolin Wu
-void drawLineAntiAliased(Image* img, Color c, int x0, int y0, int x1, int y1){
+void DrawLineAntiAliased(Image* img, Color c, int x0, int y0, int x1, int y1){
     int dx = abs(x1 - x0);
     int dy = abs(y1 - y0);
 
-    vec2 p0 = correctLineEnd(x0, y0, dx, dy, img->width, img->height);
-    vec2 p1 = correctLineEnd(x1, y1, dx, dy, img->width, img->height);
+    vec2 p0 = CorrectLineEnd(x0, y0, dx, dy, img->width, img->height);
+    vec2 p1 = CorrectLineEnd(x1, y1, dx, dy, img->width, img->height);
     x0 = p0.x;
     y0 = p0.y;
     x1 = p1.x;
     y1 = p1.y;
 
     if(dx > dy){
-        drawLineAAHorizontal(img, c, x0, y0, x1, y1);
+        DrawLineAAHorizontal(img, c, x0, y0, x1, y1);
     } else {
-        drawLineAAVertical(img, c, x0, y0, x1, y1);
+        DrawLineAAVertical(img, c, x0, y0, x1, y1);
     }
 }
 
 
 #define POINT_RADIUS 3
-void drawLineFromPoints(Image* img, vec2* points, int count, Color color, int drawPoints){
+void DrawLineFromPoints(Image* img, vec2* points, int count, Color color, int drawPoints){
     if(points == NULL){
         printf("line array is null\n");
         return;
@@ -284,22 +336,22 @@ void drawLineFromPoints(Image* img, vec2* points, int count, Color color, int dr
         for(int i = 0; i < count-1; i++){
             vec2 start = points[i];
             vec2 end = points[i+1];
-            drawLine(img, color, start.x, start.y, end.x, end.y);
+            DrawLine(img, color, start.x, start.y, end.x, end.y);
         }
 
     else
         for(int i = 0; i < count-1; i++){
             vec2 start = points[i];
             vec2 end = points[i+1];
-            drawLine(img, color, start.x, start.y, end.x, end.y);
-            drawCircle(img, start, POINT_RADIUS, color);
+            DrawLine(img, color, start.x, start.y, end.x, end.y);
+            DrawCircle(img, start.x, start.y, POINT_RADIUS, color);
         }
 }
 
 
 
 
-int saveImagePPM(Image* img, char* filename){
+int SaveImagePPM(Image* img, char* filename){
 
     char path[64];
     sprintf(path, "images/%s", filename);
@@ -330,21 +382,21 @@ int saveImagePPM(Image* img, char* filename){
     return 0;
 }
 
-int saveImagePNG(Image* img, char* filename){
+int SaveImagePNG(Image* img, char* filename){
     char path[64];
-    sprintf(path, "images/%s", filename);
+    sprintf(path, "%s", filename);
     return stbi_write_png(path, img->width, img->height, 4, &img->buffer[0], 4*img->width);
 }
 
 
-int loadPNG(Image* img, char* filename){
+int LoadPNG(Image* img, char* filename){
     char path[64];
     sprintf(path, "images/%s", filename);
 
     int w, h, comp;
     unsigned char* imagedata = stbi_load(path, &w, &h, &comp, STBI_rgb_alpha);
 
-    createImage(img, w, h);
+    CreateImage(img, w, h);
 
     for(int i = 0; i < h; i++)
     for(int j = 0; j < w; j++){

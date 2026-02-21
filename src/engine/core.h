@@ -74,7 +74,16 @@ typedef union{
         uint8_t r, g, b, a;
     };
     uint32_t rgba;
-} Color;
+} ColorRGBA;
+
+typedef union{
+    struct{
+        uint8_t a, r, g, b;
+    };
+    uint32_t argb;
+} ColorARGB;
+
+typedef ColorRGBA Color;
 
 typedef enum{
     WHITE,

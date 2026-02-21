@@ -4,8 +4,8 @@
 #include "chunk.h"
 #include "region.h"
 
-#define DEFAULT_CS_WIDTH 2
-#define DEFAULT_CS_HEIGHT 1
+#define DEFAULT_CS_WIDTH 4
+#define DEFAULT_CS_HEIGHT 2
 
 #define CS_WIDTH    DEFAULT_CS_WIDTH
 #define CS_HEIGHT   DEFAULT_CS_HEIGHT

@@ -2,6 +2,7 @@
 #define WINDOW_H
 
 #include "core.h"
+#include "painter.h"
 
 
 // Third party
@@ -12,7 +13,7 @@
 #define SCR_HEIGHT 800
 
 #define WIN_TITLE "SDL Playground"
-#define MAX_TITLE_LEN 256
+#define MAX_TITLE_LEN 512
 
 
 typedef struct{
@@ -20,6 +21,7 @@ typedef struct{
     int h;
     char title[MAX_TITLE_LEN];
     bool isrunning;
+    Image screen;
     SDL_Window* window;
     SDL_Renderer* renderer;
 } Window;

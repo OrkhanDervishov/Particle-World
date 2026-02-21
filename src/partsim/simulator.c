@@ -354,14 +354,11 @@ void SimulateChunk(Chunk* chunk){
 
 void SimulateChunkSpace(ChunkSpace *cs){
 
-    for(int i = cs->simEndY-1; i >= cs->simStartY; i--)
+    for(int i = cs->simStartY; i < cs->simEndY; i++)
     for(int j = cs->simStartX; j < cs->simEndX; j++){
         SimulateChunkComplete(&CS_GET_ARRAY_CHUNK(cs, j, i), j*cs->chunk_width, i*cs->chunk_height);
         SimulateChunkHeatMapComplete(cs, &CS_GET_ARRAY_CHUNK(cs, j, i), j*cs->chunk_width, i*cs->chunk_height);
     }
-    // for(int i = cs->simEndY-2; i >= cs->simStartY+1; i--)
-    // for(int j = cs->simStartX+1; j < cs->simEndX-1; j++){
-    // }
 }
 
 

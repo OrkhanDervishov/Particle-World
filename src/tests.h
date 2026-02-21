@@ -43,9 +43,10 @@ int CoreTest(){
     return 0;
 }
 
-int GuiTest(){
-    return 0;
-}
+// int GuiTest(){
+//     return 0;
+// }
+
 
 int DirtyRectTest(){
     LinkedList* list;
@@ -436,6 +437,10 @@ int ParticleGameTest(){
     return 0;
 }
 
+void GuiTest(){
+
+}
+
 void RunTests(){
     // WindowTest();
     // ChunkTest();
@@ -445,6 +450,7 @@ void RunTests(){
     // DrawerTest();
     // ParticleInitTest();
     ParticleGameTest();
+    // GuiTest();
     // ChunkRenderTest();
     // ChunkSpaceTest();
 }

@@ -9,8 +9,8 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
 
     *win = (Window*)malloc(sizeof(Window));
     
-    if(strlen(title) > MAX_TITLE_LEN)
-    strcpy((*win)->title, title);
+    if(strlen(title) < MAX_TITLE_LEN)
+        strcpy((*win)->title, title);
     (*win)->isrunning = 1;
     (*win)->w = w;
     (*win)->h = h;
@@ -24,35 +24,48 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
         SDL_WINDOW_SHOWN
     );
 
+    
     if(fs)
-        SDL_SetWindowFullscreen((*win)->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    SDL_SetWindowFullscreen((*win)->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     
     if((*win)->window == NULL){
         fprintf(stderr, "Error: %s\n", SDL_GetError());
         return 1;
     }
+    
+    // printf("works\n");
+    // To manipulate SDL's window surface through custom image object
+    Surface *surf = SDL_GetWindowSurface((*win)->window);
+    SDL_FreeSurface(surf);
+    surf = SDL_CreateRGBSurface(
+        0, w, h, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
+    );
+    printf("w:%d h:%d\n", w, h);
+    printf("surf_w:%d surf_h:%d\n", surf->w, surf->h);
+    (*win)->screen.width = surf->w;
+    (*win)->screen.height = surf->h;
+    (*win)->screen.buffer = (Color*)surf->pixels;
+    // printf("works1\n");
 
-    (*win)->renderer = SDL_CreateRenderer((*win)->window, -1, SDL_RENDERER_SOFTWARE);
-
-    SDL_SetRenderDrawBlendMode((*win)->renderer, SDL_BLENDMODE_BLEND);
-
-    if((*win)->renderer == NULL){
-        fprintf(stderr, "Error: %s\n", SDL_GetError());
-        return 1;
-    }
-
+    // (*win)->renderer = SDL_CreateRenderer((*win)->window, -1, SDL_RENDERER_SOFTWARE);
+    // if((*win)->renderer == NULL){
+    //     fprintf(stderr, "Error: %s\n", SDL_GetError());
+    //     return 1;
+    // }
+    // SDL_SetRenderDrawBlendMode((*win)->renderer, SDL_BLENDMODE_BLEND);
 
     return 0;
 }
 
 void DestroyWindow(Window** win){
-    SDL_DestroyRenderer((*win)->renderer);
-    if((*win)->window == NULL) printf("Window deletion error\n");
-    SDL_DestroyWindow((*win)->window);
-    SDL_Quit();
-    if((*win) == NULL) printf("Window is null\n");
-    free(*win);
+    // if((*win)->renderer != NULL)
+    //     SDL_DestroyRenderer((*win)->renderer);
+    if((*win)->window != NULL)
+        SDL_DestroyWindow((*win)->window);
+    if((*win) != NULL)
+        free(*win);
     (*win) = NULL;
+    SDL_Quit();
 }
 
 void Clear(Window* win){

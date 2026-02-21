@@ -8,11 +8,13 @@ void ChangeParticleType(ParticleGame* game);
 void ToggleGravity(ParticleGame* game);
 void BrushIncrease(ParticleGame* game);
 void BrushDecrease(ParticleGame* game);
+void TakeScreenShot(ParticleGame* game);
 
 void (*MouseLeftEvent)(ParticleGame* game) = function1;
 void (*MouseRightEvent)(ParticleGame* game) = function2;
 void (*MouseScrollEvent)(ParticleGame* game) = NULL;
-void (*SpaceButtonEvent)(ParticleGame* game) = ClearFunction;
+void (*SpaceButtonEvent)(ParticleGame* game) = TakeScreenShot;
+void (*TabButtonEvent)(ParticleGame* game) = TakeScreenShot;
 void (*cButtonEvent)(ParticleGame* game) = ClearFunction;
 void (*vButtonEvent)(ParticleGame* game) = ChangeParticleType;
 void (*xButtonEvent)(ParticleGame* game) = ToggleGravity;
@@ -29,6 +31,7 @@ void ProcessInput(ParticleGame* game)
     int mx, my;
     int state = SDL_GetMouseState(&mx, &my);
 
+    
     // Particle generation and GUI Interraction
     if(state & SDL_BUTTON(SDL_BUTTON_LEFT)) MouseLeftEvent(game);
     if(state & SDL_BUTTON(SDL_BUTTON_RIGHT)) MouseRightEvent(game);
@@ -65,6 +68,7 @@ void ProcessInput(ParticleGame* game)
             if(BRUSH_DECREASE_BUTTON) twoButtonEvent(game);
             if(DELAY_INCREASE_BUTTON) SpeedUpParticleSimulator();
             if(DELAY_DECREASE_BUTTON) SlowDownParticleSimulator();
+            if(TAB_BUTTON) TabButtonEvent(game); 
         }
     }
 }
@@ -124,4 +128,9 @@ void BrushDecrease(ParticleGame* game){
         return;
     }
     game->g_params.brush_size--;
+}
+
+void TakeScreenShot(ParticleGame* game){
+    SaveImagePNG(&(game->win->screen), "picture.png");
+    printf("worked\n");
 }
