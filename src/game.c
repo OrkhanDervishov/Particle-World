@@ -10,6 +10,8 @@ int RAD = 6;
 int fps = 0;
 int drawlines = 0;
 
+void Guide(ParticleGame* game, Color textColor);
+
 int RunParticleGame(ParticleGame* game){
 
     Window* win = game->win;
@@ -31,7 +33,7 @@ int RunParticleGame(ParticleGame* game){
     vec2 sizes = {25, 10};
     Button* button;
     CreateButton(&button, "Hello", buttonColor, TRUE, pos, sizes, NULL);
-    PrintButtonParams(button);
+    // PrintButtonParams(button);
 
     SetChunkSpace(&(game->cs));
     StartRenderer(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
@@ -50,24 +52,27 @@ int RunParticleGame(ParticleGame* game){
         draw_end = GetTimeNano()/1000;
         
         // RenderText
+        char selectedStr[64];
         char fpsStr[16];
+        sprintf(selectedStr, "Selected type: %s", typeNameList[game->g_params.selectedParticleType]);
         sprintf(fpsStr, "fps: %d", fps);
-        BasicTextRender(game->win, typeNameList[game->g_params.selectedParticleType], 10, 10, 2, textColor);
-        BasicTextRender(game->win, fpsStr, 10, 40, 2, textColor);
+        BasicTextRender(game->win, selectedStr, 10, 10, 2, textColor);
+        BasicTextRender(game->win, fpsStr, 10, 30, 2, textColor);
+        Guide(game, textColor);
         
-        Rect rect1 = {10, 30, 100, 100};
-        Rect rect2 = {110, 30, 100, 100};
-        Rect rect3 = {210, 30, 100, 100};
-        Rect rect4 = {310, 30, 100, 100};
-        Color color1 = {.rgba = 0xFF000000};
-        Color color2 = {.rgba = 0xFFFF0000};
-        Color color3 = {.rgba = 0xFF00FF00};
-        Color color4 = {.rgba = 0xFFFFFFFF};
-        DrawFilledRect(&(win->screen), rect1, color1);
-        DrawFilledRect(&(win->screen), rect2, color2);
-        DrawFilledRect(&(win->screen), rect3, color3);
-        DrawFilledRect(&(win->screen), rect4, color4);
-        DrawButton(win, button, 10, 200);
+        // Rect rect1 = {10, 30, 100, 100};
+        // Rect rect2 = {110, 30, 100, 100};
+        // Rect rect3 = {210, 30, 100, 100};
+        // Rect rect4 = {310, 30, 100, 100};
+        // Color color1 = {.rgba = 0xFF000000};
+        // Color color2 = {.rgba = 0xFFFF0000};
+        // Color color3 = {.rgba = 0xFF00FF00};
+        // Color color4 = {.rgba = 0xFFFFFFFF};
+        // DrawFilledRect(&(win->screen), rect1, color1);
+        // DrawFilledRect(&(win->screen), rect2, color2);
+        // DrawFilledRect(&(win->screen), rect3, color3);
+        // DrawFilledRect(&(win->screen), rect4, color4);
+        // DrawButton(win, button, 10, 200);
         SDL_UpdateWindowSurface(win->window);
         
 
@@ -131,4 +136,19 @@ int RunParticleGame(ParticleGame* game){
     // SDL_DestroyTexture(bgt);
     // DeleteParticleGame(&game);
     return 0;
+}
+
+const char* guideChangeType =       "Change particle type - V";
+const char* guideCreate =           "Create particles - Mouse left";
+const char* guideDelete =           "Delete particles - Mouse right";
+const char* guideBrushIncrease =    "Increase brush size - 1";
+const char* guideBrushDecrease =    "Decrease brush size - 2";
+const char* guideGravity =          "Reverse gravity - X";
+void Guide(ParticleGame* game, Color textColor){
+    BasicTextRender(game->win, guideChangeType,     10, 60, 2, textColor);  
+    BasicTextRender(game->win, guideCreate,         10, 80, 2, textColor);  
+    BasicTextRender(game->win, guideDelete,         10, 100, 2, textColor);  
+    BasicTextRender(game->win, guideBrushIncrease,  10, 120, 2, textColor);  
+    BasicTextRender(game->win, guideBrushDecrease,  10, 140, 2, textColor);  
+    BasicTextRender(game->win, guideGravity,        10, 160, 2, textColor);  
 }
