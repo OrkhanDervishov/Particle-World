@@ -1,9 +1,9 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 
-#include "../engine/engine_lib.h"
-#include "../partsim/particle_data.h"
-#include "../partsim/dirtyrect.h"
+#include "engine_lib.h"
+#include "particle_data.h"
+#include "dirtyrect.h"
 
 
 
@@ -90,7 +90,7 @@ void ChunkWallBox(Chunk* chunk);
 void ColorChunk(Chunk* chunk, Color color);
 
 void ClearChunkFull(Chunk* chunk);
-void ClearChunkPart(Chunk* chunk, int x, int y, int w, int h);
+void ClearChunkPartly(Chunk* chunk, int x, int y, int w, int h);
 
 // void ChunkCreateParticle(Chunk* chunk, ParticleType type, int chunk_x, int chunk_y);
 // void ChunkCreateReplaceParticle(Chunk* chunk, ParticleType type, int chunk_x, int chunk_y);

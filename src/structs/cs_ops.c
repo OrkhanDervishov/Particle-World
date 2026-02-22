@@ -100,7 +100,7 @@ void CreateParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad, int type){
         for(int j = startx; j < endx; j++){
             int dj = abs(cX - j);
             if(di*di + dj*dj < srad){
-                if(j >= 0 && i >= 0 && j < cs->width_p && i < cs->height_p){
+                if(j >= 0 && i >= 0 && j < (int)cs->width_p && i < (int)cs->height_p){
                     // if(sim->pMap[i][j].id < 0)
                     CS_GET_STATE(cs, j, i) = P_FRESH;
                     CS_GET_TYPE(cs, j, i) = type;
@@ -132,7 +132,7 @@ void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
 }
 
 void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad){
-        int starty = cY - rad;
+    int starty = cY - rad;
     int startx = cX - rad;
     int endy = cY + rad;
     int endx = cX + rad;
@@ -143,7 +143,7 @@ void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad){
         for(int j = startx; j < endx; j++){
             int dj = abs(cX - j);
             if(di*di + dj*dj < srad){
-                if(j >= 0 && i >= 0 && j < cs->width_p && i < cs->height_p){
+                if(j >= 0 && i >= 0 && j < (int)cs->width_p && i < (int)cs->height_p){
                     CS_GET_STATE(cs, j, i) = P_IGNORED;
                     CS_GET_TYPE(cs, j, i) = AIR;
                     CS_GET_COLOR(cs, j, i).a = 0;
@@ -157,12 +157,12 @@ void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad){
 
 void WallBoxCS(ChunkSpace *cs){
 
-    for(int j = 0; j < cs->width_p; j++){
+    for(size_t j = 0; j < cs->width_p; j++){
         CreateParticleCS(cs, j, 0, WALL);
         CreateParticleCS(cs, j, cs->height_p-1, WALL);
     }
 
-    for(int i = 1; i < cs->height_p - 1; i++){
+    for(size_t i = 1; i < cs->height_p - 1; i++){
         CreateParticleCS(cs, 0, i, WALL);
         CreateParticleCS(cs, cs->width_p-1, i, WALL);
     }   
@@ -170,14 +170,14 @@ void WallBoxCS(ChunkSpace *cs){
 
 void ClearFullCS(ChunkSpace* cs){
 
-    for(int i = 0; i < cs->size_c; i++){
+    for(size_t i = 0; i < cs->size_c; i++){
         ClearChunkFull(&cs->chunks[i]);
     }
 }
 
 void ClearPartCS(ChunkSpace* cs){
 
-    for(int i = 0; i < cs->size_c; i++){
+    for(size_t i = 0; i < cs->size_c; i++){
         ClearChunkFull(&cs->chunks[i]);
     }
 }

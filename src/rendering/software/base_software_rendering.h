@@ -1,7 +1,7 @@
 #ifndef BASE_SOFTWARE_RENDERING_H
 #define BASE_SOFTWARE_RENDERING_H
 
-#include "../engine/engine_lib.h"
+#include "engine_lib.h"
 
 void DrawRectSW(Window* window, Rect r);
 void DrawFilledRectSW(Window* window, Rect r);

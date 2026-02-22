@@ -1,18 +1,18 @@
 #ifndef TESTS_H
 #define TESTS_H
 
-#include "engine/engine_lib.h"
-#include "partsim/particle_load.h"
-#include "structs/chunk.h"
-#include "structs/region.h"
-#include "structs/chunk_space.h"
+#include "engine_lib.h"
+#include "particle_load.h"
+#include "chunk.h"
+#include "region.h"
+#include "chunk_space.h"
 // #include "world.h"
 #include "game/particle_game.h"
 #include "game.h"
-#include "rendering/chunk_renderer.h"
-#include "partsim/dirtyrect.h"
-#include "partsim/particle_data.h"
-#include "partsim/simulator.h"
+#include "chunk_renderer_sw.h"
+#include "dirtyrect.h"
+#include "particle_data.h"
+#include "simulator.h"
 
 
 int WindowTest(){
@@ -367,10 +367,10 @@ void ChunkSpaceTest(){
     //----------------------------
     CONSOLE("Chunk Space render test\n");
 
-    StartRenderer(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
+    StartChunkRendererSW(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
     // ColorChunkSpace(&cs);
     CONSOLE("works\n");
-    DrawChunkSpace(window, &cs, 0, 0);
+    DrawChunkSpaceSW(window, &cs, 0, 0);
     // RegionDraw(window, &region, 0, 0);
     // RegionDraw(window, &cs.regions[0], 0, 0);
     // ChunkDraw(window, &cs.regions[0].chunks[0], 0, 0);
@@ -380,7 +380,7 @@ void ChunkSpaceTest(){
     // RegionDraw(window, &region, 0, 0);
     CONSOLE("works1\n");
     SDL_Delay(5000);
-    EndRenderer();
+    EndChunkRendererSW();
 
     //----------------------
     

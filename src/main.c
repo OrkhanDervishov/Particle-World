@@ -1,11 +1,11 @@
 #include <stdio.h>
-#include "engine/engine_lib.h"
-#include "partsim/particle_data.h"
+#include "tests.h"
+// #include "engine_lib.h"
+// #include "particle_data.h"
 // #include "partsim/simulator.h"
 // #include "partsim/particle.h"
 // #include "game_gui.h"
 // #include "particle_game.h"
-#include "tests.h"
 // #include "rbsim/rigid.h"
 // #include "chessgame/chess.h"
 

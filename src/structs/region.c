@@ -61,7 +61,7 @@ void ActivateRegion(Region* region){
 }
 
 void ColorRegion(Region* region, Color color){
-    for(int i = 0; i < region->h*region->w; i++){
+    for(size_t i = 0; i < region->h*region->w; i++){
         ColorChunk(&region->chunks[i], color);
     }
 }

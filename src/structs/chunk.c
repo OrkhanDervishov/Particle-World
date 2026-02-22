@@ -112,6 +112,6 @@ void ClearChunkFull(Chunk* chunk){
     }
 }
 
-void ClearChunkPart(Chunk* chunk, int x, int y, int w, int h){
+void ClearChunkPartly(Chunk* chunk, int x, int y, int w, int h){
 
 }

@@ -36,7 +36,7 @@ int RunParticleGame(ParticleGame* game){
     // PrintButtonParams(button);
 
     SetChunkSpace(&(game->cs));
-    StartRenderer(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
+    StartChunkRendererSW(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
     InitBasicTextRenderer();
     while(win->isrunning){
         iter_start = clock();
@@ -45,10 +45,10 @@ int RunParticleGame(ParticleGame* game){
         ProcessInput(game);
 
         // Rendering
-        Color textColor = {.rgba = 0xFF0000FF};
+        Color textColor = {.r=255, .g=0, .b=0, .a=255};
         ClearWindow(game->win, game->s_params.bg_color);
         draw_start = GetTimeNano()/1000;
-        DrawChunkSpace(win, cs, 0, 0);
+        DrawChunkSpaceSW(win, cs, 0, 0);
         draw_end = GetTimeNano()/1000;
         
         // RenderText
@@ -60,14 +60,18 @@ int RunParticleGame(ParticleGame* game){
         BasicTextRender(game->win, fpsStr, 10, 30, 2, textColor);
         Guide(game, textColor);
         
-        // Rect rect1 = {10, 30, 100, 100};
-        // Rect rect2 = {110, 30, 100, 100};
-        // Rect rect3 = {210, 30, 100, 100};
-        // Rect rect4 = {310, 30, 100, 100};
+        Rect rect1 = {10, 30, 100, 100};
+        Rect rect2 = {110, 30, 100, 100};
+        Rect rect3 = {210, 30, 100, 100};
+        Rect rect4 = {310, 30, 100, 100};
         // Color color1 = {.rgba = 0xFF000000};
         // Color color2 = {.rgba = 0xFFFF0000};
         // Color color3 = {.rgba = 0xFF00FF00};
-        // Color color4 = {.rgba = 0xFFFFFFFF};
+        // Color color4 = {.rgba = 0xFFFFFF00};
+        // Color color1 = {.r=255, .g=0, .b=0, .a=255};
+        // Color color2 = {.r=0, .g=255, .b=0, .a=255};
+        // Color color3 = {.r=255, .g=255, .b=255, .a=255};
+        // Color color4 = {.r=255, .g=255, .b=0, .a=255};
         // DrawFilledRect(&(win->screen), rect1, color1);
         // DrawFilledRect(&(win->screen), rect2, color2);
         // DrawFilledRect(&(win->screen), rect3, color3);
@@ -126,7 +130,7 @@ int RunParticleGame(ParticleGame* game){
         }
     }
     EndBasicTextRenderer();
-    EndRenderer();
+    EndChunkRendererSW();
     
     DeleteButton(&button);
 
@@ -137,6 +141,11 @@ int RunParticleGame(ParticleGame* game){
     // DeleteParticleGame(&game);
     return 0;
 }
+
+
+
+
+
 
 const char* guideChangeType =       "Change particle type - V";
 const char* guideCreate =           "Create particles - Mouse left";

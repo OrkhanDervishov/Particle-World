@@ -1,7 +1,7 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include "../engine/engine_lib.h"
+#include "engine_lib.h"
 // #include "../game/particle_game.h"
 
 typedef enum{

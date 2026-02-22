@@ -5,7 +5,7 @@
     Basic font renderer renders only basic fonts
 */
 
-#include "../engine/engine_lib.h"
+#include "engine_lib.h"
 #include "basic_fonts.h"
 
 int InitBasicTextRenderer();

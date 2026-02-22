@@ -80,6 +80,7 @@ typedef union{
     struct{
         uint8_t a, r, g, b;
     };
+    uint32_t rgba;
     uint32_t argb;
 } ColorARGB;
 

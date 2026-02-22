@@ -2,19 +2,19 @@
 #define PARTICLE_H
 
 
-#include <stdio.h>
-#include <string.h>
-#include <malloc.h>
-#include <time.h>
-#include <math.h>
+// #include <stdio.h>
+// #include <string.h>
+// #include <malloc.h>
+// #include <time.h>
+// #include <math.h>
 
 // Third party
-#include <SDL2/SDL.h>
+// #include <SDL2/SDL.h>
 
 // App
 #include "particle_data.h"
-#include "../engine/engine_lib.h"
-#include "../structs/cs_ops.h"
+#include "engine_lib.h"
+#include "cs_ops.h"
 
 // GUI macros
 #define MAX_BUTTONS 100

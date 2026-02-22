@@ -1,9 +1,9 @@
 #ifndef CONTROLS_H
 #define CONTROLS_H
 
-#include "../engine/engine_lib.h"
+#include "engine_lib.h"
 // #include "../partsim/simulator.h"
-#include "../game/particle_game.h"
+#include "particle_game.h"
 
 #define LEFT_BUTTON (event.button.button == SDL_BUTTON_LEFT)
 #define RIGHT_BUTTON (event.button.button == SDL_BUTTON_RIGHT)

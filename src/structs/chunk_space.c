@@ -68,8 +68,7 @@ int CreateChunkSpace
     cs->simStartY = 1;
     cs->simEndY = cs->height_c - 1;
     
-    Pos wp = {0,0};
-    for(int i = 0; i < cs->size_r; i++){
+    for(size_t i = 0; i < cs->size_r; i++){
         CreateRegion(&cs->regions[i], cs->region_width, cs->region_height, cs->chunk_width, cs->chunk_height); 
     }
 
@@ -77,15 +76,15 @@ int CreateChunkSpace
 }
 
 void DeleteChunkSpace(ChunkSpace* cs){
-    for(int i = 0; i < cs->size_r; i++){
+    for(size_t i = 0; i < cs->size_r; i++){
         DeleteRegion(&cs->regions[i]);
     }
 }
 
 void ArrangeChunks(ChunkSpace *cs){
 
-    for(int i = 0; i < cs->height_c; i++)
-    for(int j = 0; j < cs->width_c; j++){
+    for(size_t i = 0; i < cs->height_c; i++)
+    for(size_t j = 0; j < cs->width_c; j++){
         int rx = j / cs->region_width;
         int ry = i / cs->region_height;
 
@@ -112,7 +111,7 @@ Color getRandomColor2(){
 }
 
 void ColorChunkSpace(ChunkSpace* cs){
-    for(int i = 0; i < cs->size_r; i++){
+    for(size_t i = 0; i < cs->size_r; i++){
         ColorRegion(&cs->regions[i], getRandomColor2());
     }
 }

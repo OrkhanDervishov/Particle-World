@@ -15,7 +15,7 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
     (*win)->w = w;
     (*win)->h = h;
     
-    (*win)->window = SDL_CreateWindow(
+    (*win)->window = SDL_CreateWindow   (
         title,
         SDL_WINDOWPOS_CENTERED, 
         SDL_WINDOWPOS_CENTERED,
@@ -36,10 +36,6 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
     // printf("works\n");
     // To manipulate SDL's window surface through custom image object
     Surface *surf = SDL_GetWindowSurface((*win)->window);
-    SDL_FreeSurface(surf);
-    surf = SDL_CreateRGBSurface(
-        0, w, h, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
-    );
     printf("w:%d h:%d\n", w, h);
     printf("surf_w:%d surf_h:%d\n", surf->w, surf->h);
     (*win)->screen.width = surf->w;

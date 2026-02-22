@@ -1,10 +1,10 @@
 #ifndef SIMULATOR_H
 #define SIMULATOR_H
 
-#include "../engine/engine_lib.h"
+#include "engine_lib.h"
 #include "dirtyrect.h"
 #include "particle_data.h"
-#include "../structs/chunk_space.h"
+#include "chunk_space.h"
 
 extern int PART_SIDE;
 extern int DELAY;

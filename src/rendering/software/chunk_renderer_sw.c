@@ -1,5 +1,4 @@
-#include "chunk_renderer.h"
-
+#include "chunk_renderer_sw.h"
 
 // System
 
@@ -27,25 +26,22 @@ void FreeStoreSurface(){
 }
 
 
-int StartRenderer(int chunk_w, int chunk_h, int partSize){
+int StartChunkRendererSW(int chunk_w, int chunk_h, int partSize){
     InitStoreSurface(chunk_w, chunk_h, partSize);
     return 0;
 }
 
-int ChangeChunkSettings(int chunk_w, int chunk_h, int partSize){
+int ChangeChunkSettingsSW(int chunk_w, int chunk_h, int partSize){
     InitStoreSurface(chunk_w, chunk_h, partSize);
     return 0;
 }
 
-void EndRenderer(){
+void EndChunkRendererSW(){
     FreeStoreSurface();
 }
 
+//###########################################
 
-
-//#############################################
-
-// Free the surface after use
 Surface* ChunkToSurface(Chunk* chunk){
     if(chunk == NULL){
         return NULL;
@@ -106,48 +102,14 @@ Surface* ImageToSurfaceRGBA(Image* img){
 }
 
 
-//#############################################
 
-// Rendering with SDL_Renderer
-    
-void ChunkRender(Window* window, Chunk* chunk, int x, int y){
-    Surface* chunkImage = ChunkToSurface(chunk);
-    Texture* chunkTexture = SDL_CreateTextureFromSurface(window->renderer, chunkImage);
-        
-    
-    SDL_Rect srcRect = {0, 0, chunk->w, chunk->h};
-    SDL_Rect dstRect = {x, y, chunk->w*reqParticleSize, chunk->h*reqParticleSize};
-    SDL_RenderCopy(window->renderer, chunkTexture, &srcRect, &dstRect);
-    
-    clock_t start = GetTimeNano();
-    SDL_DestroyTexture(chunkTexture);
-    clock_t end = GetTimeNano();
-    printf("%d\n", (end-start)/1000);
-    SDL_FreeSurface(chunkImage);
-}
+//###########################################
 
-
-
-void RegionRender(Window* window, Region* region, int x, int y){
-    
-    for(int i = 0; i < region->h; i++)
-    for(int j = 0; j < region->w; j++){
-        ChunkRender(
-            window, &region->chunks[i*region->w + j], 
-            x + j*reqChunkWidth, y + i*reqChunkHeight
-        );
-    }
-}
-
-//#############################################
-
-// Rendering with SDL_Surface
-
-void ShowChunks(Window* window, Chunk* chunk, int x, int y){
+void ShowChunksSW(Window* window, Chunk* chunk, int x, int y){
     SDL_Rect rect = {.x = x, .y = y, .w = chunk->w, .h = chunk->h};
 }
 
-void ChunkDraw(Window* window, Chunk* chunk, int x, int y){
+void DrawChunkSW(Window* window, Chunk* chunk, int x, int y){
     ChunkToStoreSurface(chunk);
     Surface* winSurface = SDL_GetWindowSurface(window->window);
     
@@ -162,11 +124,11 @@ void ChunkDraw(Window* window, Chunk* chunk, int x, int y){
     // SDL_FreeSurface(chunkImage);
 }
 
-void RegionDraw(Window* window, Region* region, int x, int y){
+void DrawRegionSW(Window* window, Region* region, int x, int y){
     // CONSOLE("########################\n");
     for(int i = 0; i < region->h; i++){
     for(int j = 0; j < region->w; j++){
-            ChunkDraw(
+            DrawChunkSW(
                 window, &region->chunks[i*region->w + j], 
                 x + j*reqChunkWidth*reqParticleSize, 
                 y + i*reqChunkHeight*reqParticleSize
@@ -176,10 +138,10 @@ void RegionDraw(Window* window, Region* region, int x, int y){
     }
 }
 
-void DrawChunkSpace(Window* window, ChunkSpace* cs, int x, int y){
+void DrawChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
     for(int i = 0; i < cs->height_c; i++){
     for(int j = 0; j < cs->width_c; j++){
-            ChunkDraw(
+            DrawChunkSW(
                 window, &cs->chunks[i*cs->width_c + j], 
                 x + j*reqChunkWidth*reqParticleSize, 
                 y + i*reqChunkHeight*reqParticleSize

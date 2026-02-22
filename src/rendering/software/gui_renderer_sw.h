@@ -1,7 +1,7 @@
 #ifndef GUI_RENDERER_SW_H
 #define GUI_RENDERER_SW_H
 
-#include "../gui/gui.h"
+#include "gui.h"
 #include "basic_text_renderer.h"
 
 void DrawGuiElement(Window* window, GuiElement* elem, int x, int y);

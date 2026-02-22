@@ -1,7 +1,7 @@
 #ifndef PARTICLE_DATA_H
 #define PARTICLE_DATA_H
 
-#include "../engine/engine_lib.h"
+#include "engine_lib.h"
 
 
 typedef enum{

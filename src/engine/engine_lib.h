@@ -5,7 +5,7 @@
 #include "window.h"
 #include "timing.h"
 #include "painter.h"
-#include "./ds/list.h"
+#include "list.h"
 #include "constants.h"
 #include "geometry.h"
 

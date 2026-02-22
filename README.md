@@ -1,5 +1,5 @@
 # Particle World: Cellular particle simulator
-<h3>The project was inspired from Noita game</h3>
+<h3>The project was inspired by Noita game</h3>
 
 <h4>Demos</h4>
 <img src="resources/demo1.gif">
