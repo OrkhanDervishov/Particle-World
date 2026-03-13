@@ -8,14 +8,16 @@
 #include <time.h>
 #include <math.h>
 #include <assert.h>
+#include <unistd.h>
+#include <pthread.h>
 
 // Third party
 #include <SDL2/SDL.h>
 typedef SDL_Surface Surface;
 typedef SDL_Texture Texture;
 
-#define ICON_PATH "./src/images/sand.bmp"
-#define BG_PATH "./src/images/background.bmp"
+// #define ICON_PATH "./src/images/sand.bmp"
+// #define BG_PATH "./src/images/background.bmp"
 
 typedef struct{
     int x, y;
@@ -67,7 +69,10 @@ typedef struct{
     int radius;
 } Circle;
 
-
+typedef enum{
+    COLOR_RGBA,
+    COLOR_BGRA
+} ColorFormat;
 
 typedef union{
     struct{
@@ -78,11 +83,11 @@ typedef union{
 
 typedef union{
     struct{
-        uint8_t a, r, g, b;
+        uint8_t b, g, r, a;
     };
-    uint32_t rgba;
-    uint32_t argb;
-} ColorARGB;
+    // uint32_t rgba;
+    uint32_t bgra;
+} ColorBGRA;
 
 typedef ColorRGBA Color;
 

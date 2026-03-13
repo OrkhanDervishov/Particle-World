@@ -1,46 +1,37 @@
 #include "basic_text_renderer.h"
 
 
-Surface* fontSurface;
+// Surface* fontSurface;
+
+Image font_image;
+
 int fontWidth;
 int fontHeight;
 
 int InitBasicTextRenderer(){
-    if(fontSurface != NULL){
-        SDL_FreeSurface(fontSurface);
-    }
 
     fontWidth = DEFAULT_FONT_WIDTH;
     fontHeight = DEFAULT_FONT_HEIGHT;
-    fontSurface = SDL_CreateRGBSurface(
-        0, DEFAULT_FONT_WIDTH, DEFAULT_FONT_HEIGHT,
-        32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
-    );
+    create_image(&font_image, fontWidth, fontHeight);
 }
 
 void EndBasicTextRenderer(){
-    if(fontSurface == NULL) return;
-    SDL_FreeSurface(fontSurface);
+    delete_image(&font_image);
 }
 
-int SymbolToSurface(char sym, Color color){
-        
-    uint32_t *pixels = (uint32_t *)fontSurface->pixels;
+int SymbolToImage(char sym, Color color){
+
     for(size_t i = 0; i < fontHeight; i++)
     for(size_t j = 0; j < fontWidth; j++){
-        pixels[i*fontWidth + j] = (int)fontList[sym][i][j]*color.rgba;
+        font_image.buffer[i*fontWidth + j].rgba = (int)fontList[sym][i][j]*color.rgba;
     }
 
     return 0;
 }
 
 void BasicSymbolRender(Window* window, char sym, int x, int y, int scale, Color color){
-    SymbolToSurface(sym, color);
-    Surface* winSurface = SDL_GetWindowSurface(window->window);
-    
-    SDL_Rect srcRect = {0, 0, fontWidth, fontHeight};
-    SDL_Rect dstRect = {x, y, fontWidth*scale, fontHeight*scale};
-    SDL_BlitScaled(fontSurface, &srcRect, winSurface, &dstRect);
+    SymbolToImage(sym, color);
+    draw_image_on_fimage_scaled(window->context, font_image, x, y, scale, scale);
 }
 
 void BasicTextRender(Window* window, const char* text, int x, int y, int scale, Color color){

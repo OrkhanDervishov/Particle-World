@@ -8,8 +8,6 @@
 #define REGION_WIDTH DEFAULT_REGION_WIDTH
 #define REGION_HEIGHT DEFAULT_REGION_HEIGHT
 
-// #define DEFAULT_CHUNK_SIZE 64
-// #define DEFAULT_PARTICLE_SIZE 2
 
 int CreateParticleGame(ParticleGame** game){
     (*game) = (ParticleGame*)malloc(sizeof(ParticleGame));
@@ -27,12 +25,14 @@ int CreateParticleGame(ParticleGame** game){
     InitParticles();
     srand(time(NULL));
     
+    (*game)->cbCount = 0;
+
     (*game)->s_params.bg_color.rgba = 0xFF181818;
     (*game)->s_params.hm_mode = FALSE;
     (*game)->s_params.paused = FALSE;
     (*game)->s_params.delay = 0;
-    (*game)->s_params.frameKeepEnabled = TRUE;
-    (*game)->s_params.frameKeep = 90;
+    (*game)->s_params.frameLockEnabled = TRUE;
+    (*game)->s_params.frameLock = 90;
 
 
     (*game)->g_params.brush_size = 3;
@@ -45,6 +45,28 @@ void DeleteParticleGame(ParticleGame** game){
     DestroyWindow(&((*game)->win));
     free(*game);
 }
+
+void add_callback_pg(ParticleGame* game, void (*callback)(ParticleGame* game)){
+    if(game->cbCount >= CB_COUNT_MAX){
+        game->cbCount = CB_COUNT_MAX;
+        printf("callback array is filled up\n");
+    }
+    game->callbacks[game->cbCount++] = callback; 
+}
+
+void delete_callback_pg(ParticleGame* game){
+    if(game->cbCount <= 0){
+        game->cbCount = 0;
+        printf("callback array is empty\n");
+    }
+    game->cbCount--;
+}
+
+// void call_all_callbacks(ParticleGame* game){
+//     for(int i = 0; i < game->cbCount; i++){
+//         game->callbacks[i](game);
+//     }
+// }
 
 SDL_Texture* GetTexture(SDL_Renderer* renderer, SDL_Texture* bgt, char* path){
     SDL_Surface* bgs = SDL_LoadBMP(BG_PATH);

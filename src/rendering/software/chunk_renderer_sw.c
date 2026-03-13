@@ -2,42 +2,39 @@
 
 // System
 
-Surface* storeChunkSurface;
+Image chunk_image;
+FormatImage chunk_fimage;
+
 int reqChunkWidth;
 int reqChunkHeight;
 int reqParticleSize;
 
-void InitStoreSurface(int chunk_w, int chunk_h, int partSize){
-    if(storeChunkSurface != NULL){
-        SDL_FreeSurface(storeChunkSurface);
-    }
+void InitChunkImage(int chunk_w, int chunk_h, int partSize){
     reqChunkWidth = chunk_w;
     reqChunkHeight = chunk_h;
     reqParticleSize = partSize;
-    storeChunkSurface = SDL_CreateRGBSurface(
-        0, chunk_w, chunk_h,
-        32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
-    );
+    create_image(&chunk_image, chunk_w, chunk_h);
+    create_fimage(&chunk_fimage, chunk_w, chunk_h, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 }
 
-void FreeStoreSurface(){
-    if(storeChunkSurface == NULL) return;
-    SDL_FreeSurface(storeChunkSurface);
+void FreeChunkImage(){
+    delete_fimage(&chunk_fimage);
+    delete_image(&chunk_image);
 }
 
 
 int StartChunkRendererSW(int chunk_w, int chunk_h, int partSize){
-    InitStoreSurface(chunk_w, chunk_h, partSize);
+    InitChunkImage(chunk_w, chunk_h, partSize);
     return 0;
 }
 
 int ChangeChunkSettingsSW(int chunk_w, int chunk_h, int partSize){
-    InitStoreSurface(chunk_w, chunk_h, partSize);
+    InitChunkImage(chunk_w, chunk_h, partSize);
     return 0;
 }
 
 void EndChunkRendererSW(){
-    FreeStoreSurface();
+    FreeChunkImage();
 }
 
 //###########################################
@@ -62,7 +59,7 @@ Surface* ChunkToSurface(Chunk* chunk){
 }
 
 // Turns chunk data into image data and stores it in storeSurface
-int ChunkToStoreSurface(Chunk* chunk){
+int ChunkToImage(Chunk* chunk){
     if(chunk == NULL){
         return 1;
     }
@@ -71,9 +68,8 @@ int ChunkToStoreSurface(Chunk* chunk){
     //     return 2;
     // }
     
-    uint32_t *pixels = (uint32_t *)storeChunkSurface->pixels;
     for(size_t i = 0; i < chunk->size; i++){
-        pixels[i] = chunk->c[i].rgba;
+        chunk_image.buffer[i] = chunk->c[i];
     }
 
     return 0;
@@ -105,27 +101,24 @@ Surface* ImageToSurfaceRGBA(Image* img){
 
 //###########################################
 
-void ShowChunksSW(Window* window, Chunk* chunk, int x, int y){
-    SDL_Rect rect = {.x = x, .y = y, .w = chunk->w, .h = chunk->h};
+void ShowChunkSW(Window* window, Chunk* chunk, int x, int y){
+    Rect rect = {.x = x, .y = y, .w = chunk->w, .h = chunk->h};
+    
+    Color color = {.rgba = 0xFFFFFF00};
+    draw_rect_f(window->context, rect, color, 1);
 }
 
+// void ShowChunkSpaceSW(Window* window, Chunk* chunk, int x, int y)
+
 void DrawChunkSW(Window* window, Chunk* chunk, int x, int y){
-    ChunkToStoreSurface(chunk);
-    Surface* winSurface = SDL_GetWindowSurface(window->window);
+    ChunkToImage(chunk);
     
-    
-    // clock_t start = GetTimeNano();
     SDL_Rect srcRect = {0, 0, chunk->w, chunk->h};
     SDL_Rect dstRect = {x, y, chunk->w*reqParticleSize, chunk->h*reqParticleSize};
-    SDL_BlitScaled(storeChunkSurface, &srcRect, winSurface, &dstRect);
-    // clock_t end = GetTimeNano();
-    // printf("%d\n", (end-start)/1000);
-
-    // SDL_FreeSurface(chunkImage);
+    draw_image_on_fimage_scaled(window->context, chunk_image, x, y, reqParticleSize, reqParticleSize);
 }
 
 void DrawRegionSW(Window* window, Region* region, int x, int y){
-    // CONSOLE("########################\n");
     for(int i = 0; i < region->h; i++){
     for(int j = 0; j < region->w; j++){
             DrawChunkSW(
@@ -134,7 +127,6 @@ void DrawRegionSW(Window* window, Region* region, int x, int y){
                 y + i*reqChunkHeight*reqParticleSize
             );
         }
-        // CONSOLE("-----------------\n");
     }
 }
 
@@ -146,7 +138,6 @@ void DrawChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
                 x + j*reqChunkWidth*reqParticleSize, 
                 y + i*reqChunkHeight*reqParticleSize
             );
-            // printf("works10000");
         }
     }
 }
@@ -162,10 +153,10 @@ void DrawImageInWindowSW(Window* window, Image* img, int x, int y, int scale){
 
     SDL_Rect srcRect = {0, 0, img->width, img->height};
     SDL_Rect dstRect = {x, y, img->width*scale, img->height*scale};
-    if(scale != 1)
-        SDL_BlitScaled(storeChunkSurface, &srcRect, winSurface, &dstRect);
-    else
-        SDL_BlitSurface(storeChunkSurface, &srcRect, winSurface, &dstRect);
+    // if(scale != 1)
+        // SDL_BlitScaled(storeChunkSurface, &srcRect, winSurface, &dstRect);
+    // else
+        // SDL_BlitSurface(storeChunkSurface, &srcRect, winSurface, &dstRect);
 
     SDL_FreeSurface(imageSurface);
 }

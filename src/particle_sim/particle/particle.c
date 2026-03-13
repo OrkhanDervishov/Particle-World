@@ -59,10 +59,10 @@ void SetChunkSpace(ChunkSpace* cs){
 #define STEAM_DISTRIBUTION 20
 
 bool BasicDistributiveFalling(int x, int y, int prob){
-    TYPE_DT p_type = GET_PART_TYPE(x, y);
-    TYPE_DT d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
-    TYPE_DT ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
-    TYPE_DT rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
+    part_type_t p_type = GET_PART_TYPE(x, y);
+    part_type_t d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
+    part_type_t ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
+    part_type_t rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
 
     int val = rand()%101;
     if(val > 100-prob){
@@ -92,11 +92,11 @@ bool BasicDistributiveFalling(int x, int y, int prob){
 
 
 bool BasicDistributiveFlying(int x, int y, int prob){
-    TYPE_DT p_type = GET_PART_TYPE(x, y);
-    TYPE_DT u_type = GET_PART_TYPE(x, y-GRAVITY_Y);
-    TYPE_DT lu_type = GET_PART_TYPE(x-1, y-GRAVITY_Y);
-    TYPE_DT ru_type = GET_PART_TYPE(x+1, y-GRAVITY_Y);
-    LIFET_DT* p_lifet = &GET_PART_LIFE_T(x, y);
+    part_type_t p_type = GET_PART_TYPE(x, y);
+    part_type_t u_type = GET_PART_TYPE(x, y-GRAVITY_Y);
+    part_type_t lu_type = GET_PART_TYPE(x-1, y-GRAVITY_Y);
+    part_type_t ru_type = GET_PART_TYPE(x+1, y-GRAVITY_Y);
+    part_lifet_t* p_lifet = &GET_PART_LIFE_T(x, y);
 
     int val = rand()%100;
     if(val > 100-prob){
@@ -126,8 +126,8 @@ bool BasicDistributiveFlying(int x, int y, int prob){
 }
 
 bool BasicFallingBehave(int x, int y){
-    TYPE_DT p_type = GET_PART_TYPE(x, y);
-    TYPE_DT d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
+    part_type_t p_type = GET_PART_TYPE(x, y);
+    part_type_t d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
 
     if(typeDensityList[d_type] < typeDensityList[p_type]){
         BasicDistributiveFalling(x, y, SAND_DISTRIBUTION);
@@ -138,8 +138,8 @@ bool BasicFallingBehave(int x, int y){
 
 bool BasicDustBehave(int x, int y){
 
-    TYPE_DT p_type = GET_PART_TYPE(x, y);
-    TYPE_DT d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
+    part_type_t p_type = GET_PART_TYPE(x, y);
+    part_type_t d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
 
     if((typeDensityList[d_type] < typeDensityList[p_type])
      && !CHECK_FLAG(typeFlagsList[d_type], IS_DUST)){
@@ -148,14 +148,14 @@ bool BasicDustBehave(int x, int y){
         return TRUE;
     }
 
-    TYPE_DT ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
+    part_type_t ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
     if((typeDensityList[ld_type] < typeDensityList[p_type])
      && !CHECK_FLAG(typeFlagsList[ld_type], IS_DUST)){
         SWAP_PARTS(x, y, x-1, y+GRAVITY_Y);
         return TRUE;
     }
 
-    TYPE_DT rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
+    part_type_t rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
     if((typeDensityList[rd_type] < typeDensityList[p_type])
      && !CHECK_FLAG(typeFlagsList[rd_type], IS_DUST)){ 
         SWAP_PARTS(x, y, x+1, y+GRAVITY_Y);
@@ -167,10 +167,10 @@ bool BasicDustBehave(int x, int y){
 
 bool BasicLiquidBehave(int x, int y){
 
-    TYPE_DT p_type = GET_PART_TYPE(x, y);
-    TYPE_DT d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
+    part_type_t p_type = GET_PART_TYPE(x, y);
+    part_type_t d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
 
-    XVEL_DT* p_xvel = &GET_PART_XVEL(x, y);
+    part_xvel_t* p_xvel = &GET_PART_XVEL(x, y);
 
     
     if(BasicDistributiveFalling(x, y, WATER_DISTRIBUTION)) return TRUE;
@@ -182,14 +182,14 @@ bool BasicLiquidBehave(int x, int y){
     //     }
     // }
 
-    TYPE_DT ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
+    part_type_t ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
     if(typeDensityList[ld_type] < typeDensityList[p_type]){
         if(!CHECK_FLAG(typeFlagsList[ld_type], IS_SOLID)){
             SWAP_PARTS(x, y, x-1, y+GRAVITY_Y);
             return TRUE;
         }
     }
-    TYPE_DT rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
+    part_type_t rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
     if(typeDensityList[rd_type] < typeDensityList[p_type]){
         if(!CHECK_FLAG(typeFlagsList[rd_type], IS_SOLID)){
             SWAP_PARTS(x, y, x+1, y+GRAVITY_Y);
@@ -197,8 +197,8 @@ bool BasicLiquidBehave(int x, int y){
         }
     }
 
-    TYPE_DT l_type = GET_PART_TYPE(x-1, y);
-    TYPE_DT r_type = GET_PART_TYPE(x+1, y);
+    part_type_t l_type = GET_PART_TYPE(x-1, y);
+    part_type_t r_type = GET_PART_TYPE(x+1, y);
 
     if(*p_xvel > 1){
         if(typeDensityList[l_type] < typeDensityList[p_type]){
@@ -237,13 +237,13 @@ bool BasicLiquidBehave(int x, int y){
 
 bool BasicGasBehave(int x, int y){
 
-    TYPE_DT p_type = GET_PART_TYPE(x, y);
-    XVEL_DT *p_xvel = &GET_PART_XVEL(x, y);
+    part_type_t p_type = GET_PART_TYPE(x, y);
+    part_xvel_t *p_xvel = &GET_PART_XVEL(x, y);
 
     if(BasicDistributiveFlying(x, y, STEAM_DISTRIBUTION) == TRUE) return TRUE;
 
-    TYPE_DT l_type = GET_PART_TYPE(x-1, y);
-    TYPE_DT r_type = GET_PART_TYPE(x+1, y);
+    part_type_t l_type = GET_PART_TYPE(x-1, y);
+    part_type_t r_type = GET_PART_TYPE(x+1, y);
     if(*p_xvel > 1){
         if(typeDensityList[l_type] > typeDensityList[p_type]){
             if(CHECK_FLAG(typeFlagsList[l_type], IS_GAS)){
@@ -330,12 +330,12 @@ bool BasicGasBehave(int x, int y){
 
 bool BasicAcidicBehave(int x, int y){
     
-    TYPE_DT p_type = GET_PART_TYPE(x, y);
-    EFFECTT_DT *p_efft = &GET_PART_EFFECT_T(x, y);
+    part_type_t p_type = GET_PART_TYPE(x, y);
+    part_effectt_t *p_efft = &GET_PART_EFFECT_T(x, y);
 
-    TYPE_DT d_type = GET_PART_TYPE(x, y+1);
+    part_type_t d_type = GET_PART_TYPE(x, y+1);
     if(CHECK_FLAG(typeFlagsList[d_type], ACID_HAS_AN_EFFECT)){ 
-        if(*p_efft < ACID_EFFECT_TIME) (*p_efft)++;
+        if(*p_efft > 0) (*p_efft)--;
         else{
             DELETE_PART(x, y);
             DELETE_PART(x, y+1);
@@ -343,9 +343,9 @@ bool BasicAcidicBehave(int x, int y){
         return TRUE;
     }
 
-    TYPE_DT l_type = GET_PART_TYPE(x-1, y);
+    part_type_t l_type = GET_PART_TYPE(x-1, y);
     if(CHECK_FLAG(typeFlagsList[l_type], ACID_HAS_AN_EFFECT)){
-        if(*p_efft < ACID_EFFECT_TIME) (*p_efft)++;
+        if(*p_efft > 0) (*p_efft)--;
         else{
             DELETE_PART(x, y);
             DELETE_PART(x-1, y);
@@ -353,9 +353,9 @@ bool BasicAcidicBehave(int x, int y){
         return TRUE;
     }
 
-    TYPE_DT r_type = GET_PART_TYPE(x+1, y);
+    part_type_t r_type = GET_PART_TYPE(x+1, y);
     if(CHECK_FLAG(typeFlagsList[r_type], ACID_HAS_AN_EFFECT)){ 
-        if(*p_efft < ACID_EFFECT_TIME) (*p_efft)++;
+        if(*p_efft > 0) (*p_efft)--;
         else{
             DELETE_PART(x, y);
             DELETE_PART(x+1, y);
@@ -363,9 +363,9 @@ bool BasicAcidicBehave(int x, int y){
         return TRUE;
     }
 
-    TYPE_DT u_type = GET_PART_TYPE(x, y-1);
+    part_type_t u_type = GET_PART_TYPE(x, y-1);
     if(CHECK_FLAG(typeFlagsList[u_type], ACID_HAS_AN_EFFECT)){ 
-        if(*p_efft < ACID_EFFECT_TIME) (*p_efft)++;
+        if(*p_efft > 0) (*p_efft)--;
         else{
             DELETE_PART(x, y);
             DELETE_PART(x, y-1);
@@ -377,15 +377,15 @@ bool BasicAcidicBehave(int x, int y){
 }
 
 bool BasicBurningBehave(int x, int y, PartType type){
-    TYPE_DT p_type = GET_PART_TYPE(x, y);
-    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
-    HEAT_DT p_heat = GET_PART_HEAT(x, y);
-    COLOR_DT *p_color = &GET_PART_COLOR(x, y);
-    PFLAGS_DT *p_pf = &GET_PART_PFLAGS(x, y);
+    part_type_t p_type = GET_PART_TYPE(x, y);
+    part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
+    part_heat_t p_heat = GET_PART_HEAT(x, y);
+    part_color_t *p_color = &GET_PART_COLOR(x, y);
+    part_pflags_t *p_pf = &GET_PART_PFLAGS(x, y);
 
     if(p_heat > 1000){
         // printf("works\n");
-        (*p_lifet)++;
+        (*p_lifet)--;
         if(*p_lifet > BURNING_COAL_LIFE_TIME){
             REPLACE_PART(x, y, SMOKE);
             return TRUE;
@@ -416,7 +416,7 @@ bool CoalBehave(int x, int y){
 
 bool WaterBehave(int x, int y)
 {
-    HEAT_DT p_heat = GET_PART_HEAT(x, y);
+    part_heat_t p_heat = GET_PART_HEAT(x, y);
     bool changed = FALSE;
     if(p_heat > WATER_TO_STEAM_TEMP){
         REPLACE_PART(x, y, STEAM);
@@ -447,9 +447,9 @@ bool AcidBehave(int x, int y)
 
 bool SteamBehave(int x, int y)
 {
-    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
-    (*p_lifet)++;
-    if(*p_lifet > STEAM_LIFE_TIME){DELETE_PART(x, y);}
+    part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
+    (*p_lifet)--;
+    if(*p_lifet == 0){DELETE_PART(x, y);}
 
     BasicGasBehave(x, y);
 
@@ -467,14 +467,14 @@ bool FungusBehave(int x, int y)
 
 bool FireBehave(int x, int y){
 
-    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
-    EFFECTT_DT *p_effectt = &GET_PART_EFFECT_T(x, y);
-    HEAT_DT p_heat = GET_PART_HEAT(x, y);
+    part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
+    part_effectt_t *p_effectt = &GET_PART_EFFECT_T(x, y);
+    part_heat_t p_heat = GET_PART_HEAT(x, y);
     
-    (*p_lifet)++;
-    (*p_effectt)++;
+    (*p_lifet)--;
+    (*p_effectt)--;
 
-    if((*p_effectt) > FIRE_EFFECT_TIME){
+    if((*p_effectt) == 0){
         if(rand() % 10 > 5){
             REPLACE_PART(x, y, SMOKE);
         } else {
@@ -483,7 +483,7 @@ bool FireBehave(int x, int y){
         return TRUE;
     }
 
-    if((*p_lifet) > FIRE_LIFE_TIME){
+    if((*p_lifet) == 0){
         if(rand() % 10 > 5){
             REPLACE_PART(x, y, SMOKE);
         } else {
@@ -507,9 +507,9 @@ bool FireBehave(int x, int y){
 
 bool SmokeBehave(int x, int y){
 
-    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
-    (*p_lifet)++;
-    if(*p_lifet > SMOKE_LIFE_TIME){DELETE_PART(x, y);}
+    part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
+    (*p_lifet)--;
+    if(*p_lifet == 0){DELETE_PART(x, y);}
 
     BasicGasBehave(x, y);
 
@@ -518,7 +518,7 @@ bool SmokeBehave(int x, int y){
 
 bool LavaBehave(int x, int y){
     
-    HEAT_DT p_heat = GET_PART_HEAT(x, y);
+    part_heat_t p_heat = GET_PART_HEAT(x, y);
     bool changed = FALSE;
 
     if(p_heat < 500){
@@ -569,8 +569,8 @@ bool PowderBehave(int x, int y){
 bool ObsidianBehave(int x, int y){
     
     bool changed = FALSE;
-    HEAT_DT p_heat = GET_PART_HEAT(x, y);
-    COLOR_DT* p_color = &GET_PART_COLOR(x, y);
+    part_heat_t p_heat = GET_PART_HEAT(x, y);
+    part_color_t* p_color = &GET_PART_COLOR(x, y);
 
     if(p_heat > 1500){
         ChangeColor(p_color, ORANGE);
@@ -583,9 +583,9 @@ bool ObsidianBehave(int x, int y){
 
 bool PhantomBehave(int x, int y){
     
-    LIFET_DT *p_lifet = &GET_PART_LIFE_T(x, y);
-    (*p_lifet)++;
-    if(*p_lifet > PHANTOM_LIFE_TIME){DELETE_PART(x, y);}
+    part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
+    (*p_lifet)--;
+    if(*p_lifet == 0){DELETE_PART(x, y);}
 
     return TRUE;
 }
@@ -594,10 +594,10 @@ bool SourceBehave(int x, int y){
     
     PartType genType = ACID;
 
-    TYPE_DT d_type = GET_PART_TYPE(x, y+1);
-    TYPE_DT u_type = GET_PART_TYPE(x, y-1);
-    TYPE_DT l_type = GET_PART_TYPE(x-1, y);
-    TYPE_DT r_type = GET_PART_TYPE(x+1, y);
+    part_type_t d_type = GET_PART_TYPE(x, y+1);
+    part_type_t u_type = GET_PART_TYPE(x, y-1);
+    part_type_t l_type = GET_PART_TYPE(x-1, y);
+    part_type_t r_type = GET_PART_TYPE(x+1, y);
 
     if(d_type == AIR){
         REPLACE_PART(x, y+1, genType);

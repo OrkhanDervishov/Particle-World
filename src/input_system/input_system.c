@@ -1,5 +1,10 @@
 #include "input_system.h"
 
+#include "particle_generation.h"
+
+vec2 startPosMouseHold;
+bool startMouseLeftHold = FALSE;
+bool startMouseRightHold = FALSE;
 
 void function1(ParticleGame* game);
 void function2(ParticleGame* game);
@@ -9,6 +14,9 @@ void ToggleGravity(ParticleGame* game);
 void BrushIncrease(ParticleGame* game);
 void BrushDecrease(ParticleGame* game);
 void TakeScreenShot(ParticleGame* game);
+void Explode(ParticleGame *game);
+void CreateLine(ParticleGame *game);
+void CreateSpell(ParticleGame* game);
 
 void (*MouseLeftEvent)(ParticleGame* game) = function1;
 void (*MouseRightEvent)(ParticleGame* game) = function2;
@@ -18,9 +26,28 @@ void (*TabButtonEvent)(ParticleGame* game) = TakeScreenShot;
 void (*cButtonEvent)(ParticleGame* game) = ClearFunction;
 void (*vButtonEvent)(ParticleGame* game) = ChangeParticleType;
 void (*xButtonEvent)(ParticleGame* game) = ToggleGravity;
-void (*zButtonEvent)(ParticleGame* game) = ClearFunction;
+void (*zButtonEvent)(ParticleGame* game) = CreateLine;
+void (*rButtonEvent)(ParticleGame* game) = Explode;
+void (*aButtonEvent)(ParticleGame* game) = CreateSpell;
 void (*oneButtonEvent)(ParticleGame* game) = BrushIncrease;
 void (*twoButtonEvent)(ParticleGame* game) = BrushDecrease;
+
+
+vec2 GetMousePos(){
+    vec2 mousepos;
+    SDL_GetMouseState(&mousepos.x, &mousepos.y);
+    return mousepos;
+}
+
+vec2 GetMousePosInCS(){
+    vec2 mousepos;
+    SDL_GetMouseState(&mousepos.x, &mousepos.y);
+    mousepos.x = ((mousepos.x) / DEFAULT_PARTICLE_SIZE);
+    mousepos.y = ((mousepos.y) / DEFAULT_PARTICLE_SIZE);
+    return mousepos;
+}
+
+
 
 void ProcessInput(ParticleGame* game)
 {
@@ -41,6 +68,16 @@ void ProcessInput(ParticleGame* game)
     while(SDL_PollEvent(&event)){
         if(event.type == SDL_QUIT) win->isrunning = 0;
         
+        if(event.type == SDL_MOUSEBUTTONUP){
+            if(event.button.button == SDL_BUTTON_LEFT){
+                startMouseLeftHold = FALSE;
+            }
+            // It does not work(at least for now)
+            if(event.button.button == SDL_BUTTON_RIGHT){
+                startMouseRightHold = FALSE;
+            }
+        }
+
         if(event.type == SDL_KEYUP){
             if(QUIT_BUTTON) win->isrunning = 0;
             
@@ -59,10 +96,14 @@ void ProcessInput(ParticleGame* game)
             if(HEATMAP_OF_BUTTON){
                 game->s_params.hm_mode = game->s_params.hm_mode ? 0 : 1;
             }
-            if(EXPLOSION_BUTTON){
-                int px = ((mx) / PART_SIDE);
-                int py = ((my) / PART_SIDE);
-                // Explosion(game->w, px, py, 3*RADIUS, 200, PHANTOM);
+            if(R_BUTTON){
+                rButtonEvent(game);
+            }
+            if(Z_BUTTON){
+                zButtonEvent(game);
+            }
+            if(A_BUTTON){
+                aButtonEvent(game);
             }
             if(BRUSH_INCREASE_BUTTON) oneButtonEvent(game);
             if(BRUSH_DECREASE_BUTTON) twoButtonEvent(game);
@@ -73,8 +114,6 @@ void ProcessInput(ParticleGame* game)
     }
 }
 
-
-
 void function1(ParticleGame* game){
     int mx, my;
     int state = SDL_GetMouseState(&mx, &my);
@@ -83,12 +122,19 @@ void function1(ParticleGame* game){
         int px = ((mx) / DEFAULT_PARTICLE_SIZE);
         int py = ((my) / DEFAULT_PARTICLE_SIZE);
 
-        int bs = game->g_params.brush_size;
-
-        // CreateParticlesRectCS(&(game->cs), px - bs, py - bs, 2*bs, 2*bs, game->g_params.selectedParticleType);
-        CreateParticlesCircleCS(&(game->cs), px, py, bs, game->g_params.selectedParticleType);
-        // AddDirtyRect(sim, px, py, RADIUS);
-    // }
+        if(startMouseLeftHold == FALSE){
+            startMouseLeftHold = TRUE;
+            startPosMouseHold = GetMousePosInCS();
+        } else {
+            vec2 endPosMouseHold = GetMousePosInCS();
+            CreationLineCS(
+                &(game->cs), startPosMouseHold.x, startPosMouseHold.y, 
+                endPosMouseHold.x, endPosMouseHold.y, 
+                game->g_params.brush_size, game->g_params.selectedParticleType
+            );
+            
+            startPosMouseHold = endPosMouseHold;
+        }
 }
 
 void function2(ParticleGame* game){
@@ -96,11 +142,18 @@ void function2(ParticleGame* game){
     int state = SDL_GetMouseState(&mx, &my);
     int px = ((mx) / DEFAULT_PARTICLE_SIZE);
     int py = ((my) / DEFAULT_PARTICLE_SIZE);
-
-    int bs = game->g_params.brush_size;
-    // DeleteParticlesRectCS(&(game->cs), px - bs, py - bs, 2*bs, 2*bs);
-    DeleteParticlesCircleCS(&(game->cs), px, py, bs);
-    // AddDirtyRect(sim, px, py, RADIUS);
+    
+    // Right button hold does not work(at least for now)
+    if(startMouseRightHold == FALSE){
+        startMouseRightHold = TRUE;
+        startPosMouseHold = GetMousePosInCS();
+    } else {
+        int bs = game->g_params.brush_size;
+        vec2 endPosMouseHold = GetMousePosInCS();
+        DeleteParticlesCircleCS(&(game->cs), px, py, bs);
+        
+        startPosMouseHold = endPosMouseHold;
+    }
 }
 
 
@@ -131,6 +184,62 @@ void BrushDecrease(ParticleGame* game){
 }
 
 void TakeScreenShot(ParticleGame* game){
-    SaveImagePNG(&(game->win->screen), "picture.png");
-    printf("worked\n");
+    Image img;
+    img.buffer = NULL;
+    create_image(&img, game->win->context.width, game->win->context.height);
+    fimage_to_image(game->win->context, img);
+    save_image_png(&img, "picture.png");
+}
+
+void Explode(ParticleGame *game){
+    int mx, my;
+    int state = SDL_GetMouseState(&mx, &my);
+    int px = ((mx) / DEFAULT_PARTICLE_SIZE);
+    int py = ((my) / DEFAULT_PARTICLE_SIZE);
+    Explosion(&(game->cs), px, py, game->g_params.brush_size*2, 1000, FIRE_SMOKE);
+}
+
+bool startLine = FALSE;
+Pos startPos;
+void mouse_points_draw_line(ParticleGame *game){
+    if(startLine == FALSE) return;
+    vec2 endPos = GetMousePosInCS();
+
+    Color color = {.rgba = 0xFF00FF00};
+    draw_line_f(
+        game->win->context, color, 
+        startPos.x*DEFAULT_PARTICLE_SIZE, startPos.y*DEFAULT_PARTICLE_SIZE, 
+        endPos.x*DEFAULT_PARTICLE_SIZE, endPos.y*DEFAULT_PARTICLE_SIZE
+    );
+}
+
+void CreateLine(ParticleGame *game){
+
+    if(startLine == FALSE){
+        startLine = TRUE;
+        startPos = GetMousePosInCS();
+        add_callback_pg(game, mouse_points_draw_line);
+    } else {
+        delete_callback_pg(game);
+        startLine = FALSE;
+        vec2 endPos = GetMousePosInCS();
+        CreationLineCS(
+            &(game->cs), startPos.x, startPos.y, endPos.x, endPos.y, 
+            game->g_params.brush_size, game->g_params.selectedParticleType
+        );
+    }
+}
+
+void CreateSpell(ParticleGame* game){
+    vec2 pos = GetMousePosInCS();
+
+    Image spellImage;
+    spellImage.buffer = NULL;
+    load_png(&spellImage, "./resources/spell2.png");
+    ParticleImage pimg = GenerateMagicFromImage(spellImage, DEFAULT_PARTICLE_SIZE/4, 0xFFFFFFFF);
+    
+    PutParticleImageCS(&(game->cs), pos.x - pimg.width/2, pos.y - pimg.height/2, 1, pimg);
+    
+    DestroyParticleImage(pimg);
+    delete_image(&spellImage);
 }

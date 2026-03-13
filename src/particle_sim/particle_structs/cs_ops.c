@@ -11,10 +11,17 @@ void CreateParticleCS(ChunkSpace *cs, int x, int y, int type){
     }
     CS_GET_STATE(cs, x, y) = P_FRESH;
     CS_GET_TYPE(cs, x, y) = type;
-    CS_GET_COLOR(cs, x, y) = typeColorList[WALL][0];
-    CS_GET_LIFE_T(cs, x, y) = 0;
-    CS_GET_EFFECT_T(cs, x, y) = 0;
-    CS_GET_HEAT(cs, x, y) = 1100;
+    CS_GET_COLOR(cs, x, y) = typeColorList[type][0];
+    CS_GET_LIFE_T(cs, x, y) = 500;
+    CS_GET_EFFECT_T(cs, x, y) = 500;
+    CS_GET_HEAT(cs, x, y) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;;
+}
+
+void CreateMagicParticleCS(ChunkSpace *cs, int x, int y, int type, part_color_t color, part_lifet_t life_t){
+    CS_GET_STATE(cs, x, y) = P_FRESH;
+    CS_GET_TYPE(cs, x, y) = type;
+    CS_GET_COLOR(cs, x, y) = color;
+    CS_GET_LIFE_T(cs, x, y) = life_t - rand()%250;
 }
 
 void DeleteParticleCS(ChunkSpace *cs, int x, int y){
@@ -62,6 +69,9 @@ void ReplaceParticleCS(ChunkSpace *cs, int x, int y, int type){
     CS_GET_STATE(cs, x, y) = P_FRESH;
     CS_GET_TYPE(cs, x, y) = type;
     CS_GET_COLOR(cs, x, y) = typeColorList[type][0];
+    CS_GET_LIFE_T(cs, x, y) = 500;
+    CS_GET_EFFECT_T(cs, x, y) = 500;
+    CS_GET_HEAT(cs, x, y) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;
 }
 
 
@@ -81,8 +91,8 @@ void CreateParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
         CS_GET_STATE(cs, j, i) = P_FRESH;
         CS_GET_TYPE(cs, j, i) = type;
         CS_GET_COLOR(cs, j, i) = typeColorList[type][0];
-        CS_GET_LIFE_T(cs, j, i) = 0;
-        CS_GET_EFFECT_T(cs, j, i) = 0;
+        CS_GET_LIFE_T(cs, j, i) = 500;
+        CS_GET_EFFECT_T(cs, j, i) = 500;
         CS_GET_HEAT(cs, j, i) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;
         // TODO: Init particle data.
     }
@@ -105,8 +115,8 @@ void CreateParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad, int type){
                     CS_GET_STATE(cs, j, i) = P_FRESH;
                     CS_GET_TYPE(cs, j, i) = type;
                     CS_GET_COLOR(cs, j, i) = typeColorList[type][0];
-                    CS_GET_LIFE_T(cs, j, i) = 0;
-                    CS_GET_EFFECT_T(cs, j, i) = 0;
+                    CS_GET_LIFE_T(cs, j, i) = 500 + rand()%100;
+                    CS_GET_EFFECT_T(cs, j, i) = 50 + rand()%50;
                     CS_GET_HEAT(cs, j, i) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;
                 }
             }
@@ -183,3 +193,150 @@ void ClearPartCS(ChunkSpace* cs){
 }
 
 //======================================================
+
+void Explosion(ChunkSpace *cs, int px, int py, int rad, int power, int replaceWith){
+    int x = rad - 1;
+    int y = 0;
+    int dx = 1;
+    int dy = 1;
+    int err = dx - (rad << 1);
+
+    while(x >= y){
+        int cx = x;
+        int cy = y;
+        DestructionLine(cs, px, py, px + cx, py + cy, power, replaceWith);
+        DestructionLine(cs, px, py, px + cy, py + cx, power, replaceWith);
+        DestructionLine(cs, px, py, px - cy, py + cx, power, replaceWith);
+        DestructionLine(cs, px, py, px - cx, py + cy, power, replaceWith);
+        DestructionLine(cs, px, py, px - cx, py - cy, power, replaceWith);
+        DestructionLine(cs, px, py, px - cy, py - cx, power, replaceWith);
+        DestructionLine(cs, px, py, px + cy, py - cx, power, replaceWith);
+        DestructionLine(cs, px, py, px + cx, py - cy, power, replaceWith);
+
+        if(err <= 0){
+            y++;
+            err += dy;
+            dy += 2;  
+        }
+        if(err > 0){
+            x--;
+            dx += 2;
+            err += dx - (rad << 1);
+        }
+    }
+}
+
+
+void DestructionLine(ChunkSpace *cs, int x0, int y0, int x1, int y1, int power, int replaceWith){
+    int dx = abs(x1 - x0);
+    int sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = y0 < y1 ? 1 : -1;
+    int error = dx + dy;
+    
+    while(1){
+        if(x0 >= 0 && y0 >= 0 && x0 < cs->width_p && y0 < cs->height_p){
+            if(GetTypeCS(cs, x0, y0) == WALL) break;
+            CreateParticleCS(cs, x0, y0, replaceWith);
+            SetHeatCS(cs, x0, y0, power * 10);
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * error;
+            if(e2 >= dy){
+                if(x0 == x1) break;
+                error += dy;
+                x0 += sx;
+            }
+            if(e2 <= dx){
+                if(y0 == y1) break;
+                error += dx;
+                y0 += sy;
+            }
+        }
+        else{
+            break;
+        }
+    }
+    // int dx = abs(px1 - px0);
+    // int sx = px0 < px1 ? 1 : -1;
+    // int dy = -abs(py1 - py0);
+    // int sy = py0 < py1 ? 1 : -1;
+    // int error = dx + dy;
+
+    // Color c;
+    // ChangeColor(&c, FIRE_COLORS);
+
+    // while (1) {
+    //     CreateReplaceParticle(sim, px0, py0, &c, FIRE);
+
+    //     if (px0 == px1 && py0 == py1) break;
+
+    //     int e2 = 2 * error;
+
+    //     if (e2 >= dy) {
+    //         error += dy;
+    //         px0 += sx;
+    //     }
+
+    //     if (e2 <= dx) {
+    //         error += dx;
+    //         py0 += sy;
+    //     }
+    // }
+}
+
+
+void CreationLineCS(ChunkSpace* cs, int x0, int y0, int x1, int y1, int width, int type){
+
+    int dx = abs(x1 - x0);
+    int sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = y0 < y1 ? 1 : -1;
+    int error = dx + dy;
+
+    while(1){
+        if(x0 >= 0 && y0 >= 0 && x0 < cs->width_p && y0 < cs->height_p){
+            // CreateParticleCS(cs, x0, y0, type);
+            CreateParticlesCircleCS(cs, x0, y0, width, type);
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * error;
+            if(e2 >= dy){
+                if(x0 == x1) break;
+                error += dy;
+                x0 += sx;
+            }
+            if(e2 <= dx){
+                if(y0 == y1) break;
+                error += dx;
+                y0 += sy;
+            }
+        }
+        else{
+            break;
+        }
+    }
+}
+
+
+void PutParticleImageCS(ChunkSpace* cs, int x, int y, int scale, ParticleImage pimg){
+    
+    Rect rect = {.x = x, .y = y, .w = pimg.width, .h = pimg.height};
+    rect = CorrectRect(rect, cs->width_p, cs->height_p);
+    rect.x = 0;
+    rect.y = 0;
+    int oldx = x, oldy = y;
+    int subx = 0, suby = 0;
+    if(x < 0){
+        subx = abs(x);
+        x = 0;
+    }
+    if(y < 0){
+        suby = abs(y);
+        y = 0;
+    }
+
+    for(int i = rect.y + suby; i < rect.h; i++)
+    for(int j = rect.x + subx; j < rect.w; j++){
+        if(pimg.types[i*pimg.width + j] == EMPTY) continue;
+        CreateMagicParticleCS(cs, j+x-subx, i+y-suby, pimg.types[i*pimg.width + j], pimg.colors[i*pimg.width + j], 500);
+    }
+}

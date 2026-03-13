@@ -123,3 +123,16 @@ void SetSimEndpointsChunkSpace(ChunkSpace* cs, int startX, int endX, int startY,
     cs->simStartY = startY;
     cs->simEndY = endY;
 }
+
+
+// STATE_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// TYPE_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// XVEL_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// YVEL_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// COLOR_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// EFFECTT_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// LIFET_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// HEAT_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// PFLAGS_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// DURABILITY_DT GetTypeCS(ChunkSpace* cs, int x, int y);
+// CUSTOM_DT GetTypeCS(ChunkSpace* cs, int x, int y);

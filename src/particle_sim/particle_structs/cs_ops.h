@@ -18,4 +18,10 @@ void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad);
 void WallBoxCS(ChunkSpace *cs);
 void ClearFullCS(ChunkSpace* cs);
 
+void Explosion(ChunkSpace *cs, int px, int py, int rad, int power, int replaceWith);
+void DestructionLine(ChunkSpace *cs, int x0, int y0, int x1, int y1, int power, int replaceWith);
+
+void CreationLineCS(ChunkSpace* cs, int x0, int y0, int x1, int y1, int width, int type);
+void PutParticleImageCS(ChunkSpace* cs, int x, int y, int scale, ParticleImage pimg);
+
 #endif

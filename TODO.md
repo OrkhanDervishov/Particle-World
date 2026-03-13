@@ -11,9 +11,9 @@
 2. Add powder(1/2)
 3. Improve density checking
 4. Add some kind of gui(1/2)
-5. Add letters
-6. Use SDL_Surface for drawing
-7. Add chunks
+5. ~~Add letters~~
+6. ~~Use SDL_Surface for drawing~~
+7. ~~Add chunks~~
 8. Add dirty rectangles
 9. Add light
 10. Read particle data from a file

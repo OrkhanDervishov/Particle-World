@@ -7,19 +7,6 @@
 
 
 
-#define STATE_DT        byte
-#define TYPE_DT         int32_t
-#define XVEL_DT         uint8_t
-#define YVEL_DT         uint8_t
-#define COLOR_DT        Color
-#define EFFECTT_DT      uint16_t
-#define LIFET_DT        uint16_t
-#define HEAT_DT         int32_t
-#define PFLAGS_DT       uint8_t
-#define DURABILITY_DT   uint32_t
-#define CUSTOM_DT       void*
-
-
 typedef struct{
     // "chunk_world_pos" Position of a chunk in the game world and 
     // "chunk_pos" its position in the array of loaded chunks
@@ -36,17 +23,17 @@ typedef struct{
     // Chunk particle data
     void*           data_block;
     // Particle attribute arrays
-    STATE_DT        *state;
-    TYPE_DT         *type;
-    XVEL_DT         *xvel;
-    YVEL_DT         *yvel;
-    COLOR_DT        *c;
-    EFFECTT_DT      *effect_t;
-    LIFET_DT        *life_t;
-    HEAT_DT         *heat;
-    PFLAGS_DT       *pflags;
-    DURABILITY_DT   *durability;
-    CUSTOM_DT       *custom;
+    part_state_t        *state;
+    part_type_t         *type;
+    part_xvel_t         *xvel;
+    part_yvel_t         *yvel;
+    part_color_t        *c;
+    part_effectt_t      *effect_t;
+    part_lifet_t        *life_t;
+    part_heat_t         *heat;
+    part_pflags_t       *pflags;
+    part_durab_t        *durability;
+    part_custom_t       *custom;
 } Chunk;
 
 // #define CHUNK_GET_PARTICLE(c, x, y)      (c)->pmap.map[y][x]

@@ -4,8 +4,8 @@
 #include "chunk.h"
 #include "region.h"
 
-#define DEFAULT_CS_WIDTH 4
-#define DEFAULT_CS_HEIGHT 2
+#define DEFAULT_CS_WIDTH 2
+#define DEFAULT_CS_HEIGHT 1
 
 #define CS_WIDTH    DEFAULT_CS_WIDTH
 #define CS_HEIGHT   DEFAULT_CS_HEIGHT
@@ -96,6 +96,99 @@ typedef struct{
 */
 
 // TODO: Implement functions for local get.
+
+// Getters
+static inline part_state_t GetStateCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_STATE(cs, x, y);
+}
+
+static inline part_type_t GetTypeCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_TYPE(cs, x, y);
+}
+
+static inline part_xvel_t GetXVelCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_XVEL(cs, x, y);
+}
+
+static inline part_yvel_t GetYVelCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_YVEL(cs, x, y);
+}
+
+static inline part_color_t GetColorCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_COLOR(cs, x, y);
+}
+
+static inline part_effectt_t GetEffectTimeCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_EFFECT_T(cs, x, y);
+}
+
+static inline part_lifet_t GetLifeTimeCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_LIFE_T(cs, x, y);
+}
+
+static inline part_heat_t GetHeatCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_HEAT(cs, x, y);
+}
+
+static inline part_pflags_t GetParticleFlagsCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_PFLAGS(cs, x, y);
+}
+
+static inline part_durab_t GetDurabilityCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_DURAB(cs, x, y);
+}
+
+static inline part_custom_t GetCustomCS(ChunkSpace* cs, int x, int y){
+    return CS_GET_CUSTOM(cs, x, y);
+}
+
+
+
+// Setters
+static inline void SetStateCS(ChunkSpace* cs, int x, int y, part_state_t state){
+    CS_GET_STATE(cs, x, y) = state;
+}
+
+static inline void SetTypeCS(ChunkSpace* cs, int x, int y, part_type_t type){
+    CS_GET_TYPE(cs, x, y) = type;
+}
+
+static inline void etXVelCS(ChunkSpace* cs, int x, int y, part_xvel_t xvel){
+    CS_GET_XVEL(cs, x, y) = xvel;
+}
+
+static inline void SetYVelCS(ChunkSpace* cs, int x, int y, part_yvel_t yvel){
+    CS_GET_YVEL(cs, x, y) = yvel;
+}
+
+static inline void SetColorCS(ChunkSpace* cs, int x, int y, part_color_t color){
+    CS_GET_COLOR(cs, x, y) = color;
+}
+
+static inline void SetEffectTimeCS(ChunkSpace* cs, int x, int y, part_effectt_t et){
+    CS_GET_EFFECT_T(cs, x, y) = et;
+}
+
+static inline void SetLifeTimeCS(ChunkSpace* cs, int x, int y, part_lifet_t lt){
+    CS_GET_LIFE_T(cs, x, y) = lt;
+}
+
+static inline void SetHeatCS(ChunkSpace* cs, int x, int y, part_heat_t heat){
+    CS_GET_HEAT(cs, x, y) = heat;
+}
+
+static inline void SetParticleFlagsCS(ChunkSpace* cs, int x, int y, part_pflags_t pf){
+    CS_GET_PFLAGS(cs, x, y) = pf;
+}
+
+static inline void SetDurabilityCS(ChunkSpace* cs, int x, int y, part_durab_t durab){
+    CS_GET_DURAB(cs, x, y) = durab;
+}
+
+static inline void SetCustomCS(ChunkSpace* cs, int x, int y, part_custom_t value){
+    CS_GET_CUSTOM(cs, x, y) = value;
+}
+
 
 //==============================================================
 

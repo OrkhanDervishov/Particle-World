@@ -28,8 +28,8 @@
 typedef struct{
     bool paused;
     int delay;
-    bool frameKeepEnabled;
-    int frameKeep;
+    bool frameLockEnabled;
+    int frameLock;
 
     Color bg_color;
     bool hm_mode;
@@ -40,11 +40,14 @@ typedef struct{
     int selectedParticleType;
 } GameParameters;
 
-typedef struct{
+#define CB_COUNT_MAX 100
+typedef struct ParticleGame{
     Window* win;
     ChunkSpace cs;
     GameSystemParameters s_params;
     GameParameters g_params;
+    int cbCount;
+    void (*callbacks[CB_COUNT_MAX])(struct ParticleGame* game);
 } ParticleGame;
 
 
@@ -56,6 +59,10 @@ typedef struct{
 
 int CreateParticleGame(ParticleGame** game);
 void DeleteParticleGame(ParticleGame** game);
+
+void add_callback_pg(ParticleGame* game, void (*callback)(ParticleGame* game));
+void delete_callback_pg(ParticleGame* game);
+// void call_all_callbacks(ParticleGame* game);
 
 int BuildLabEnv(ParticleGame* game);
 

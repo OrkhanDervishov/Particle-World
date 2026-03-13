@@ -1,6 +1,7 @@
 #include "renderer_sw.h"
 
 void ClearWindow(Window *window, Color color){
+    // printf("works1\n");
     SDL_FillRect(
         SDL_GetWindowSurface(window->window), NULL, 
         SDL_MapRGB(
@@ -8,4 +9,5 @@ void ClearWindow(Window *window, Color color){
             color.r, color.g, color.b
         )
     );
+    // printf("works2\n");
 }

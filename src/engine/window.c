@@ -33,15 +33,15 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
         return 1;
     }
     
-    // printf("works\n");
     // To manipulate SDL's window surface through custom image object
     Surface *surf = SDL_GetWindowSurface((*win)->window);
-    printf("w:%d h:%d\n", w, h);
-    printf("surf_w:%d surf_h:%d\n", surf->w, surf->h);
-    (*win)->screen.width = surf->w;
-    (*win)->screen.height = surf->h;
-    (*win)->screen.buffer = (Color*)surf->pixels;
-    // printf("works1\n");
+    (*win)->context.width = surf->w;
+    (*win)->context.height = surf->h;
+    (*win)->context.format = create_format(0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+    (*win)->context.buffer = surf->pixels;
+
+
+
 
     // (*win)->renderer = SDL_CreateRenderer((*win)->window, -1, SDL_RENDERER_SOFTWARE);
     // if((*win)->renderer == NULL){

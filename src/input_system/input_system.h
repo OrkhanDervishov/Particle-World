@@ -11,6 +11,8 @@
 #define X_BUTTON (event.key.keysym.sym == SDLK_x)
 #define V_BUTTON (event.key.keysym.sym == SDLK_v)
 #define R_BUTTON (event.key.keysym.sym == SDLK_r)
+#define Z_BUTTON (event.key.keysym.sym == SDLK_z)
+#define A_BUTTON (event.key.keysym.sym == SDLK_a)
 #define BUTTON_1 (event.key.keysym.sym == SDLK_1)
 #define BUTTON_2 (event.key.keysym.sym == SDLK_2)
 #define BUTTON_3 (event.key.keysym.sym == SDLK_3)

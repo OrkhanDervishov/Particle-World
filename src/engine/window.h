@@ -21,7 +21,7 @@ typedef struct{
     int h;
     char title[MAX_TITLE_LEN];
     bool isrunning;
-    Image screen;
+    FormatImage context;
     SDL_Window* window;
     SDL_Renderer* renderer;
 } Window;

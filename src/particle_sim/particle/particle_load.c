@@ -110,7 +110,7 @@ void InitParticles(){
     Color c;
     ChangeColor(&c, YELLOW);
     AddType("sand", SAND, c, c, 700, SAND_FLAGS, 0x00, SandBehave, SAND_HT, 100);
-    ChangeColor(&c, BLUE);
+    ChangeColor(&c, WATER_COLORS);
     AddType("water", WATER, c, c, 200, WATER_FLAGS, 0x00, WaterBehave, WATER_HT, 100);
     ChangeColor(&c, LIGHT_BLUE);
     AddType("steam", STEAM, c, c, 40, STEAM_FLAGS, 0x00, SteamBehave, STEAM_HT, 100);
