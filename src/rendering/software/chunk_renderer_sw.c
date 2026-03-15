@@ -101,11 +101,32 @@ Surface* ImageToSurfaceRGBA(Image* img){
 
 //###########################################
 
-void ShowChunkSW(Window* window, Chunk* chunk, int x, int y){
-    Rect rect = {.x = x, .y = y, .w = chunk->w, .h = chunk->h};
-    
-    Color color = {.rgba = 0xFFFFFF00};
+void ShowChunkSW(Window* window, Chunk* chunk, int x, int y, Color color){
+    Rect rect = {.x = x, .y = y, .w = chunk->w*DEFAULT_PARTICLE_SIZE, .h = chunk->h*DEFAULT_PARTICLE_SIZE};
     draw_rect_f(window->context, rect, color, 1);
+    // draw_filled_rect_f(window->context, rect, color);
+}
+
+void ShowChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
+
+    Color green = {.rgba = 0xFF00FF00};
+    Color yellow = {.rgba = 0xFF00FFFF};
+    bool row_toggle = FALSE;
+    bool col_toggle = FALSE;
+    for(int i = 0; i < cs->height_c; i++){
+        row_toggle = row_toggle ? FALSE : TRUE;
+        col_toggle = row_toggle;
+        for(int j = 0; j < cs->width_c; j++){
+            col_toggle = col_toggle ? FALSE : TRUE;
+            Color color = col_toggle ? green : yellow;
+            ShowChunkSW(
+                window, &cs->chunks[i*cs->width_c + j], 
+                x + j*reqChunkWidth*reqParticleSize, 
+                y + i*reqChunkHeight*reqParticleSize,
+                color
+            );
+        }
+    }
 }
 
 // void ShowChunkSpaceSW(Window* window, Chunk* chunk, int x, int y)

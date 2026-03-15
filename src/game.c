@@ -12,8 +12,9 @@ int drawlines = 0;
 
 void Guide(ParticleGame* game, Color textColor);
 void call_all_callbacks(ParticleGame* game){
-    for(int i = 0; i < game->cbCount; i++){
-        game->callbacks[i](game);
+    for(int i = 0; i < CB_COUNT_MAX; i++){
+        if(game->callbacks[i] != NULL)
+            game->callbacks[i](game);
     }
 }
 
@@ -30,51 +31,67 @@ int RunParticleGame(ParticleGame* game){
     clock_t draw_start = 0, draw_end = 0;
     clock_t sim_start = 0, sim_end = 0;
     clock_t simh_start = 0, simh_end = 0;
-    // Loop
-
-    Color buttonColor = {.rgba = 0xFF0000FF};
-    vec2 pos = {0, 0};
-    vec2 sizes = {50, 25};
-    Button* button;
-    CreateButton(&button, "Hello", buttonColor, TRUE, pos, sizes, NULL);
-    // PrintButtonParams(button);
-
-    // Create Objects
-    Image spellImage;
-    spellImage.buffer = NULL;
-    load_png(&spellImage, "./resources/spell2.png");
-    ParticleImage pimg = GenerateMagicFromImage(spellImage, DEFAULT_PARTICLE_SIZE, 0xFFFFFFFF);
     
-
+    Color buttonColor = {.rgba = 0xFF0000FF};
+    Color gbColor = {.rgba = 0xFF808080};
+    vec2 pos = {10, 10};
+    vec2 gb_pos = {0, 0};
+    vec2 sizes = {50, 25};
+    vec2 gb_sizes = {150, 80};
+    Button* button;
+    GuiBox* gb;
+    CreateButton(&button, "Hello", buttonColor, TRUE, pos, sizes, NULL);
+    CreateGuiBox(&gb, "gui_box", gbColor, 0, FALSE, gb_pos, gb_sizes);
+    AddButton(gb, button);
+    // PrintGuiBoxParams(gb);
+    // PrintButtonParams(button);
+    GuiElement elem;
+    elem.type = GUI_BOX;
+    elem.element = (void*)gb;
+    
+    // Create Objects
+    
+    
     char fpstext[64];
     char typetext[64];
     char brushtext[64];
-
+    
     SetChunkSpace(&(game->cs));
+    InitGuiRenderer();
     StartChunkRendererSW(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
-    Color textColor = {.r=255, .g=0, .b=0, .a=255};
     InitBasicTextRenderer();
+    Color textColor = {.r=255, .g=0, .b=0, .a=255};
+    // Loop
     while(win->isrunning){
         iter_start = clock();
         start = clock();
         
         ProcessInput(game);
-
+        
         // Rendering
         fill_f(win->context, game->s_params.bg_color);;
         draw_start = GetTimeNano()/1000;
         DrawChunkSpaceSW(win, cs, 0, 0);
         
+
+        // Call ParticleGame callbacks
+        call_all_callbacks(game);
+        
+        Color mouse_color = {.rgba = 0xFFFFFFFF};
+        int mx, my;
+        int state = SDL_GetMouseState(&mx, &my);
+        draw_circle_f(win->context, mx, my, game->g_params.brush_size*DEFAULT_PARTICLE_SIZE, mouse_color);
+
         // RenderText
         BasicTextRender(game->win, fpstext,     10, 10, 2, textColor);  
         BasicTextRender(game->win, typetext,    10, 30, 2, textColor);  
         BasicTextRender(game->win, brushtext,   10, 50, 2, textColor);  
         Guide(game, textColor);
         
-        // Call ParticleGame callbacks
-        call_all_callbacks(game);
-        
+
+        DrawGuiElement(win, &elem, 10, 300);
         // DrawButton(win, button, 10, 500);
+        // DrawGuiBox(win, gb, 10, 300);
         SDL_UpdateWindowSurface(win->window);
         draw_end = GetTimeNano()/1000;
         
@@ -136,10 +153,9 @@ int RunParticleGame(ParticleGame* game){
     EndChunkRendererSW();
     
     // Delete Objects
-    DestroyParticleImage(pimg);
-    delete_image(&spellImage);
 
     DeleteButton(&button);
+    DeleteGuiBox(&gb);
 
     printf("game running: %d\n", game->win->isrunning);
     return 0;

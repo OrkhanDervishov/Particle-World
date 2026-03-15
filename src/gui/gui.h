@@ -16,7 +16,7 @@ typedef struct
 } GuiElement;
 
 
-#define MAX_GUIBOX_ELEMENTS 32
+#define MAX_GUIBOX_ELEMENTS 16
 typedef struct{
     char* name;
     Color color;
@@ -26,7 +26,7 @@ typedef struct{
     bool element_draw;
     vec2 pos;
     vec2 sizes;
-    int8_t elemCount;
+    int8_t elem_count;
     GuiElement* elements;
 } GuiBox;
 
@@ -42,10 +42,11 @@ typedef struct{
 } Button;
 
 void CreateGuiBox(
-    GuiBox* box, const char* name, Color color, int8_t layer, 
+    GuiBox** box, const char* name, Color color, int8_t layer, 
     bool bg_draw, vec2 pos, vec2 sizes
 );
-void DeleteGuiBox(GuiBox* box);
+void PrintGuiBoxParams(GuiBox* box);
+void DeleteGuiBox(GuiBox** box);
 void CreateButton(
     Button** button, const char *text, Color color,
     bool bg_draw, vec2 pos, vec2 sizes, void* func

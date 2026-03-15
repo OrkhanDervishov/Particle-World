@@ -52,7 +52,7 @@ all: main
 	./main
 
 all2: main2
-	./main
+	./main2
 
 
 

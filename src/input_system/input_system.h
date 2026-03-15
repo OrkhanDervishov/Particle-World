@@ -21,6 +21,7 @@
 #define F_BUTTON (event.key.keysym.sym == SDLK_f)
 #define P_BUTTON (event.key.keysym.sym == SDLK_p)
 #define TAB_BUTTON (event.key.keysym.sym == SDLK_TAB)
+#define SPACE_BUTTON (event.key.keysym.sym == SDLK_SPACE)
 
 
 #define PARTICLE_GENERATION_BUTTON      LEFT_BUTTON

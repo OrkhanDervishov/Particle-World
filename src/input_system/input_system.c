@@ -17,11 +17,12 @@ void TakeScreenShot(ParticleGame* game);
 void Explode(ParticleGame *game);
 void CreateLine(ParticleGame *game);
 void CreateSpell(ParticleGame* game);
+void ShowChunks(ParticleGame* game);
 
 void (*MouseLeftEvent)(ParticleGame* game) = function1;
 void (*MouseRightEvent)(ParticleGame* game) = function2;
 void (*MouseScrollEvent)(ParticleGame* game) = NULL;
-void (*SpaceButtonEvent)(ParticleGame* game) = TakeScreenShot;
+void (*SpaceButtonEvent)(ParticleGame* game) = ShowChunks;
 void (*TabButtonEvent)(ParticleGame* game) = TakeScreenShot;
 void (*cButtonEvent)(ParticleGame* game) = ClearFunction;
 void (*vButtonEvent)(ParticleGame* game) = ChangeParticleType;
@@ -110,6 +111,7 @@ void ProcessInput(ParticleGame* game)
             if(DELAY_INCREASE_BUTTON) SpeedUpParticleSimulator();
             if(DELAY_DECREASE_BUTTON) SlowDownParticleSimulator();
             if(TAB_BUTTON) TabButtonEvent(game); 
+            if(SPACE_BUTTON) SpaceButtonEvent(game);
         }
     }
 }
@@ -184,11 +186,24 @@ void BrushDecrease(ParticleGame* game){
 }
 
 void TakeScreenShot(ParticleGame* game){
-    Image img;
+    Image img;  
     img.buffer = NULL;
     create_image(&img, game->win->context.width, game->win->context.height);
     fimage_to_image(game->win->context, img);
-    save_image_png(&img, "picture.png");
+    char path[64];
+    // char filename[64];
+    char path_log[96];
+    time_t t;
+    t = time(&t);
+    snprintf(path, 64, "./screenshots/%d.png", t);
+    save_image_png(&img, path);
+    // printf("works\n");
+    // Color info_color = {.rgba = INFO_TEXT_COLOR};
+    // Color message_color = {.rgba = 0xFFFFFFFF};
+    // snprintf(path_log, 96, "image saved in %s", path);
+    // BasicTextRender(game->win, "[INFO] ", 10, 300, 2, message_color);
+    // BasicTextRender(game->win, path_log, 40, 300, 2, message_color);
+    // printf("%s\n", path_log);
 }
 
 void Explode(ParticleGame *game){
@@ -213,14 +228,16 @@ void mouse_points_draw_line(ParticleGame *game){
     );
 }
 
+int cb_index_line = -1;
 void CreateLine(ParticleGame *game){
 
     if(startLine == FALSE){
         startLine = TRUE;
         startPos = GetMousePosInCS();
-        add_callback_pg(game, mouse_points_draw_line);
+        cb_index_line = add_callback_pg(game, mouse_points_draw_line);
     } else {
-        delete_callback_pg(game);
+        delete_callback_pg(game, cb_index_line);
+        cb_index_line = -1;
         startLine = FALSE;
         vec2 endPos = GetMousePosInCS();
         CreationLineCS(
@@ -242,4 +259,23 @@ void CreateSpell(ParticleGame* game){
     
     DestroyParticleImage(pimg);
     delete_image(&spellImage);
+}
+
+bool chunk_show = FALSE;
+ParticleGame* this_game;
+void show_chunks(){
+    ShowChunkSpaceSW(this_game->win, &(this_game->cs), 0, 0);
+}
+
+int cb_index_chunks = -1;
+void ShowChunks(ParticleGame* game){
+    if(chunk_show){
+        delete_callback_pg(game, cb_index_chunks);
+        cb_index_chunks = -1;
+        chunk_show = FALSE;
+    } else {
+        this_game = game;
+        cb_index_chunks = add_callback_pg(game, show_chunks);
+        chunk_show = TRUE;
+    }
 }

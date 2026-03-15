@@ -70,28 +70,6 @@ typedef struct{
 } Circle;
 
 typedef enum{
-    COLOR_RGBA,
-    COLOR_BGRA
-} ColorFormat;
-
-typedef union{
-    struct{
-        uint8_t r, g, b, a;
-    };
-    uint32_t rgba;
-} ColorRGBA;
-
-typedef union{
-    struct{
-        uint8_t b, g, r, a;
-    };
-    // uint32_t rgba;
-    uint32_t bgra;
-} ColorBGRA;
-
-typedef ColorRGBA Color;
-
-typedef enum{
     WHITE,
     BLACK,
     RED,

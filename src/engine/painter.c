@@ -9,17 +9,6 @@
 
 // Basics
 //##################################################################
-Color get_random_color(){
-    Color c = {
-        .r = rand() % 256,
-        .g = rand() % 256,
-        .b = rand() % 256,
-        .a = 255
-    };
-
-    return c;
-}
-
 
 MyPixelFormat create_format(int r_mask, int g_mask, int b_mask, int a_mask){
     MyPixelFormat format;
@@ -157,12 +146,6 @@ int fimage_to_image(FormatImage fimg, Image img){
     for(int i = 0; i < fimg.height; i++)
     for(int j = 0; j < fimg.width; j++){
         int fcolor = fimg.buffer[i * fimg.width + j];
-        // Color color = {
-        //     .r = fcolor >> fimg.format.r_shift,
-        //     .g = fcolor >> fimg.format.g_shift,
-        //     .b = fcolor >> fimg.format.b_shift,
-        //     .a = fcolor >> fimg.format.a_shift
-        // };
         img.buffer[i * img.width + j] = (Color)GET_COLOR(fcolor, fimg.format);
     }
 
@@ -271,38 +254,65 @@ void put_pixel_f(FormatImage fimg, int x, int y, Color color){
 }
 
 
+#define PUT_PIXEL_ON_CIRCLE(img, x, y, color)   if((x) >= 0 && (x) < (img).width && (y) >= 0 && (y) < (img).height){ \
+                                                    IMG_GET((img), (x), (y)) = (color); \
+                                                }
+
 // TODO: Add fill option
-void draw_circle(Image img, int x, int y, int radius, Color color){
-    x = radius - 1;
-    y = 0;
-    int dx = 1;
-    int dy = 1;
-    int err = dx - (radius << 1);
+void draw_circle(Image img, int cx, int cy, int radius, Color color){
+    int x = 0;
+    int y = -radius;
+    int p = -radius;
 
     while(x >= y){
-        int cx = x;
-        int cy = y;
-        // PutPixel(img, x + rad, y + rad, color);
-        // PutPixel(img, x + rad, y + rad, color);
-        // PutPixel(img, x + rad, y + rad, color);
-        // PutPixel(img, x + rad, y + rad, color);
-        // PutPixel(img, x + rad, y + rad, color);
-        // PutPixel(img, x + rad, y + rad, color);
-        // PutPixel(img, x + rad, y + rad, color);
-        // PutPixel(img, x + rad, y + rad, color);
-
-        if(err <= 0){
+        if(p > 0){
             y++;
-            err += dy;
-            dy += 2;  
+            p += 2*(x + y) + 1;
+        } else {
+            p += 2*x + 1;
         }
-        if(err > 0){
-            x--;
-            dx += 2;
-            err += dx - (radius << 1);
-        }
+
+        PUT_PIXEL_ON_CIRCLE(img, cx + x, cy + y, color)
+        PUT_PIXEL_ON_CIRCLE(img, cx - x, cy + y, color)
+        PUT_PIXEL_ON_CIRCLE(img, cx + x, cy - y, color)
+        PUT_PIXEL_ON_CIRCLE(img, cx - x, cy - y, color)
+        PUT_PIXEL_ON_CIRCLE(img, cx + y, cy + x, color)
+        PUT_PIXEL_ON_CIRCLE(img, cx + y, cy - x, color)
+        PUT_PIXEL_ON_CIRCLE(img, cx - y, cy + x, color)
+        PUT_PIXEL_ON_CIRCLE(img, cx - y, cy - x, color)
+
+        x++;
     }
 }
+
+void draw_circle_f(FormatImage fimg, int cx, int cy, int radius, Color color){
+    int x = 0;
+    int y = -radius;
+    int p = -radius;
+    int fcolor = GET_FCOLOR(color, fimg.format);
+
+    while(x < -y){
+        if(p > 0){
+            y++;
+            p += 2*(x + y) + 1;
+        } else {
+            p += 2*x + 1;
+        }
+        
+        PUT_PIXEL_ON_CIRCLE(fimg, cx + x, cy + y, fcolor)
+        PUT_PIXEL_ON_CIRCLE(fimg, cx - x, cy + y, fcolor)
+        PUT_PIXEL_ON_CIRCLE(fimg, cx + x, cy - y, fcolor)
+        PUT_PIXEL_ON_CIRCLE(fimg, cx - x, cy - y, fcolor)
+        PUT_PIXEL_ON_CIRCLE(fimg, cx + y, cy + x, fcolor)
+        PUT_PIXEL_ON_CIRCLE(fimg, cx + y, cy - x, fcolor)
+        PUT_PIXEL_ON_CIRCLE(fimg, cx - y, cy + x, fcolor)
+        PUT_PIXEL_ON_CIRCLE(fimg, cx - y, cy - x, fcolor)
+        
+        x++;
+    }
+}
+#undef PUT_PIXEL_ON_CIRCLE
+
 
 void draw_rect(Image img, Rect rect, Color color, int tickness){
     rect = CorrectRect(rect, img.width, img.height);

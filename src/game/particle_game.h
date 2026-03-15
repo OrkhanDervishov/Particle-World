@@ -60,8 +60,8 @@ typedef struct ParticleGame{
 int CreateParticleGame(ParticleGame** game);
 void DeleteParticleGame(ParticleGame** game);
 
-void add_callback_pg(ParticleGame* game, void (*callback)(ParticleGame* game));
-void delete_callback_pg(ParticleGame* game);
+int add_callback_pg(ParticleGame* game, void (*callback)(ParticleGame* game));
+void delete_callback_pg(ParticleGame* game, int cb_index);
 // void call_all_callbacks(ParticleGame* game);
 
 int BuildLabEnv(ParticleGame* game);

@@ -25,6 +25,10 @@ int CreateParticleGame(ParticleGame** game){
     InitParticles();
     srand(time(NULL));
     
+
+    for(int i = 0; i < CB_COUNT_MAX; i++){
+        (*game)->callbacks[i] = NULL;
+    }
     (*game)->cbCount = 0;
 
     (*game)->s_params.bg_color.rgba = 0xFF181818;
@@ -46,19 +50,50 @@ void DeleteParticleGame(ParticleGame** game){
     free(*game);
 }
 
-void add_callback_pg(ParticleGame* game, void (*callback)(ParticleGame* game)){
+int add_callback_pg(ParticleGame* game, void (*callback)(ParticleGame* game)){
     if(game->cbCount >= CB_COUNT_MAX){
         game->cbCount = CB_COUNT_MAX;
         printf("callback array is filled up\n");
+        return -1;
     }
-    game->callbacks[game->cbCount++] = callback; 
+
+    int index = -1;
+    for(int i = 0; i < CB_COUNT_MAX; i++){
+        if(game->callbacks[i] == NULL){
+            game->callbacks[i] = callback;
+            index = i;
+            game->cbCount++;
+            break;
+        }
+    }
+
+    return index;
 }
 
-void delete_callback_pg(ParticleGame* game){
+int cmp_greater(const void* a, const void* b){
+    return *(int*)a - *(int*)b;
+}
+
+
+#define INF 0x3F3F3F3F
+void delete_callback_pg(ParticleGame* game, int cb_index){
     if(game->cbCount <= 0){
         game->cbCount = 0;
         printf("callback array is empty\n");
+        return;
     }
+
+    if(cb_index < 0){
+        return;
+    }
+
+    if(cb_index >= CB_COUNT_MAX){
+        cb_index = CB_COUNT_MAX - 1;
+        printf("callback array invalid index\n");
+        return;
+    }
+
+    game->callbacks[cb_index] = NULL;
     game->cbCount--;
 }
 

@@ -12,8 +12,18 @@
 #define IMG_GET(img, x, y) (img).buffer[(y)*(img).width + (x)]
 // #define COLOR_ALPHA
 
-#define DEFAULT_IMAGE_WIDTH 1920
-#define DEFAULT_IMAGE_HEIGHT 1080
+#define DEFAULT_IMAGE_WIDTH 720
+#define DEFAULT_IMAGE_HEIGHT 480
+
+
+typedef union{
+    struct{
+        uint8_t r, g, b, a;
+    };
+    uint32_t rgba;
+} ColorRGBA;
+
+typedef ColorRGBA Color;
 
 typedef struct{
     int r_mask;
@@ -75,7 +85,38 @@ typedef struct{
                                             .a = 255                                                                             \
                                             }
 
-Color get_random_color();
+#define GET_RANDOM_COLOR    (Color){                \
+                                .r = rand() & 255,  \
+                                .g = rand() & 255,  \
+                                .b = rand() & 255,  \
+                                .a = 255            \
+                            }
+
+#define GET_NEGATIVE(color) (Color){                \
+                                .r = 255 - color.r, \
+                                .g = 255 - color.g, \
+                                .b = 255 - color.b, \
+                                .a = color.a,       \
+                            }
+
+static inline Color get_random_color(){
+    return (Color){
+        .r = rand() & 255,
+        .g = rand() & 255,
+        .b = rand() & 255,
+        .a = 255
+    };
+}
+
+static inline Color get_negative(Color color){
+    return (Color){
+        .r = 255 - color.r,
+        .g = 255 - color.g,
+        .b = 255 - color.b,
+        .a = color.a,
+    };
+}
+
 MyPixelFormat create_format(int r_mask, int g_mask, int b_mask, int a_mask);
 int get_formatted_color(Color color, MyPixelFormat format);
 Color get_unformatted_color(int fcolor, MyPixelFormat format);
@@ -88,12 +129,11 @@ void create_fimage(
 void delete_fimage(FormatImage* fimg);
 void fill_f(FormatImage fimg, Color color);
 void put_pixel_f(FormatImage fimg, int x, int y, Color color);
-void draw_circle_f(FormatImage fimg, int x, int y, int radius, Color color);
+void draw_circle_f(FormatImage fimg, int cx, int cy, int radius, Color color);
 void draw_rect_f(FormatImage fimg, Rect rect, Color color, int tickness);
 void draw_filled_circle_f(FormatImage fimg, int x, int y, int radius, Color color);
 void draw_filled_rect_f(FormatImage fimg, Rect rect, Color color);
 void draw_line_f(FormatImage fimg, Color c, int x0, int y0, int x1, int y1);
-
 
 // RGBA image functions
 int create_image(Image* img, size_t w, size_t h);
@@ -103,7 +143,7 @@ void draw_image_on_image_scaled(Image dest, Image src, int x, int y, int scaleX,
 void fill_image(Image img, Color color);
 void put_pixel(Image img, int x, int y, Color color);
 // TODO: Add fill option
-void draw_circle(Image img, int x, int y, int radius, Color color);
+void draw_circle(Image img, int cx, int cy, int radius, Color color);
 void draw_rect(Image img, Rect rect, Color color, int tickness);
 void draw_filled_circle(Image img, int x, int y, int radius, Color color);
 void draw_filled_rect(Image img, Rect rect, Color color);
