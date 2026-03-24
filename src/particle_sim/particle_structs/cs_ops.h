@@ -22,6 +22,7 @@ void Explosion(ChunkSpace *cs, int px, int py, int rad, int power, int replaceWi
 void DestructionLine(ChunkSpace *cs, int x0, int y0, int x1, int y1, int power, int replaceWith);
 
 void CreationLineCS(ChunkSpace* cs, int x0, int y0, int x1, int y1, int width, int type);
+void DeletionLineCS(ChunkSpace* cs, int x0, int y0, int x1, int y1, int width);
 void PutParticleImageCS(ChunkSpace* cs, int x, int y, int scale, ParticleImage pimg);
 
 #endif

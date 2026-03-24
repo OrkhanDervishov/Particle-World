@@ -16,8 +16,16 @@
 typedef SDL_Surface Surface;
 typedef SDL_Texture Texture;
 
-// #define ICON_PATH "./src/images/sand.bmp"
-// #define BG_PATH "./src/images/background.bmp"
+#define INF 0x3F3F3F3F
+
+typedef enum{
+    UP = 0,
+    DOWN,
+    LEFT,
+    RIGHT,
+    FORWARD,
+    BACKWARD
+} Sides;
 
 typedef struct{
     int x, y;
@@ -36,6 +44,7 @@ typedef struct{
 typedef struct{
     float x, y;
 } vec2f;
+typedef vec2 Posf;
 
 typedef struct{
     float x, y, z;

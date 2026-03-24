@@ -86,6 +86,14 @@ void CreateParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
     int endX = startX + r.w;
     int endY = startY + r.h;
 
+    int cX = startX + r.w/2;
+    int cY = startY + r.h/2;
+    Chunk* chunk = &cs->chunks[CS_GET_CHUNK_INDEX(cs, cX, cY)];
+    dr_add(
+        chunk->dirty_rect_list, &chunk->dr_count, 
+        r, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE
+    );
+
     for(int i = startY; i < endY; i++)
     for(int j = startX; j < endX; j++){
         CS_GET_STATE(cs, j, i) = P_FRESH;
@@ -105,6 +113,18 @@ void CreateParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad, int type){
     int endx = cX + rad;
     int srad = rad * rad;
 
+    Chunk* chunk = &cs->chunks[CS_GET_CHUNK_INDEX(cs, cX, cY)];
+    Rect rect = {
+        .x = cX%DEFAULT_CHUNK_SIZE-rad,
+        .y = cY%DEFAULT_CHUNK_SIZE-rad,
+        .w = 2*rad,
+        .h = 2*rad
+    };
+    dr_add(
+        chunk->dirty_rect_list, &chunk->dr_count, 
+        rect, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE
+    );
+    
     for(int i = starty; i < endy; i++){
         int di = abs(cY - i);
         for(int j = startx; j < endx; j++){
@@ -147,6 +167,18 @@ void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad){
     int endy = cY + rad;
     int endx = cX + rad;
     int srad = rad * rad;
+
+    Chunk* chunk = &cs->chunks[CS_GET_CHUNK_INDEX(cs, cX, cY)];
+    Rect rect = {
+        .x = cX%DEFAULT_CHUNK_SIZE-rad,
+        .y = cY%DEFAULT_CHUNK_SIZE-rad,
+        .w = 2*rad,
+        .h = 2*rad
+    };
+    dr_add(
+        chunk->dirty_rect_list, &chunk->dr_count, 
+        rect, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE
+    );
 
     for(int i = starty; i < endy; i++){
         int di = abs(cY - i);
@@ -297,6 +329,36 @@ void CreationLineCS(ChunkSpace* cs, int x0, int y0, int x1, int y1, int width, i
         if(x0 >= 0 && y0 >= 0 && x0 < cs->width_p && y0 < cs->height_p){
             // CreateParticleCS(cs, x0, y0, type);
             CreateParticlesCircleCS(cs, x0, y0, width, type);
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * error;
+            if(e2 >= dy){
+                if(x0 == x1) break;
+                error += dy;
+                x0 += sx;
+            }
+            if(e2 <= dx){
+                if(y0 == y1) break;
+                error += dx;
+                y0 += sy;
+            }
+        }
+        else{
+            break;
+        }
+    }
+}
+
+void DeletionLineCS(ChunkSpace* cs, int x0, int y0, int x1, int y1, int width){
+
+    int dx = abs(x1 - x0);
+    int sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0);
+    int sy = y0 < y1 ? 1 : -1;
+    int error = dx + dy;
+
+    while(1){
+        if(x0 >= 0 && y0 >= 0 && x0 < cs->width_p && y0 < cs->height_p){
+            DeleteParticlesCircleCS(cs, x0, y0, width);
             if (x0 == x1 && y0 == y1) break;
             int e2 = 2 * error;
             if(e2 >= dy){

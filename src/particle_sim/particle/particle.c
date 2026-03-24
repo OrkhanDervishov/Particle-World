@@ -55,7 +55,8 @@ void SetChunkSpace(ChunkSpace* cs){
 
 #define GRAVITY_Y gravity
 #define SAND_DISTRIBUTION 84
-#define WATER_DISTRIBUTION 40
+#define WATER_FALLING_DISTRIBUTION 40
+#define WATER_FLOWING_DISTRIBUTION 50
 #define STEAM_DISTRIBUTION 20
 
 bool BasicDistributiveFalling(int x, int y, int prob){
@@ -64,22 +65,22 @@ bool BasicDistributiveFalling(int x, int y, int prob){
     part_type_t ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
     part_type_t rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
 
-    int val = rand()%101;
-    if(val > 100-prob){
+    int val = rand()%100;
+    if(val >= 100-prob){
         if((typeDensityList[d_type] < typeDensityList[p_type])
             && !CHECK_FLAG(typeFlagsList[d_type], IS_DUST)){
             SWAP_PARTS(x, y, x, y+GRAVITY_Y);
             return TRUE;
         }
     }
-    if(val > (100-prob)/2 + 3){
+    if(val >= (100-prob)/2){
         if((typeDensityList[ld_type] < typeDensityList[p_type])
         && !CHECK_FLAG(typeFlagsList[ld_type], IS_DUST)){
             SWAP_PARTS(x, y, x-1, y+GRAVITY_Y);
             return TRUE;
         }
     }
-    if(val > 0){
+    if(val >= 0){
         if((typeDensityList[rd_type] < typeDensityList[p_type])
         && !CHECK_FLAG(typeFlagsList[rd_type], IS_DUST)){ 
             SWAP_PARTS(x, y, x+1, y+GRAVITY_Y);
@@ -87,6 +88,89 @@ bool BasicDistributiveFalling(int x, int y, int prob){
         }
     }
 
+    return FALSE;
+}
+
+bool BasicDistributiveLiquid(int x, int y, int prob){
+    part_type_t p_type = GET_PART_TYPE(x, y);
+    // part_type_t d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
+    part_type_t ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
+    part_type_t rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
+    part_type_t l_type = GET_PART_TYPE(x-1, y);
+    part_type_t r_type = GET_PART_TYPE(x+1, y);
+    part_xvel_t* p_xvel = &GET_PART_XVEL(x, y);
+
+    // printf("(100-prob): %d\n", 100-prob);
+    // printf("(100-2*prob): %d\n", (100-2*prob));
+    // printf("(100-2*prob)/2: %d\n", (100-2*prob)/2);
+    // printf("0: %d\n\n", 0);
+
+    int val = rand()%100;
+    if(val <= (0+prob)){
+        if((typeDensityList[ld_type] < typeDensityList[p_type])
+        && !CHECK_FLAG(typeFlagsList[ld_type], IS_DUST)){
+            SWAP_PARTS(x, y, x-1, y+GRAVITY_Y);
+            return TRUE;
+        }
+    }
+    if(val > (100-prob)){
+        if((typeDensityList[rd_type] < typeDensityList[p_type])
+        && !CHECK_FLAG(typeFlagsList[rd_type], IS_DUST)){ 
+            SWAP_PARTS(x, y, x+1, y+GRAVITY_Y);
+            return TRUE;
+        }
+    }
+    if(val > (50+prob)){
+        // if((typeDensityList[r_type] < typeDensityList[p_type])
+        // && !CHECK_FLAG(typeFlagsList[r_type], IS_DUST)){ 
+        //     SWAP_PARTS(x, y, x+1, y);
+        //     return TRUE;
+        // }
+    }
+    if(val <= 50-prob){
+        // if((typeDensityList[r_type] < typeDensityList[p_type])
+        // && !CHECK_FLAG(typeFlagsList[r_type], IS_DUST)){ 
+            //     SWAP_PARTS(x, y, x+1, y);
+            //     return TRUE;
+            // }
+        // if((typeDensityList[l_type] < typeDensityList[p_type])
+        // && !CHECK_FLAG(typeFlagsList[l_type], IS_DUST)){
+        //     SWAP_PARTS(x, y, x-1, y);
+        //     return TRUE;
+        // }
+    }
+        
+    if(*p_xvel > 1){
+        if(typeDensityList[l_type] < typeDensityList[p_type]){
+            if(!CHECK_FLAG(typeFlagsList[l_type], IS_SOLID)){
+                SWAP_PARTS(x, y, x-1, y);
+                return TRUE;
+            }
+        }
+        if(typeDensityList[r_type] < typeDensityList[p_type]){
+            if(!CHECK_FLAG(typeFlagsList[r_type], IS_SOLID)){
+                SWAP_PARTS(x, y, x+1, y);
+                if(*p_xvel == 1) *p_xvel -= 2; 
+                *p_xvel -= 1; 
+                return TRUE;
+            }
+        }
+    } else {
+        if(typeDensityList[r_type] < typeDensityList[p_type]){
+            if(!CHECK_FLAG(typeFlagsList[r_type], IS_SOLID)){
+                SWAP_PARTS(x, y, x+1, y);
+                return TRUE;
+            }
+        }
+        if(typeDensityList[l_type] < typeDensityList[p_type]){ 
+            if(!CHECK_FLAG(typeFlagsList[l_type], IS_SOLID)){
+                SWAP_PARTS(x, y, x-1, y);
+                if(*p_xvel == 1) *p_xvel += 2; 
+                *p_xvel += 1; 
+                return TRUE;
+            }
+        }
+    }
     return FALSE;
 }
 
@@ -173,7 +257,8 @@ bool BasicLiquidBehave(int x, int y){
     part_xvel_t* p_xvel = &GET_PART_XVEL(x, y);
 
     
-    if(BasicDistributiveFalling(x, y, WATER_DISTRIBUTION)) return TRUE;
+    if(BasicDistributiveFalling(x, y, WATER_FALLING_DISTRIBUTION)) return TRUE;
+    if(BasicDistributiveLiquid(x, y, WATER_FLOWING_DISTRIBUTION)) return TRUE;
 
     // if(typeDensityList[d_type] < typeDensityList[p_type]){
     //     if(!CHECK_FLAG(typeFlagsList[d_type], IS_SOLID)){
@@ -181,56 +266,99 @@ bool BasicLiquidBehave(int x, int y){
     //         return TRUE;
     //     }
     // }
-
-    part_type_t ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
-    if(typeDensityList[ld_type] < typeDensityList[p_type]){
-        if(!CHECK_FLAG(typeFlagsList[ld_type], IS_SOLID)){
-            SWAP_PARTS(x, y, x-1, y+GRAVITY_Y);
-            return TRUE;
-        }
-    }
-    part_type_t rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
-    if(typeDensityList[rd_type] < typeDensityList[p_type]){
-        if(!CHECK_FLAG(typeFlagsList[rd_type], IS_SOLID)){
-            SWAP_PARTS(x, y, x+1, y+GRAVITY_Y);
-            return TRUE;
-        }
-    }
-
     part_type_t l_type = GET_PART_TYPE(x-1, y);
+    part_type_t ld_type = GET_PART_TYPE(x-1, y+GRAVITY_Y);
     part_type_t r_type = GET_PART_TYPE(x+1, y);
+    part_type_t rd_type = GET_PART_TYPE(x+1, y+GRAVITY_Y);
 
-    if(*p_xvel > 1){
-        if(typeDensityList[l_type] < typeDensityList[p_type]){
-            if(!CHECK_FLAG(typeFlagsList[l_type], IS_SOLID)){
-                SWAP_PARTS(x, y, x-1, y);
-                return TRUE;
-            }
-        }
-        if(typeDensityList[r_type] < typeDensityList[p_type]){
-            if(!CHECK_FLAG(typeFlagsList[r_type], IS_SOLID)){
-                SWAP_PARTS(x, y, x+1, y);
-                if(*p_xvel == 1) *p_xvel -= 2; 
-                *p_xvel -= 1; 
-                return TRUE;
-            }
-        }
-    } else {
-        if(typeDensityList[r_type] < typeDensityList[p_type]){
-            if(!CHECK_FLAG(typeFlagsList[r_type], IS_SOLID)){
-                SWAP_PARTS(x, y, x+1, y);
-                return TRUE;
-            }
-        }
-        if(typeDensityList[l_type] < typeDensityList[p_type]){ 
-            if(!CHECK_FLAG(typeFlagsList[l_type], IS_SOLID)){
-                SWAP_PARTS(x, y, x-1, y);
-                if(*p_xvel == 1) *p_xvel += 2; 
-                *p_xvel += 1; 
-                return TRUE;
-            }
-        }
-    }
+    // if(typeDensityList[ld_type] < typeDensityList[p_type] && typeDensityList[rd_type] < typeDensityList[p_type]){
+    //     int chance = rand() % 100;
+    //     if(chance >= 50){
+    //         if(!CHECK_FLAG(typeFlagsList[ld_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x-1, y+GRAVITY_Y);
+    //             return TRUE;
+    //         }
+    //     }
+    //     else {
+    //         if(!CHECK_FLAG(typeFlagsList[rd_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x+1, y+GRAVITY_Y);
+    //             return TRUE;
+    //         }
+    //     }
+    // }
+    // if(typeDensityList[l_type] < typeDensityList[p_type] && typeDensityList[r_type] < typeDensityList[p_type]){
+    //     int chance = rand() % 100;
+    //     if(chance >= 50){
+    //         if(!CHECK_FLAG(typeFlagsList[l_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x-1, y);
+    //             return TRUE;
+    //         }
+    //     }
+    //     else {
+    //         if(!CHECK_FLAG(typeFlagsList[r_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x+1, y);
+    //             return TRUE;
+    //         }
+    //     }
+    // }
+
+    // if(typeDensityList[ld_type] < typeDensityList[p_type]){
+    //     // if(typeDensityList[l_type] < typeDensityList[p_type]){
+    //     //     if(!CHECK_FLAG(typeFlagsList[l_type], IS_SOLID)){
+    //     //         SWAP_PARTS(x, y, x-1, y);
+    //     //         return TRUE;
+    //     //     }
+    //     // }
+    //     if(!CHECK_FLAG(typeFlagsList[ld_type], IS_SOLID)){
+    //         SWAP_PARTS(x, y, x-1, y+GRAVITY_Y);
+    //         return TRUE;
+    //     }
+    // }
+    // if(typeDensityList[rd_type] < typeDensityList[p_type]){
+    //     // if(typeDensityList[r_type] < typeDensityList[p_type]){
+    //     //     if(!CHECK_FLAG(typeFlagsList[r_type], IS_SOLID)){
+    //     //         SWAP_PARTS(x, y, x+1, y);
+    //     //         return TRUE;
+    //     //     }
+    //     // }
+    //     if(!CHECK_FLAG(typeFlagsList[rd_type], IS_SOLID)){
+    //         SWAP_PARTS(x, y, x+1, y+GRAVITY_Y);
+    //         return TRUE;
+    //     }
+    // }
+
+
+    // if(*p_xvel > 1){
+    //     if(typeDensityList[l_type] < typeDensityList[p_type]){
+    //         if(!CHECK_FLAG(typeFlagsList[l_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x-1, y);
+    //             return TRUE;
+    //         }
+    //     }
+    //     if(typeDensityList[r_type] < typeDensityList[p_type]){
+    //         if(!CHECK_FLAG(typeFlagsList[r_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x+1, y);
+    //             if(*p_xvel == 1) *p_xvel -= 2; 
+    //             *p_xvel -= 1; 
+    //             return TRUE;
+    //         }
+    //     }
+    // } else {
+    //     if(typeDensityList[r_type] < typeDensityList[p_type]){
+    //         if(!CHECK_FLAG(typeFlagsList[r_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x+1, y);
+    //             return TRUE;
+    //         }
+    //     }
+    //     if(typeDensityList[l_type] < typeDensityList[p_type]){ 
+    //         if(!CHECK_FLAG(typeFlagsList[l_type], IS_SOLID)){
+    //             SWAP_PARTS(x, y, x-1, y);
+    //             if(*p_xvel == 1) *p_xvel += 2; 
+    //             *p_xvel += 1; 
+    //             return TRUE;
+    //         }
+    //     }
+    // }
 
     return FALSE;
 }

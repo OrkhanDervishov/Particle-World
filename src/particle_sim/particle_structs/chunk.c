@@ -8,7 +8,8 @@ int CreateChunk(Chunk* chunk, int w, int h){
     chunk->size = w*h;
     chunk->active = TRUE;
     
-    InitDirtyRectList(&chunk->dirty_rect_list);
+    chunk->dr_count = 0;
+    dr_list_init(&chunk->dirty_rect_list);
 
     
     chunk->data_block = malloc(
@@ -62,7 +63,7 @@ int CreateChunk(Chunk* chunk, int w, int h){
 
 void DeleteChunk(Chunk* chunk){
     free(chunk->data_block);
-    DeleteList(&chunk->dirty_rect_list);
+    dr_list_destroy(&chunk->dirty_rect_list);
 }
 
 void ClearChunk(Chunk* chunk){

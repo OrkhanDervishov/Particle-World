@@ -18,7 +18,8 @@ typedef struct{
     bool    active;
 
     // Simulation
-    LinkedList      *dirty_rect_list;
+    int dr_count;
+    Rect* dirty_rect_list;
     
     // Chunk particle data
     void*           data_block;

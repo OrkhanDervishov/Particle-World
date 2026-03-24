@@ -24,34 +24,18 @@ extern int CSIDE;
 // ???
 #define COPY_PART(s, sx, sy, dx, dy) sim->pMap[sy][sx] = sim->pMap[dy][dx]
 
-extern int selectedType;
-
-extern int PART_SIDE;
-extern int DELAY;
-extern int RADIUS;
-extern int CSIDE;
-
-// int InitParticleSimulator(ParticleSimulator** sim, int w, int h, int ps);
-// void DestroyParticleSimulator(ParticleSimulator** sim);
-// void ChangeParticleSimulator(ParticleSimulator** sim, int w, int h, int ps);
-
-void ClearMap(ParticleMap* pmap);
 
 // Simulate
-void SimulateAll(ParticleMap* pmap);
-Rect SimulateRect(ParticleMap* pmap, Rect rect);
-void SimulateRects(Chunk* chunk, LinkedList* list);
+Rect SimulateChunkSpaceRect(ChunkSpace* cs, Chunk* chunk, Rect rect, int cs_x, int cs_y);
+Rect SimulateRect(Chunk* chunk, Rect rect, int cs_x, int cs_y);
+// void SimulateRects(Chunk* chunk, int cs_x, int cs_y);
+void SimulateRects(ChunkSpace* cs, Chunk* chunk, int cs_x, int cs_y);
 
+void SimulateChunkSpaceDR(ChunkSpace *cs);
 void SimulateChunkSpace(ChunkSpace *cs);
+void RefreshChunkSpace(ChunkSpace* cs);
 
 // TODO: Create new file for heat simulation
 // void SimulateHeatMap(ParticleSimulator* sim);
-
-
-// Simulator Control
-void SlowDownParticleSimulator();
-void SpeedUpParticleSimulator();
-void IncreaseBrushRadius();
-void DecreaseBrushRadius();
 
 #endif

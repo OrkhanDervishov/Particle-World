@@ -254,12 +254,24 @@ void put_pixel_f(FormatImage fimg, int x, int y, Color color){
 }
 
 
-#define PUT_PIXEL_ON_CIRCLE(img, x, y, color)   if((x) >= 0 && (x) < (img).width && (y) >= 0 && (y) < (img).height){ \
-                                                    IMG_GET((img), (x), (y)) = (color); \
-                                                }
+
+
+#define PUT_THICKNESS(img, x, y, cx, cy, color, thickness, side)   \
+do{\
+    int dx = 0;\
+    int dy = 0;\
+    for(int i = 0; i < (thickness)-1; i++){\
+        if((side) == UP)       if(y+dy >= cy) dy += -1; \
+        if((side) == DOWN)     if(y+dy <= cy) dy += 1;  \
+        if((side) == LEFT)     if(x+dx >= cx) dx += -1; \
+        if((side) == RIGHT)    if(x+dx <= cx) dx += 1;  \
+        PUT_PIXEL(img, x+dx, y+dy, color);\
+    }\
+}while(0)
+
 
 // TODO: Add fill option
-void draw_circle(Image img, int cx, int cy, int radius, Color color){
+void draw_circle(Image img, int cx, int cy, int radius, Color color, int thickness){
     int x = 0;
     int y = -radius;
     int p = -radius;
@@ -272,20 +284,20 @@ void draw_circle(Image img, int cx, int cy, int radius, Color color){
             p += 2*x + 1;
         }
 
-        PUT_PIXEL_ON_CIRCLE(img, cx + x, cy + y, color)
-        PUT_PIXEL_ON_CIRCLE(img, cx - x, cy + y, color)
-        PUT_PIXEL_ON_CIRCLE(img, cx + x, cy - y, color)
-        PUT_PIXEL_ON_CIRCLE(img, cx - x, cy - y, color)
-        PUT_PIXEL_ON_CIRCLE(img, cx + y, cy + x, color)
-        PUT_PIXEL_ON_CIRCLE(img, cx + y, cy - x, color)
-        PUT_PIXEL_ON_CIRCLE(img, cx - y, cy + x, color)
-        PUT_PIXEL_ON_CIRCLE(img, cx - y, cy - x, color)
+        PUT_THICKNESS(img, cx + x, cy + y, cx, cy, color, thickness, DOWN);
+        PUT_THICKNESS(img, cx - x, cy + y, cx, cy, color, thickness, DOWN);
+        PUT_THICKNESS(img, cx + x, cy - y, cx, cy, color, thickness, UP);
+        PUT_THICKNESS(img, cx - x, cy - y, cx, cy, color, thickness, UP);
+        PUT_THICKNESS(img, cx + y, cy + x, cx, cy, color, thickness, RIGHT);
+        PUT_THICKNESS(img, cx + y, cy - x, cx, cy, color, thickness, RIGHT);
+        PUT_THICKNESS(img, cx - y, cy + x, cx, cy, color, thickness, LEFT);
+        PUT_THICKNESS(img, cx - y, cy - x, cx, cy, color, thickness, LEFT);
 
         x++;
     }
 }
 
-void draw_circle_f(FormatImage fimg, int cx, int cy, int radius, Color color){
+void draw_circle_f(FormatImage fimg, int cx, int cy, int radius, Color color, int thickness){
     int x = 0;
     int y = -radius;
     int p = -radius;
@@ -299,19 +311,19 @@ void draw_circle_f(FormatImage fimg, int cx, int cy, int radius, Color color){
             p += 2*x + 1;
         }
         
-        PUT_PIXEL_ON_CIRCLE(fimg, cx + x, cy + y, fcolor)
-        PUT_PIXEL_ON_CIRCLE(fimg, cx - x, cy + y, fcolor)
-        PUT_PIXEL_ON_CIRCLE(fimg, cx + x, cy - y, fcolor)
-        PUT_PIXEL_ON_CIRCLE(fimg, cx - x, cy - y, fcolor)
-        PUT_PIXEL_ON_CIRCLE(fimg, cx + y, cy + x, fcolor)
-        PUT_PIXEL_ON_CIRCLE(fimg, cx + y, cy - x, fcolor)
-        PUT_PIXEL_ON_CIRCLE(fimg, cx - y, cy + x, fcolor)
-        PUT_PIXEL_ON_CIRCLE(fimg, cx - y, cy - x, fcolor)
+        PUT_THICKNESS(fimg, cx + x, cy + y, cx, cy, fcolor, thickness, DOWN);
+        PUT_THICKNESS(fimg, cx - x, cy + y, cx, cy, fcolor, thickness, DOWN);
+        PUT_THICKNESS(fimg, cx + x, cy - y, cx, cy, fcolor, thickness, UP);
+        PUT_THICKNESS(fimg, cx - x, cy - y, cx, cy, fcolor, thickness, UP);
+        PUT_THICKNESS(fimg, cx + y, cy + x, cx, cy, fcolor, thickness, RIGHT);
+        PUT_THICKNESS(fimg, cx + y, cy - x, cx, cy, fcolor, thickness, RIGHT);
+        PUT_THICKNESS(fimg, cx - y, cy + x, cx, cy, fcolor, thickness, LEFT);
+        PUT_THICKNESS(fimg, cx - y, cy - x, cx, cy, fcolor, thickness, LEFT);
         
         x++;
     }
 }
-#undef PUT_PIXEL_ON_CIRCLE
+#undef PUT_THICKNESS
 
 
 void draw_rect(Image img, Rect rect, Color color, int tickness){
@@ -681,7 +693,7 @@ void draw_line_from_points(Image img, vec2* points, int count, Color color, int 
             vec2 start = points[i];
             vec2 end = points[i+1];
             draw_line(img, color, start.x, start.y, end.x, end.y);
-            draw_circle(img, start.x, start.y, POINT_RADIUS, color);
+            draw_filled_circle(img, start.x, start.y, POINT_RADIUS, color);
         }
 }
 

@@ -108,8 +108,8 @@ void ProcessInput(ParticleGame* game)
             }
             if(BRUSH_INCREASE_BUTTON) oneButtonEvent(game);
             if(BRUSH_DECREASE_BUTTON) twoButtonEvent(game);
-            if(DELAY_INCREASE_BUTTON) SpeedUpParticleSimulator();
-            if(DELAY_DECREASE_BUTTON) SlowDownParticleSimulator();
+            // if(DELAY_INCREASE_BUTTON) SpeedUpParticleSimulator();
+            // if(DELAY_DECREASE_BUTTON) SlowDownParticleSimulator();
             if(TAB_BUTTON) TabButtonEvent(game); 
             if(SPACE_BUTTON) SpaceButtonEvent(game);
         }
@@ -145,14 +145,17 @@ void function2(ParticleGame* game){
     int px = ((mx) / DEFAULT_PARTICLE_SIZE);
     int py = ((my) / DEFAULT_PARTICLE_SIZE);
     
-    // Right button hold does not work(at least for now)
     if(startMouseRightHold == FALSE){
         startMouseRightHold = TRUE;
         startPosMouseHold = GetMousePosInCS();
     } else {
         int bs = game->g_params.brush_size;
         vec2 endPosMouseHold = GetMousePosInCS();
-        DeleteParticlesCircleCS(&(game->cs), px, py, bs);
+        DeletionLineCS(
+            &(game->cs), startPosMouseHold.x, startPosMouseHold.y, 
+            endPosMouseHold.x, endPosMouseHold.y, 
+            game->g_params.brush_size
+        );
         
         startPosMouseHold = endPosMouseHold;
     }
@@ -264,7 +267,7 @@ void CreateSpell(ParticleGame* game){
 bool chunk_show = FALSE;
 ParticleGame* this_game;
 void show_chunks(){
-    ShowChunkSpaceSW(this_game->win, &(this_game->cs), 0, 0);
+    ShowChunkSpaceAllSW(this_game->win, &(this_game->cs), 0, 0);
 }
 
 int cb_index_chunks = -1;

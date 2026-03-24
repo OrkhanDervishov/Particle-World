@@ -70,10 +70,12 @@ typedef struct{
     Macro definitions of ChunkSpace's chunk/particle gathering functions.
 */
 
+
 #define CS_GET_CHUNK_INDEX(cs_p, x, y)      ((y)>>(cs_p)->height_power)*(cs_p)->width_c + ((x)>>(cs_p)->width_power)
-// Used when you use iterate through chunks.
+// Used when you iterate through chunks.
 #define CS_GET_ARRAY_CHUNK(cs_p, x, y)      (cs_p)->chunks[(y)*(cs_p)->width_c + (x)]
-// Used when you use real world coordinates.
+
+// Get chunk via chunk space coordinates
 #define CS_GET_CHUNK(cs_p, x, y)            (cs_p)->chunks[CS_GET_CHUNK_INDEX(cs_p, x, y)]
 #define CS_GET_PART_X(cs_p, x)              (x)&((cs_p)->chunk_width-1)
 #define CS_GET_PART_Y(cs_p, y)              (y)&((cs_p)->chunk_height-1)

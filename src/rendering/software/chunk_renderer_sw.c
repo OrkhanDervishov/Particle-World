@@ -101,6 +101,35 @@ Surface* ImageToSurfaceRGBA(Image* img){
 
 //###########################################
 
+
+void ShowChunkDirtyRectsSW(Window* window, Chunk* chunk, int x, int y, Color color){
+    Rect* list = chunk->dirty_rect_list;
+    
+    for(int i = 0; i < chunk->dr_count; i++){
+        Rect rect = list[i];
+        rect.x = rect.x*DEFAULT_PARTICLE_SIZE + x;
+        rect.y = rect.y*DEFAULT_PARTICLE_SIZE + y;
+        rect.w *= DEFAULT_PARTICLE_SIZE;
+        rect.h *= DEFAULT_PARTICLE_SIZE;
+        draw_rect_f(window->context, rect, color, 1);
+    }
+}
+
+void ShowChunkSpaceDirtyRectsSW(Window* window, ChunkSpace* cs, int x, int y){
+    Color color = {.rgba = 0xFFFF00FF};
+
+    for(int i = 0; i < cs->height_c; i++){
+        for(int j = 0; j < cs->width_c; j++){
+            ShowChunkDirtyRectsSW(
+                window, &cs->chunks[i*cs->width_c + j], 
+                x + j*reqChunkWidth*reqParticleSize, 
+                y + i*reqChunkHeight*reqParticleSize,
+                color
+            );
+        }
+    }
+}
+
 void ShowChunkSW(Window* window, Chunk* chunk, int x, int y, Color color){
     Rect rect = {.x = x, .y = y, .w = chunk->w*DEFAULT_PARTICLE_SIZE, .h = chunk->h*DEFAULT_PARTICLE_SIZE};
     draw_rect_f(window->context, rect, color, 1);
@@ -108,7 +137,7 @@ void ShowChunkSW(Window* window, Chunk* chunk, int x, int y, Color color){
 }
 
 void ShowChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
-
+    
     Color green = {.rgba = 0xFF00FF00};
     Color yellow = {.rgba = 0xFF00FFFF};
     bool row_toggle = FALSE;
@@ -129,7 +158,17 @@ void ShowChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
     }
 }
 
-// void ShowChunkSpaceSW(Window* window, Chunk* chunk, int x, int y)
+// void ShowChunkAllSW(Window* window, Chunk* chunk, int x, int y, Color color){
+
+// }
+
+void ShowChunkSpaceAllSW(Window* window, ChunkSpace* cs, int x, int y){
+    ShowChunkSpaceDirtyRectsSW(window, cs, x, y);
+    ShowChunkSpaceSW(window, cs, x, y);
+}
+
+//###########################################
+
 
 void DrawChunkSW(Window* window, Chunk* chunk, int x, int y){
     ChunkToImage(chunk);

@@ -50,18 +50,12 @@ typedef struct{
     MyPixelFormat format;
 } FormatImage;
 
-// typedef struct{
-//     int width;
-//     int height;
-//     ColorFormat cformat;
-//     union{
-//         ColorBGRA* bgra;
-//         ColorRGBA* rgba;
-//     };
-// } SuperImage;
-
-
-
+#define PUT_PIXEL(img, x, y, color)   \
+do{\
+    if((x) >= 0 && (x) < (img).width && (y) >= 0 && (y) < (img).height){ \
+        IMG_GET((img), (x), (y)) = (color); \
+    }\
+} while(0)
 
 // The most basic functions
 #define  GET_FCOLOR(color, format)  (                                               \
@@ -129,7 +123,7 @@ void create_fimage(
 void delete_fimage(FormatImage* fimg);
 void fill_f(FormatImage fimg, Color color);
 void put_pixel_f(FormatImage fimg, int x, int y, Color color);
-void draw_circle_f(FormatImage fimg, int cx, int cy, int radius, Color color);
+void draw_circle_f(FormatImage fimg, int cx, int cy, int radius, Color color, int thickness);
 void draw_rect_f(FormatImage fimg, Rect rect, Color color, int tickness);
 void draw_filled_circle_f(FormatImage fimg, int x, int y, int radius, Color color);
 void draw_filled_rect_f(FormatImage fimg, Rect rect, Color color);
@@ -143,7 +137,7 @@ void draw_image_on_image_scaled(Image dest, Image src, int x, int y, int scaleX,
 void fill_image(Image img, Color color);
 void put_pixel(Image img, int x, int y, Color color);
 // TODO: Add fill option
-void draw_circle(Image img, int cx, int cy, int radius, Color color);
+void draw_circle(Image img, int cx, int cy, int radius, Color color, int thickness);
 void draw_rect(Image img, Rect rect, Color color, int tickness);
 void draw_filled_circle(Image img, int x, int y, int radius, Color color);
 void draw_filled_rect(Image img, Rect rect, Color color);

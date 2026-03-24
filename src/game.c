@@ -80,7 +80,7 @@ int RunParticleGame(ParticleGame* game){
         Color mouse_color = {.rgba = 0xFFFFFFFF};
         int mx, my;
         int state = SDL_GetMouseState(&mx, &my);
-        draw_circle_f(win->context, mx, my, game->g_params.brush_size*DEFAULT_PARTICLE_SIZE, mouse_color);
+        draw_circle_f(win->context, mx, my, game->g_params.brush_size*DEFAULT_PARTICLE_SIZE, mouse_color, 2);
 
         // RenderText
         BasicTextRender(game->win, fpstext,     10, 10, 2, textColor);  
@@ -103,6 +103,7 @@ int RunParticleGame(ParticleGame* game){
             // Particle simulation
             sim_start = GetTimeNano()/1000;
             SimulateChunkSpace(cs);
+            RefreshChunkSpace(cs);
             sim_end = GetTimeNano()/1000;
             
             // Heatmap simulation
@@ -139,7 +140,7 @@ int RunParticleGame(ParticleGame* game){
                     sim_end - sim_start,
                     simh_end - simh_start,
                     end - start,
-                    DELAY
+                    game->s_params.delay
                 );
             SDL_SetWindowTitle(win->window, win->title);
             sprintf(fpstext, "fps: %.0f / draw_time: %.2fms / sim_time: %.2fms", 

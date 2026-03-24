@@ -48,45 +48,45 @@ int CoreTest(){
 // }
 
 
-int DirtyRectTest(){
-    LinkedList* list;
-    Rect r1 = {
-        .x = 10,
-        .y = 10,
-        .w = 10,
-        .h = 10
-    };
+// int DirtyRectTest(){
+//     LinkedList* list;
+//     Rect r1 = {
+//         .x = 10,
+//         .y = 10,
+//         .w = 10,
+//         .h = 10
+//     };
 
-    Rect r2 = {
-        .x = -10,
-        .y = -10,
-        .w = 10,
-        .h = 10
-    };
+//     Rect r2 = {
+//         .x = -10,
+//         .y = -10,
+//         .w = 10,
+//         .h = 10
+//     };
 
-    CONSOLE("DirtyRect test started\n");
+//     CONSOLE("DirtyRect test started\n");
 
-    CONSOLE("DirtyRect creation test\n");
-    InitDirtyRectList(&list);
+//     CONSOLE("DirtyRect creation test\n");
+//     InitDirtyRectList(&list);
 
-    CONSOLE("DirtyRect correction test\n");
-    CorrectDirtyRect(100, 100, &r1);
-    CorrectDirtyRect(100, 100, &r2);
-    printf("x:%d, y:%d, w:%d h:%d\n", r1.x, r1.y, r1.w, r1.h);
-    printf("x:%d, y:%d, w:%d h:%d\n", r2.x, r2.y, r2.w, r2.h);
+//     CONSOLE("DirtyRect correction test\n");
+//     CorrectDirtyRect(100, 100, &r1);
+//     CorrectDirtyRect(100, 100, &r2);
+//     printf("x:%d, y:%d, w:%d h:%d\n", r1.x, r1.y, r1.w, r1.h);
+//     printf("x:%d, y:%d, w:%d h:%d\n", r2.x, r2.y, r2.w, r2.h);
 
-    CONSOLE("DirtyRect node addition test\n");
-    AddDirtyRect(list, 100, 100, 10, 10, 10);
+//     CONSOLE("DirtyRect node addition test\n");
+//     AddDirtyRect(list, 100, 100, 10, 10, 10);
 
-    CONSOLE("DirtyRect node deletion test\n");
-    DeleteDirtyRect(list, list->head);
+//     CONSOLE("DirtyRect node deletion test\n");
+//     DeleteDirtyRect(list, list->head);
 
-    CONSOLE("DirtyRect deletion test\n");
-    DestroyDirtyRectList(&list);
+//     CONSOLE("DirtyRect deletion test\n");
+//     DestroyDirtyRectList(&list);
 
-    CONSOLE("DirtyRect test success\n\n");
-    return 0;
-}
+//     CONSOLE("DirtyRect test success\n\n");
+//     return 0;
+// }
 
 // Not used anymore
 // int ParticleMapTest(){

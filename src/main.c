@@ -15,7 +15,7 @@
 // #define CHESS_TEST
 
 
-int RigidTest();
+int RigidTest(); 
 int Chess();
 
 int main(int argc, char* argv[]){

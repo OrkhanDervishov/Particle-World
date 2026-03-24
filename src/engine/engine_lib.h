@@ -5,7 +5,6 @@
 #include "window.h"
 #include "timing.h"
 #include "painter.h"
-#include "list.h"
 #include "constants.h"
 #include "geometry.h"
 
