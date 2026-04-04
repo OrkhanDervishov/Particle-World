@@ -5,6 +5,7 @@
 #include "particle_generation.h"
 #include "basic_text_renderer.h"
 #include "gui_renderer_sw.h"
+#include "gui_handler.h"
 #include "input_system.h"
 
 int RunParticleGame(ParticleGame* game);

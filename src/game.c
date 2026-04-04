@@ -11,12 +11,76 @@ float fps = 0;
 int drawlines = 0;
 
 void Guide(ParticleGame* game, Color textColor);
+void init_buttons(ParticleGame* game, Button** buttons);
+
 void call_all_callbacks(ParticleGame* game){
     for(int i = 0; i < CB_COUNT_MAX; i++){
         if(game->callbacks[i] != NULL)
             game->callbacks[i](game);
     }
 }
+
+void func(){
+    printf("Hello\n");
+}
+
+void clear_space(ParticleGame* game){
+    ClearFullCS(&game->cs);
+}
+
+void select_sand(ParticleGame* game){
+    game->g_params.selectedParticleType = SAND;
+}
+void select_water(ParticleGame* game){
+    game->g_params.selectedParticleType = WATER;
+}
+void select_steam(ParticleGame* game){
+    game->g_params.selectedParticleType = STEAM;
+}
+void select_acid(ParticleGame* game){
+    game->g_params.selectedParticleType = ACID;
+}
+void select_wood(ParticleGame* game){
+    game->g_params.selectedParticleType = WOOD;
+}
+void select_wall(ParticleGame* game){
+    game->g_params.selectedParticleType = WALL;
+}
+void select_fire(ParticleGame* game){
+    game->g_params.selectedParticleType = FIRE;
+}
+void select_fire_smoke(ParticleGame* game){
+    game->g_params.selectedParticleType = FIRE_SMOKE;
+}
+void select_smoke(ParticleGame* game){
+    game->g_params.selectedParticleType = SMOKE;
+}
+void select_coal(ParticleGame* game){
+    game->g_params.selectedParticleType = COAL;
+}
+void select_powder(ParticleGame* game){
+    game->g_params.selectedParticleType = POWDER;
+}
+void select_oil(ParticleGame* game){
+    game->g_params.selectedParticleType = OIL;
+}
+void select_lava(ParticleGame* game){
+    game->g_params.selectedParticleType = LAVA;
+}
+void select_fungus(ParticleGame* game){
+    game->g_params.selectedParticleType = FUNGUS;
+}
+void select_obsidian(ParticleGame* game){
+    game->g_params.selectedParticleType = OBSIDIAN;
+}
+void select_phantom(ParticleGame* game){
+    game->g_params.selectedParticleType = PHANTOM;
+}
+void select_source(ParticleGame* game){
+    game->g_params.selectedParticleType = SOURCE;
+}
+
+
 
 int RunParticleGame(ParticleGame* game){
     
@@ -33,21 +97,12 @@ int RunParticleGame(ParticleGame* game){
     clock_t simh_start = 0, simh_end = 0;
     
     Color buttonColor = {.rgba = 0xFF0000FF};
-    Color gbColor = {.rgba = 0xFF808080};
-    vec2 pos = {10, 10};
-    vec2 gb_pos = {0, 0};
+    vec2 pos = {10, win->h -50};
+    vec2 pos2 = {65, win->h -50};
     vec2 sizes = {50, 25};
-    vec2 gb_sizes = {150, 80};
-    Button* button;
-    GuiBox* gb;
-    CreateButton(&button, "Hello", buttonColor, TRUE, pos, sizes, NULL);
-    CreateGuiBox(&gb, "gui_box", gbColor, 0, FALSE, gb_pos, gb_sizes);
-    AddButton(gb, button);
-    // PrintGuiBoxParams(gb);
-    // PrintButtonParams(button);
-    GuiElement elem;
-    elem.type = GUI_BOX;
-    elem.element = (void*)gb;
+
+    Button* buttons[100];
+    init_buttons(game, buttons);
     
     // Create Objects
     
@@ -88,14 +143,11 @@ int RunParticleGame(ParticleGame* game){
         BasicTextRender(game->win, brushtext,   10, 50, 2, textColor);  
         Guide(game, textColor);
         
+        DrawGuiElement(win, &game->gui, 0, 0);
 
-        DrawGuiElement(win, &elem, 10, 300);
-        // DrawButton(win, button, 10, 500);
-        // DrawGuiBox(win, gb, 10, 300);
         SDL_UpdateWindowSurface(win->window);
         draw_end = GetTimeNano()/1000;
         
-
         // Simulations
         if(!game->s_params.paused){
             WallBoxCS(cs);
@@ -155,8 +207,8 @@ int RunParticleGame(ParticleGame* game){
     
     // Delete Objects
 
-    DeleteButton(&button);
-    DeleteGuiBox(&gb);
+    // DeleteButton(&button1);
+    // DeleteButton(&button2);
 
     printf("game running: %d\n", game->win->isrunning);
     return 0;
@@ -177,6 +229,7 @@ const char* guideGravity =          "Reverse gravity - X";
 const char* guideLine =             "Create particles along a line - Z";
 const char* guideScreenshot =       "Take screenshot - TAB";
 const char* guideSpell =            "Cast spell - A";
+const char* guideChunks =           "Show chunks - SPACE";
 void Guide(ParticleGame* game, Color textColor){
     // int startX = game->win->screen.width-350;
     int startX = 10;
@@ -191,6 +244,34 @@ void Guide(ParticleGame* game, Color textColor){
     BasicTextRender(game->win, guideLine,           startX, startY+140, 2, textColor);  
     BasicTextRender(game->win, guideScreenshot,     startX, startY+160, 2, textColor);  
     BasicTextRender(game->win, guideSpell,          startX, startY+180, 2, textColor);  
+    BasicTextRender(game->win, guideChunks,         startX, startY+200, 2, textColor);  
 }
 
 
+void init_buttons(ParticleGame* game, Button** buttons){
+    Color buttonColor = {.rgba = 0xFF0000FF};
+    vec2 sizes = {150, 40};
+
+    CreateButton(&buttons[0],   "Clear",      buttonColor,                  TRUE, (Pos){10+(sizes.x+5)*0, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)clear_space);
+    CreateButton(&buttons[1],   "Sand",       typeColorList[SAND][0],       TRUE, (Pos){10+(sizes.x+5)*1, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)select_sand);
+    CreateButton(&buttons[2],   "Water",      typeColorList[WATER][0],      TRUE, (Pos){10+(sizes.x+5)*2, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)select_water);
+    CreateButton(&buttons[3],   "Steam",      typeColorList[STEAM][0],      TRUE, (Pos){10+(sizes.x+5)*3, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)select_steam);
+    CreateButton(&buttons[4],   "Acid",       typeColorList[ACID][0],       TRUE, (Pos){10+(sizes.x+5)*4, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)select_acid);
+    CreateButton(&buttons[5],   "Wood",       typeColorList[WOOD][0],       TRUE, (Pos){10+(sizes.x+5)*5, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)select_wood);
+    CreateButton(&buttons[6],   "Wall",       typeColorList[WALL][0],       TRUE, (Pos){10+(sizes.x+5)*6, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)select_wall);
+    CreateButton(&buttons[7],   "Fire",       typeColorList[FIRE][0],       TRUE, (Pos){10+(sizes.x+5)*7, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)select_fire);
+    CreateButton(&buttons[8],   "Fire Smoke", typeColorList[FIRE_SMOKE][0], TRUE, (Pos){10+(sizes.x+5)*0, game->win->h -(sizes.y+5)*1 - 5},      sizes, (GENERIC_FUNC_POINTER)select_fire_smoke);
+    CreateButton(&buttons[9],   "Smoke",      typeColorList[SMOKE][0],      TRUE, (Pos){10+(sizes.x+5)*1, game->win->h -(sizes.y+5)*1 - 5},      sizes, (GENERIC_FUNC_POINTER)select_smoke);
+    CreateButton(&buttons[10],  "Coal",       typeColorList[COAL][0],       TRUE, (Pos){10+(sizes.x+5)*2, game->win->h -(sizes.y+5)*1 - 5},      sizes, (GENERIC_FUNC_POINTER)select_coal);
+    CreateButton(&buttons[11],  "Powder",     typeColorList[POWDER][0],     TRUE, (Pos){10+(sizes.x+5)*3, game->win->h -(sizes.y+5)*1 - 5},      sizes, (GENERIC_FUNC_POINTER)select_powder);
+    CreateButton(&buttons[12],  "Oil",        typeColorList[OIL][0],        TRUE, (Pos){10+(sizes.x+5)*4, game->win->h -(sizes.y+5)*1 - 5},      sizes, (GENERIC_FUNC_POINTER)select_oil);
+    CreateButton(&buttons[13],  "Lava",       typeColorList[LAVA][0],       TRUE, (Pos){10+(sizes.x+5)*5, game->win->h -(sizes.y+5)*1 - 5},      sizes, (GENERIC_FUNC_POINTER)select_lava);
+    CreateButton(&buttons[14],  "Fungus",     typeColorList[FUNGUS][0],     TRUE, (Pos){10+(sizes.x+5)*6, game->win->h -(sizes.y+5)*1 - 5},      sizes, (GENERIC_FUNC_POINTER)select_fungus);
+    CreateButton(&buttons[15],  "Phantom",    typeColorList[PHANTOM][0],    TRUE, (Pos){10+(sizes.x+5)*7, game->win->h -(sizes.y+5)*1 - 5},      sizes, (GENERIC_FUNC_POINTER)select_phantom);
+    CreateButton(&buttons[16],  "Source",     typeColorList[SOURCE][0],     TRUE, (Pos){10+(sizes.x+5)*8, game->win->h -(sizes.y+5)*1 - 5},      sizes, (GENERIC_FUNC_POINTER)select_source);
+    // PrintButtonParams(buttons[0]);
+    for(int i = 0; i < 17; i++){
+        add_button_gui(&game->gui, buttons[i]);
+    }
+    // add_button_gui(&game->gui, button2);
+}

@@ -1,6 +1,6 @@
 CPP_COMPILER = g++
 C_COMPILER = gcc
-FLAGS = -O2# -Wall -Wextra
+FLAGS = -O2
 THIRDPARTY_INCLUDE_FOLDER = -Ithird_party/include
 LIB_FOLDER = -Lthird_party/lib
 LINKER_LIBS = -lmingw32 -lSDL2main -lSDL2 -lm

@@ -4,6 +4,7 @@
 #include "engine_lib.h"
 // #include "../partsim/simulator.h"
 #include "particle_game.h"
+#include "gui_handler.h"
 
 #define LEFT_BUTTON (event.button.button == SDL_BUTTON_LEFT)
 #define RIGHT_BUTTON (event.button.button == SDL_BUTTON_RIGHT)

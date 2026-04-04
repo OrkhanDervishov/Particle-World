@@ -17,6 +17,7 @@ typedef SDL_Surface Surface;
 typedef SDL_Texture Texture;
 
 #define INF 0x3F3F3F3F
+#define GENERIC_FUNC_POINTER void (*)()
 
 typedef enum{
     UP = 0,

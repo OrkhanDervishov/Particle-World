@@ -68,7 +68,7 @@ int ChunkToImage(Chunk* chunk){
     //     return 2;
     // }
     
-    for(size_t i = 0; i < chunk->size; i++){
+    for(int i = 0; i < chunk->size; i++){
         chunk_image.buffer[i] = chunk->c[i];
     }
 
@@ -118,8 +118,8 @@ void ShowChunkDirtyRectsSW(Window* window, Chunk* chunk, int x, int y, Color col
 void ShowChunkSpaceDirtyRectsSW(Window* window, ChunkSpace* cs, int x, int y){
     Color color = {.rgba = 0xFFFF00FF};
 
-    for(int i = 0; i < cs->height_c; i++){
-        for(int j = 0; j < cs->width_c; j++){
+    for(int i = 0; i < (int)cs->height_c; i++){
+        for(int j = 0; j < (int)cs->width_c; j++){
             ShowChunkDirtyRectsSW(
                 window, &cs->chunks[i*cs->width_c + j], 
                 x + j*reqChunkWidth*reqParticleSize, 
@@ -142,10 +142,10 @@ void ShowChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
     Color yellow = {.rgba = 0xFF00FFFF};
     bool row_toggle = FALSE;
     bool col_toggle = FALSE;
-    for(int i = 0; i < cs->height_c; i++){
+    for(int i = 0; i < (int)cs->height_c; i++){
         row_toggle = row_toggle ? FALSE : TRUE;
         col_toggle = row_toggle;
-        for(int j = 0; j < cs->width_c; j++){
+        for(int j = 0; j < (int)cs->width_c; j++){
             col_toggle = col_toggle ? FALSE : TRUE;
             Color color = col_toggle ? green : yellow;
             ShowChunkSW(
@@ -173,14 +173,14 @@ void ShowChunkSpaceAllSW(Window* window, ChunkSpace* cs, int x, int y){
 void DrawChunkSW(Window* window, Chunk* chunk, int x, int y){
     ChunkToImage(chunk);
     
-    SDL_Rect srcRect = {0, 0, chunk->w, chunk->h};
-    SDL_Rect dstRect = {x, y, chunk->w*reqParticleSize, chunk->h*reqParticleSize};
+    // SDL_Rect srcRect = {0, 0, chunk->w, chunk->h};
+    // SDL_Rect dstRect = {x, y, chunk->w*reqParticleSize, chunk->h*reqParticleSize};
     draw_image_on_fimage_scaled(window->context, chunk_image, x, y, reqParticleSize, reqParticleSize);
 }
 
 void DrawRegionSW(Window* window, Region* region, int x, int y){
-    for(int i = 0; i < region->h; i++){
-    for(int j = 0; j < region->w; j++){
+    for(int i = 0; i < (int)region->h; i++){
+    for(int j = 0; j < (int)region->w; j++){
             DrawChunkSW(
                 window, &region->chunks[i*region->w + j], 
                 x + j*reqChunkWidth*reqParticleSize, 
@@ -191,8 +191,8 @@ void DrawRegionSW(Window* window, Region* region, int x, int y){
 }
 
 void DrawChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
-    for(int i = 0; i < cs->height_c; i++){
-    for(int j = 0; j < cs->width_c; j++){
+    for(int i = 0; i < (int)cs->height_c; i++){
+    for(int j = 0; j < (int)cs->width_c; j++){
             DrawChunkSW(
                 window, &cs->chunks[i*cs->width_c + j], 
                 x + j*reqChunkWidth*reqParticleSize, 
@@ -207,16 +207,16 @@ void DrawChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
 
 // Image software rendering
 
-void DrawImageInWindowSW(Window* window, Image* img, int x, int y, int scale){
-    Surface* imageSurface = ImageToSurfaceRGBA(img);
-    Surface* winSurface = SDL_GetWindowSurface(window->window);
+// void DrawImageInWindowSW(Window* window, Image* img, int x, int y, int scale){
+//     Surface* imageSurface = ImageToSurfaceRGBA(img);
+//     // Surface* winSurface = SDL_GetWindowSurface(window->window);
 
-    SDL_Rect srcRect = {0, 0, img->width, img->height};
-    SDL_Rect dstRect = {x, y, img->width*scale, img->height*scale};
-    // if(scale != 1)
-        // SDL_BlitScaled(storeChunkSurface, &srcRect, winSurface, &dstRect);
-    // else
-        // SDL_BlitSurface(storeChunkSurface, &srcRect, winSurface, &dstRect);
+//     SDL_Rect srcRect = {0, 0, img->width, img->height};
+//     SDL_Rect dstRect = {x, y, img->width*scale, img->height*scale};
+//     // if(scale != 1)
+//         // SDL_BlitScaled(storeChunkSurface, &srcRect, winSurface, &dstRect);
+//     // else
+//         // SDL_BlitSurface(storeChunkSurface, &srcRect, winSurface, &dstRect);
 
-    SDL_FreeSurface(imageSurface);
-}
+//     SDL_FreeSurface(imageSurface);
+// }

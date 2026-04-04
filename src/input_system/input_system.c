@@ -119,7 +119,9 @@ void ProcessInput(ParticleGame* game)
 void function1(ParticleGame* game){
     int mx, my;
     int state = SDL_GetMouseState(&mx, &my);
-    // if(!CheckGuiButtons(game->win, mx, my)){
+
+    GuiElement* e = gui_handle(&game->gui, 0, 0, mx, my);
+    if(e == NULL){
         int created = 0;
         int px = ((mx) / DEFAULT_PARTICLE_SIZE);
         int py = ((my) / DEFAULT_PARTICLE_SIZE);
@@ -137,6 +139,15 @@ void function1(ParticleGame* game){
             
             startPosMouseHold = endPosMouseHold;
         }
+    } else {
+        switch (e->type)
+        {
+        case BUTTON:
+            Button* b = ((Button*)e->element);
+            void (*f)(ParticleGame* game) = (PARTICLE_GAME_FUNC)b->func;
+            f(game);
+        }
+    }
 }
 
 void function2(ParticleGame* game){

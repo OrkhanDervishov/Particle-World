@@ -10,9 +10,14 @@
 
 
 int CreateParticleGame(ParticleGame** game){
+    //******************************************/
+    // Initializing game window
     (*game) = (ParticleGame*)malloc(sizeof(ParticleGame));
     if(CreateWindow(&((*game)->win), SCR_WIDTH, SCR_HEIGHT, WIN_TITLE, TRUE)) return 1;
-
+    //******************************************/
+    
+    //******************************************/
+    // Initializing chunk system
     ChunkSpace* cs = &((*game)->cs);
     if(CreateChunkSpace(
         cs, CS_WIDTH, CS_HEIGHT, 
@@ -20,31 +25,55 @@ int CreateParticleGame(ParticleGame** game){
         DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE
     )) return 2;
     ArrangeChunks(cs);
-    // CreateGui((*game)->win, buttons, &buttonCount, countParticleTypes - 1);
+    //******************************************/
+    
     // TODO: Solve problem
+    //******************************************/
+    // Initializing particle system
     InitParticles();
     srand(time(NULL));
+    //******************************************/
     
-
+    //******************************************/
+    // Initializing gui system
+    GuiBox* gb;
+    init_gui_handler();
+    CreateGuiBox(&gb, "gui_box", (Color){.rgba=0xFFFFFFFF}, 0, FALSE, (Pos){0, 0}, (Pos){(*game)->win->w, (*game)->win->h});
+    (*game)->gui.type = GUI_BOX;
+    (*game)->gui.element = (void*)gb;
+    //******************************************/
+    
+    
+    //******************************************/
+    // Initializing game's callback system
     for(int i = 0; i < CB_COUNT_MAX; i++){
         (*game)->callbacks[i] = NULL;
     }
     (*game)->cbCount = 0;
-
+    //******************************************/
+    
+    //******************************************/
+    // Initializing game's system parameters
     (*game)->s_params.bg_color.rgba = 0xFF181818;
     (*game)->s_params.hm_mode = FALSE;
     (*game)->s_params.paused = FALSE;
     (*game)->s_params.delay = 0;
     (*game)->s_params.frameLockEnabled = TRUE;
     (*game)->s_params.frameLock = 90;
-
-
+    //******************************************/
+    
+    
+    //******************************************/
+    // Initializing game's gameplay parameters
     (*game)->g_params.brush_size = 3;
     (*game)->g_params.selectedParticleType = 0;
+    //******************************************/
+
     return 0;
 }
 
 void DeleteParticleGame(ParticleGame** game){
+    DeleteGuiBox((GuiBox**)(&(*game)->gui.element));
     DeleteChunkSpace(&(*game)->cs);
     DestroyWindow(&((*game)->win));
     free(*game);

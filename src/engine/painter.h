@@ -50,6 +50,8 @@ typedef struct{
     MyPixelFormat format;
 } FormatImage;
 
+#define GET_PIXEL(img, x, y) IMG_GET(img, x, y)
+
 #define PUT_PIXEL(img, x, y, color)   \
 do{\
     if((x) >= 0 && (x) < (img).width && (y) >= 0 && (y) < (img).height){ \
@@ -109,6 +111,16 @@ static inline Color get_negative(Color color){
         .b = 255 - color.b,
         .a = color.a,
     };
+}
+
+static inline int get_negative_f(int fcolor, MyPixelFormat format){
+
+    int r = 0xFF - fcolor >> (format).r_shift;
+    int b = 0xFF - fcolor >> (format).g_shift;
+    int g = 0xFF - fcolor >> (format).b_shift;
+    int a = fcolor >> (format).a_shift;
+
+    return r<<(format).r_shift | g<<(format).g_shift | b<<(format).b_shift | a<<(format).a_shift;
 }
 
 MyPixelFormat create_format(int r_mask, int g_mask, int b_mask, int a_mask);

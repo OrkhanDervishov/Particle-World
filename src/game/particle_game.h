@@ -21,16 +21,18 @@
 #include "dirtyrect.h"
 #include "particle_data.h"
 #include "simulator.h"
+#include "gui_handler.h"
 
 #define ICON_PATH "./src/images/sand.bmp"
 #define BG_PATH "./src/images/background.bmp"
+
 
 typedef struct{
     bool paused;
     int delay;
     bool frameLockEnabled;
     int frameLock;
-
+    
     Color bg_color;
     bool hm_mode;
 } GameSystemParameters;
@@ -44,11 +46,13 @@ typedef struct{
 typedef struct ParticleGame{
     Window* win;
     ChunkSpace cs;
+    GuiElement gui;
     GameSystemParameters s_params;
     GameParameters g_params;
     int cbCount;
     void (*callbacks[CB_COUNT_MAX])(struct ParticleGame* game);
 } ParticleGame;
+#define PARTICLE_GAME_FUNC void (*)(ParticleGame* game)
 
 
 #define PAUSE_GAME(g) (*g)->s_params.pause = TRUE

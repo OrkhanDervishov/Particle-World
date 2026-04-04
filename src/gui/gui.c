@@ -41,7 +41,7 @@ void DeleteGuiBox(GuiBox** box){
 
 void CreateButton(
     Button** button, const char *text, Color color,
-    bool bg_draw, vec2 pos, vec2 sizes, void *func
+    bool bg_draw, vec2 pos, vec2 sizes, void (*func)()
 ){
     *button = (Button*)malloc(sizeof(Button));
     (*button)->text = (char*)malloc(256);
@@ -73,10 +73,19 @@ void DeleteButton(Button** button){
 
 
 void AddButton(GuiBox *box, Button *button){
-    // printf("works10\n");
     if(box->elem_count >= MAX_GUIBOX_ELEMENTS) return;
     GuiElement elem = {.type = BUTTON, .element = (void*)button};
     box->elements[box->elem_count++] = elem;
+}
+
+/*!
+    @param elem must contain any object that holds another objects
+*/
+void add_button_gui(GuiElement *elem, Button *button){
+    if(elem == NULL || button == NULL) return;
+    if(elem->type == GUI_BOX){
+        AddButton((GuiBox*)elem->element, button);
+    }
 }
 
 

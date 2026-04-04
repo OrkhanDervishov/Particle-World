@@ -10,6 +10,8 @@
 // Basics
 //##################################################################
 
+
+
 MyPixelFormat create_format(int r_mask, int g_mask, int b_mask, int a_mask){
     MyPixelFormat format;
     format.r_mask = r_mask;
@@ -53,7 +55,6 @@ Color get_unformatted_color(int fcolor, MyPixelFormat format){
 }
 
 // Maybe will be moved to geometry.c
-// SOLVED: Correct line endpoints when they are out of frame size
 vec2 correct_line_end(int x, int y, int dx, int dy, int width, int height){
     if(x > width - 1){
         y -= dy*(x - (width - 1))/dx;
@@ -269,6 +270,20 @@ do{\
     }\
 }while(0)
 
+#define PUT_THICKNESS_NC(img, x, y, cx, cy, format, thickness, side)   \
+do{\
+    int dx = 0;\
+    int dy = 0;\
+    for(int i = 0; i < (thickness)-1; i++){\
+        if((side) == UP)       if(y+dy >= cy) dy += -1; \
+        if((side) == DOWN)     if(y+dy <= cy) dy += 1;  \
+        if((side) == LEFT)     if(x+dx >= cx) dx += -1; \
+        if((side) == RIGHT)    if(x+dx <= cx) dx += 1;  \
+        int fcolor = get_negative_f(IMG_GET(img, x+dx, y+dy), format);\
+        PUT_PIXEL(img, x+dx, y+dy, fcolor);\
+    }\
+}while(0)
+
 
 // TODO: Add fill option
 void draw_circle(Image img, int cx, int cy, int radius, Color color, int thickness){
@@ -297,33 +312,58 @@ void draw_circle(Image img, int cx, int cy, int radius, Color color, int thickne
     }
 }
 
-void draw_circle_f(FormatImage fimg, int cx, int cy, int radius, Color color, int thickness){
-    int x = 0;
-    int y = -radius;
-    int p = -radius;
-    int fcolor = GET_FCOLOR(color, fimg.format);
 
-    while(x < -y){
-        if(p > 0){
-            y++;
-            p += 2*(x + y) + 1;
-        } else {
-            p += 2*x + 1;
+void draw_circle_f(FormatImage fimg, int cx, int cy, int radius, Color color, int thickness){
+    
+    // for(int i = 0; i < thickness; i++){
+        int x = 0;
+        int y = -radius;
+        int p = -radius;
+        int fcolor = GET_FCOLOR(color, fimg.format);
+
+        while(x < -y){
+            if(p > 0){
+                y++;
+                p += 2*(x + y) + 1;
+            } else {
+                p += 2*x + 1;
+            }
+
+            PUT_THICKNESS(fimg, cx + x, cy + y, cx, cy, fcolor, thickness, DOWN);
+            PUT_THICKNESS(fimg, cx - x, cy + y, cx, cy, fcolor, thickness, DOWN);
+            PUT_THICKNESS(fimg, cx + x, cy - y, cx, cy, fcolor, thickness, UP);
+            PUT_THICKNESS(fimg, cx - x, cy - y, cx, cy, fcolor, thickness, UP);
+            PUT_THICKNESS(fimg, cx + y, cy + x, cx, cy, fcolor, thickness, RIGHT);
+            PUT_THICKNESS(fimg, cx + y, cy - x, cx, cy, fcolor, thickness, RIGHT);
+            PUT_THICKNESS(fimg, cx - y, cy + x, cx, cy, fcolor, thickness, LEFT);
+            PUT_THICKNESS(fimg, cx - y, cy - x, cx, cy, fcolor, thickness, LEFT);
+            
+            // Negative circle creation trials
+
+            // PUT_PIXEL(fimg, cx + x, cy + y, get_negative_f(IMG_GET(fimg, cx + x, cy + y), fimg.format));
+            // PUT_PIXEL(fimg, cx - x, cy + y, get_negative_f(IMG_GET(fimg, cx - x, cy + y), fimg.format));
+            // PUT_PIXEL(fimg, cx + x, cy - y, get_negative_f(IMG_GET(fimg, cx + x, cy - y), fimg.format));
+            // PUT_PIXEL(fimg, cx - x, cy - y, get_negative_f(IMG_GET(fimg, cx - x, cy - y), fimg.format));
+            // PUT_PIXEL(fimg, cx + y, cy + x, get_negative_f(IMG_GET(fimg, cx + y, cy + x), fimg.format));
+            // PUT_PIXEL(fimg, cx + y, cy - x, get_negative_f(IMG_GET(fimg, cx + y, cy - x), fimg.format));
+            // PUT_PIXEL(fimg, cx - y, cy + x, get_negative_f(IMG_GET(fimg, cx - y, cy + x), fimg.format));
+            // PUT_PIXEL(fimg, cx - y, cy - x, get_negative_f(IMG_GET(fimg, cx - y, cy - x), fimg.format));
+            
+            // PUT_THICKNESS_NC(fimg, cx + x, cy + y, cx, cy, fimg.format, thickness, DOWN);
+            // PUT_THICKNESS_NC(fimg, cx - x, cy + y, cx, cy, fimg.format, thickness, DOWN);
+            // PUT_THICKNESS_NC(fimg, cx + x, cy - y, cx, cy, fimg.format, thickness, UP);
+            // PUT_THICKNESS_NC(fimg, cx - x, cy - y, cx, cy, fimg.format, thickness, UP);
+            // PUT_THICKNESS_NC(fimg, cx + y, cy + x, cx, cy, fimg.format, thickness, RIGHT);
+            // PUT_THICKNESS_NC(fimg, cx + y, cy - x, cx, cy, fimg.format, thickness, RIGHT);
+            // PUT_THICKNESS_NC(fimg, cx - y, cy + x, cx, cy, fimg.format, thickness, LEFT);
+            // PUT_THICKNESS_NC(fimg, cx - y, cy - x, cx, cy, fimg.format, thickness, LEFT);
+            
+            x++;
         }
-        
-        PUT_THICKNESS(fimg, cx + x, cy + y, cx, cy, fcolor, thickness, DOWN);
-        PUT_THICKNESS(fimg, cx - x, cy + y, cx, cy, fcolor, thickness, DOWN);
-        PUT_THICKNESS(fimg, cx + x, cy - y, cx, cy, fcolor, thickness, UP);
-        PUT_THICKNESS(fimg, cx - x, cy - y, cx, cy, fcolor, thickness, UP);
-        PUT_THICKNESS(fimg, cx + y, cy + x, cx, cy, fcolor, thickness, RIGHT);
-        PUT_THICKNESS(fimg, cx + y, cy - x, cx, cy, fcolor, thickness, RIGHT);
-        PUT_THICKNESS(fimg, cx - y, cy + x, cx, cy, fcolor, thickness, LEFT);
-        PUT_THICKNESS(fimg, cx - y, cy - x, cx, cy, fcolor, thickness, LEFT);
-        
-        x++;
-    }
+    // }
 }
 #undef PUT_THICKNESS
+#undef PUT_THICKNESS_NC
 
 
 void draw_rect(Image img, Rect rect, Color color, int tickness){

@@ -24,6 +24,6 @@ void DrawRegionSW(Window* window, Region* region, int x, int y);
 void DrawChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y);
 
 // Image software rendering
-void DrawImageInWindowSW(Window* window, Image* img, int x, int y, int scale);
+// void DrawImageInWindowSW(Window* window, Image* img, int x, int y, int scale);
 
 #endif

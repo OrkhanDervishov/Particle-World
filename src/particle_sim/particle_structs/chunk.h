@@ -13,8 +13,8 @@ typedef struct{
     // This data has to be used for saving
 
     // Core
-    int     w, h;  
-    int     size;
+    int  w, h;
+    int  size;
     bool    active;
 
     // Simulation
