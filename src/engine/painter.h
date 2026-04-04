@@ -7,7 +7,6 @@
 // #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-// #define SWAP(a, b, t) t = a; a = b; b = t;
 #define IMGP_GET(img, x, y) (img)->buffer[(y)*(img)->width + (x)]
 #define IMG_GET(img, x, y) (img).buffer[(y)*(img).width + (x)]
 // #define COLOR_ALPHA
@@ -177,6 +176,6 @@ void draw_image_on_fimage_scaled(FormatImage dest, Image src, int x, int y, int 
 // Image formats create and load
 int save_image_ppm(Image* img, char* filename);
 int save_image_png(Image* img, char* filename);
-int load_png(Image* img, char* path);
+int load_png(Image* img, const char* path);
 
 #endif

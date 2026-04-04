@@ -784,7 +784,7 @@ This function creates image itself.
 If you pass already created image it will be deleted.
 NOTE: This will be changed in the future
 */
-int load_png(Image* img, char* path){
+int load_png(Image* img, const char* path){
 
     int w, h, comp;
     unsigned char* imagedata = stbi_load(path, &w, &h, &comp, STBI_rgb_alpha);

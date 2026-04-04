@@ -35,6 +35,12 @@ int CreateParticleGame(ParticleGame** game){
     //******************************************/
     
     //******************************************/
+    // Initializing mouse
+    int loaded = load_cursor_image(&(*game)->mouse, "./resources/standard_cursor.png");
+    printf("cursor loaded: %d\n", loaded ? FALSE : TRUE);
+    //******************************************/
+    
+    //******************************************/
     // Initializing gui system
     GuiBox* gb;
     init_gui_handler();
@@ -73,6 +79,8 @@ int CreateParticleGame(ParticleGame** game){
 }
 
 void DeleteParticleGame(ParticleGame** game){
+    // save_image_png(&(*game)->mouse.cursor_img_normal, "hello.png");
+    free_cursor_image(&(*game)->mouse);
     DeleteGuiBox((GuiBox**)(&(*game)->gui.element));
     DeleteChunkSpace(&(*game)->cs);
     DestroyWindow(&((*game)->win));

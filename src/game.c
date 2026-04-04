@@ -135,15 +135,16 @@ int RunParticleGame(ParticleGame* game){
         Color mouse_color = {.rgba = 0xFFFFFFFF};
         int mx, my;
         int state = SDL_GetMouseState(&mx, &my);
+        DrawGuiElement(win, &game->gui, 0, 0);
         draw_circle_f(win->context, mx, my, game->g_params.brush_size*DEFAULT_PARTICLE_SIZE, mouse_color, 2);
-
+        
         // RenderText
         BasicTextRender(game->win, fpstext,     10, 10, 2, textColor);  
         BasicTextRender(game->win, typetext,    10, 30, 2, textColor);  
         BasicTextRender(game->win, brushtext,   10, 50, 2, textColor);  
         Guide(game, textColor);
         
-        DrawGuiElement(win, &game->gui, 0, 0);
+        draw_cursor(win->context, game->mouse);
 
         SDL_UpdateWindowSurface(win->window);
         draw_end = GetTimeNano()/1000;
@@ -230,6 +231,7 @@ const char* guideLine =             "Create particles along a line - Z";
 const char* guideScreenshot =       "Take screenshot - TAB";
 const char* guideSpell =            "Cast spell - A";
 const char* guideChunks =           "Show chunks - SPACE";
+const char* guideExit =             "Exit - ESC";
 void Guide(ParticleGame* game, Color textColor){
     // int startX = game->win->screen.width-350;
     int startX = 10;
@@ -245,12 +247,13 @@ void Guide(ParticleGame* game, Color textColor){
     BasicTextRender(game->win, guideScreenshot,     startX, startY+160, 2, textColor);  
     BasicTextRender(game->win, guideSpell,          startX, startY+180, 2, textColor);  
     BasicTextRender(game->win, guideChunks,         startX, startY+200, 2, textColor);  
+    BasicTextRender(game->win, guideExit,           startX, startY+220, 2, textColor);  
 }
 
 
 void init_buttons(ParticleGame* game, Button** buttons){
     Color buttonColor = {.rgba = 0xFF0000FF};
-    vec2 sizes = {150, 40};
+    vec2 sizes = {70, 30};
 
     CreateButton(&buttons[0],   "Clear",      buttonColor,                  TRUE, (Pos){10+(sizes.x+5)*0, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)clear_space);
     CreateButton(&buttons[1],   "Sand",       typeColorList[SAND][0],       TRUE, (Pos){10+(sizes.x+5)*1, game->win->h -(sizes.y+5)*2 - 5},      sizes, (GENERIC_FUNC_POINTER)select_sand);

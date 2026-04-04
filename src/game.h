@@ -7,6 +7,7 @@
 #include "gui_renderer_sw.h"
 #include "gui_handler.h"
 #include "input_system.h"
+#include "mouse.h"
 
 int RunParticleGame(ParticleGame* game);
 

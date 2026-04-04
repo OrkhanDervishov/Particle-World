@@ -7,5 +7,7 @@
 #include "painter.h"
 #include "constants.h"
 #include "geometry.h"
+#include "platform.h"
+#include "sdl2_layer.h"
 
 #endif

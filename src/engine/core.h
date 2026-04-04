@@ -13,8 +13,8 @@
 
 // Third party
 #include <SDL2/SDL.h>
-typedef SDL_Surface Surface;
-typedef SDL_Texture Texture;
+// typedef SDL_Surface Surface;
+// typedef SDL_Texture Texture;
 
 #define INF 0x3F3F3F3F
 #define GENERIC_FUNC_POINTER void (*)()
@@ -31,6 +31,7 @@ typedef enum{
 typedef struct{
     int x, y;
 } vec2;
+typedef vec2 vec2i;
 typedef vec2 Point;
 typedef vec2 Pos;
 

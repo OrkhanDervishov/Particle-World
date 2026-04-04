@@ -3,10 +3,12 @@
 
 #include "core.h"
 #include "painter.h"
+#include "platform.h"
+#include "sdl2_layer.h"
 
 
 // Third party
-#include <SDL2/SDL.h>
+// #include <SDL2/SDL.h>
 
 
 #define SCR_WIDTH 1080
