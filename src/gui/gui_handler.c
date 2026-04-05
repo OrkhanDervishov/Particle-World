@@ -28,8 +28,8 @@ GuiElement* on_guibox(GuiElement* elem, int mx, int my){
 
     bool val = FALSE;
     for(int i = 0; i < gb->elem_count; i++){
-        GuiElement ge = gb->elements[i];
-        val = handlers[ge.type](&ge, rel_x, rel_y);
+        GuiElement* ge = &gb->elements[i];
+        val = handlers[ge->type](ge, rel_x, rel_y);
         if(val){
             return &gb->elements[i];
         }
@@ -50,14 +50,12 @@ bool on_button(GuiElement* elem, int mx, int my){
         button->sizes.y
     };
     
-    // printf("works\n");
-    // CONSOLE_RECT(rect);
-    // printf("button relx:%d rely:%d\n", rel_x, rel_y);
-    // printf("x:%d y:%d\n", mx, my);
     if(
         rect.x < rel_x && rect.y < rel_y &&
         rect.w > rel_x && rect.h > rel_y
     ){
+        if(elem->cooldown > get_current_time() - elem->last_time) return FALSE;
+        elem->last_time = get_current_time();
         return TRUE;
     }
     return FALSE;

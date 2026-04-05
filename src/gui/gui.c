@@ -72,27 +72,18 @@ void DeleteButton(Button** button){
 }
 
 
-void AddButton(GuiBox *box, Button *button){
+void AddButton(GuiBox *box, Button *button, float cooldown){
     if(box->elem_count >= MAX_GUIBOX_ELEMENTS) return;
-    GuiElement elem = {.type = BUTTON, .element = (void*)button};
+    GuiElement elem = {.type = BUTTON, .element = (void*)button, .cooldown = cooldown, .last_time=0.0f};
     box->elements[box->elem_count++] = elem;
 }
 
 /*!
     @param elem must contain any object that holds another objects
 */
-void add_button_gui(GuiElement *elem, Button *button){
+void add_button_gui(GuiElement *elem, Button *button, float cooldown){
     if(elem == NULL || button == NULL) return;
     if(elem->type == GUI_BOX){
-        AddButton((GuiBox*)elem->element, button);
+        AddButton((GuiBox*)elem->element, button, cooldown);
     }
 }
-
-
-// void DrawGuiBox(Window* window, GuiBox* box, int x, int y){
-
-// }
-
-// void DrawButton(Window* window, Button* button){
-
-// }

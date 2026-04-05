@@ -15,10 +15,12 @@ typedef struct
 {
     GuiElementType type;
     void *element;
+    float cooldown;
+    float last_time;
 } GuiElement;
 
 
-#define MAX_GUIBOX_ELEMENTS 16
+#define MAX_GUIBOX_ELEMENTS 20
 typedef struct{
     char* name;
     Color color;
@@ -55,10 +57,8 @@ void CreateButton(
 );
 void PrintButtonParams(Button* button);
 void DeleteButton(Button** button);
-void AddButton(GuiBox *box, Button *button);
+void AddButton(GuiBox *box, Button *button, float cooldown);
 
-void add_button_gui(GuiElement *elem, Button *button);
-// void DrawGuiBox(Window* window, GuiBox* box);
-// void DrawButton(Window* window, Button* button);
+void add_button_gui(GuiElement *elem, Button *button, float cooldown);
 
 #endif

@@ -405,12 +405,13 @@ void draw_filled_circle(Image img, int x, int y, int radius, Color color){
 
     rect = CorrectRect(rect, img.width, img.height);
 
-    for(int i = rect.y; i < rect.h + rect.y; i++)
-    for(int j = rect.x; j < rect.w + rect.x; j++){
-        int dx = j - x;
+    for(int i = rect.y; i < rect.h + rect.y; i++){
         int dy = i - y;
-        if(dx*dx + dy*dy <= radius*radius)
-            IMG_GET(img, dx, dy) = color;
+        for(int j = rect.x; j < rect.w + rect.x; j++){
+            int dx = j - x;
+            if(dx*dx + dy*dy <= radius*radius)
+                IMG_GET(img, j, i) = color;
+        }
     }
 }
 
@@ -421,16 +422,17 @@ void draw_filled_circle_f(FormatImage fimg, int x, int y, int radius, Color colo
         .w = radius*2,
         .h = radius*2
     };
-
+    
     rect = CorrectRect(rect, fimg.width, fimg.height);
     int fcolor = get_formatted_color(color, fimg.format);
-
-    for(int i = rect.y; i < rect.h + rect.y; i++)
-    for(int j = rect.x; j < rect.w + rect.x; j++){
-        int dx = j - x;
-        int dy = i - y;
-        if(dx*dx + dy*dy <= radius*radius)
-            IMG_GET(fimg, dx, dy) = fcolor;
+    
+    for(int i = rect.y; i < rect.h + rect.y; i++){
+        int dy = y - i;
+        for(int j = rect.x; j < rect.w + rect.x; j++){
+            int dx = x - j;
+            if(dx*dx + dy*dy <= radius*radius)
+            IMG_GET(fimg, j, i) = fcolor;
+        }
     }
 }
 

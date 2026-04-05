@@ -21,11 +21,11 @@ typedef int32_t         part_type_t;
 typedef uint8_t         part_xvel_t;
 typedef uint8_t         part_yvel_t;
 typedef Color           part_color_t;
-typedef uint16_t        part_effectt_t;
-typedef uint16_t        part_lifet_t;
+typedef int16_t         part_effectt_t;
+typedef int16_t         part_lifet_t;
 typedef int32_t         part_heat_t;
 typedef uint8_t         part_pflags_t;
-typedef uint32_t        part_durab_t;
+typedef int32_t         part_durab_t;
 typedef void*           part_custom_t;
 
 

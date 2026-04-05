@@ -577,10 +577,11 @@ bool SteamBehave(int x, int y)
 {
     part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
     (*p_lifet)--;
-    if(*p_lifet == 0){DELETE_PART(x, y);}
-
-    BasicGasBehave(x, y);
-
+    if(*p_lifet <= 0){
+        DELETE_PART(x, y);
+    }else {
+        BasicGasBehave(x, y);
+    }
     return TRUE;
 }
 
@@ -637,7 +638,10 @@ bool SmokeBehave(int x, int y){
 
     part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
     (*p_lifet)--;
-    if(*p_lifet == 0){DELETE_PART(x, y);}
+    if((*p_lifet) <= 0){
+        DELETE_PART(x, y);
+        return TRUE;
+    }
 
     BasicGasBehave(x, y);
 
@@ -713,7 +717,7 @@ bool PhantomBehave(int x, int y){
     
     part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
     (*p_lifet)--;
-    if(*p_lifet == 0){DELETE_PART(x, y);}
+    if(*p_lifet <= 0){DELETE_PART(x, y);}
 
     return TRUE;
 }

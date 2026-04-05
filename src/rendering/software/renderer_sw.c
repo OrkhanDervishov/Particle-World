@@ -2,12 +2,12 @@
 
 void ClearWindow(Window *window, Color color){
     // printf("works1\n");
-    SDL_FillRect(
-        SDL_GetWindowSurface(window->window), NULL, 
-        SDL_MapRGB(
-            SDL_GetWindowSurface(window->window)->format, 
-            color.r, color.g, color.b
-        )
-    );
+    // SDL_FillRect(
+    //     SDL_GetWindowSurface(window->window), NULL, 
+    //     SDL_MapRGB(
+    //         SDL_GetWindowSurface(window->window)->format, 
+    //         color.r, color.g, color.b
+    //     )
+    // );
     // printf("works2\n");
 }

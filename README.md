@@ -11,6 +11,7 @@
 
 Currently project only supports windows
 
+Put SDL2.dll to the main directory and run
 ```
 make all
 ```

@@ -25,7 +25,6 @@ void CreateMagicParticleCS(ChunkSpace *cs, int x, int y, int type, part_color_t 
 }
 
 void DeleteParticleCS(ChunkSpace *cs, int x, int y){
-    // printf("works\n");
     CS_GET_STATE(cs, x, y) = P_IGNORED;
     CS_GET_TYPE(cs, x, y) = AIR;
     CS_GET_COLOR(cs, x, y).a = 0;
