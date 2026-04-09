@@ -42,12 +42,7 @@ int CreateChunk(Chunk* chunk, int w, int h){
 
     // Can be used in the future.
     //memset(chunk->data_block, 0, chunk->full_size);
-
-    for(int i = 0; i < w*h; i++){
-        chunk->type[i] = AIR;
-    }
-    memset(chunk->state, 0, chunk->size*sizeof(STATE_DT));
-
+    // memset(chunk->state, 0, chunk->size*sizeof(STATE_DT));
     memset(chunk->xvel, 0, chunk->size*sizeof(XVEL_DT));
     memset(chunk->yvel, 0, chunk->size*sizeof(YVEL_DT));
     memset(chunk->c, 0, chunk->size*sizeof(COLOR_DT));
@@ -57,6 +52,12 @@ int CreateChunk(Chunk* chunk, int w, int h){
     memset(chunk->pflags, 0, chunk->size*sizeof(PFLAGS_DT));
     memset(chunk->durability, 0, chunk->size*sizeof(DURABILITY_DT));
     memset(chunk->custom, 0, chunk->size*sizeof(CUSTOM_DT));
+    
+        for(int i = 0; i < w*h; i++){
+            chunk->type[i] = AIR;
+            chunk->state[i] = P_IGNORED;
+            chunk->c[i].a = 255;
+        }
 
     return 0;
 }
@@ -109,7 +110,7 @@ void ClearChunkFull(Chunk* chunk){
     for(int i = 0; i < chunk->size; i++){
         chunk->state[i] = P_IGNORED;
         chunk->type[i] = AIR;
-        chunk->c[i].a = 0;
+        // chunk->c[i].a = 0;
     }
 }
 

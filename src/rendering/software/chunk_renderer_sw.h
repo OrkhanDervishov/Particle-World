@@ -19,9 +19,9 @@ Surface* ImageToSurfaceRGBA(Image* img);
 void ShowChunkSpaceDirtyRectsSW(Window* window, ChunkSpace* cs, int x, int y);
 void ShowChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y);
 void ShowChunkSpaceAllSW(Window* window, ChunkSpace* cs, int x, int y);
-void DrawChunkSW(Window* window, Chunk* chunk, int x, int y);
-void DrawRegionSW(Window* window, Region* region, int x, int y);
-void DrawChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y);
+void DrawChunkSW(Image part_image, Chunk* chunk, int x, int y);
+void DrawRegionSW(Image part_image, Region* region, int x, int y);
+void DrawChunkSpaceSW(Image part_image, ChunkSpace* cs, int x, int y);
 
 // Image software rendering
 // void DrawImageInWindowSW(Window* window, Image* img, int x, int y, int scale);

@@ -40,7 +40,7 @@ void DrawButton(Window* window, GuiElement* elem, int x, int y){
     }
     Color textColor = {.rgba=0xFFFFFFFF};
     BasicTextRender(
-        window, button->text, rel_x+(button->sizes.x>>2), 
-        rel_y+(button->sizes.y>>2), 1, get_negative(button->color)
+        window, button->text, rel_x+(button->sizes.x/3)-(strlen(button->text)), 
+        rel_y+(button->sizes.y/3), 1, get_negative(button->color)
     );
 }

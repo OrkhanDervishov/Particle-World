@@ -33,6 +33,9 @@ Rect CorrectRectCustom(Rect rect, int minX, int minY, int maxX, int maxY){
     if(rect.y + rect.h > maxY)
         rect.h = maxY - rect.y;
 
+    if(rect.w < 0) rect.w = 0;
+    if(rect.h < 0) rect.h = 0;
+    
     return rect;
 }
 
@@ -56,6 +59,7 @@ Rect CorrectRectFully(Rect rect, int maxWidth, int maxHeight){
 
     return rect;
 }
+
 
 Rect CombineRects(Rect a, Rect b){
     return (Rect){

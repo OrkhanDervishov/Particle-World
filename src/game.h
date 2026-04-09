@@ -8,6 +8,8 @@
 #include "gui_handler.h"
 #include "input_system.h"
 #include "mouse.h"
+#include "renderer_sw.h"
+#include "chunk_lighting.h"
 
 int RunParticleGame(ParticleGame* game);
 

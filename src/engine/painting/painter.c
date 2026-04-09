@@ -85,6 +85,14 @@ vec2 correct_line_end(int x, int y, int dx, int dy, int width, int height){
 // Create, Delete
 //##################################################################
 
+int create_similar(Image* dest, Image src){
+    if(dest->buffer != NULL){
+        delete_image(dest);
+
+    }
+    return create_image(dest, src.width, src.height);
+}
+
 int create_image(Image* img, size_t w, size_t h){
     if(img->buffer != NULL){
         printf("buffer is not null\n");
@@ -98,6 +106,7 @@ int create_image(Image* img, size_t w, size_t h){
 
 void delete_image(Image* img){
     free(img->buffer);
+    img->buffer = NULL;
 }
 
 
@@ -162,8 +171,10 @@ void draw_image_on_image(Image dest, Image src, int x, int y){
     Rect rect = {.x = x, .y = y, .w = src.width, .h = src.height};
     rect = CorrectRect(rect, dest.width, dest.height);
 
-    for(int i = rect.y, k = 0; i < rect.h; i++, k++)
-    for(int j = rect.x, t = 0; j < rect.w; j++, t++){
+    int endX = rect.x + rect.w;
+    int endY = rect.y + rect.h;
+    for(int i = rect.y, k = 0; i < endY; i++, k++)
+    for(int j = rect.x, t = 0; j < endX; j++, t++){
         dest.buffer[i*dest.width + j] = src.buffer[k*src.width + t];
     }
 }
@@ -175,11 +186,23 @@ void draw_image_on_image_scaled(Image dest, Image src, int x, int y, int scaleX,
     float addX = 1.0f/(float)scaleX;
     float addY = 1.0f/(float)scaleY;
     float k = 0.0f, t = 0.0f;
-    for(int i = rect.y; i < rect.h; i++)
-    for(int j = rect.x; j < rect.w; j++){
-        k += addY;
-        t += addX;
-        dest.buffer[i*dest.width + j] = src.buffer[(int)k*src.width + (int)t];
+    int prev_k = -1, prev_t = -1;
+    int endX = rect.x + rect.w;
+    int endY = rect.y + rect.h;
+    Color res_color;
+    for(int i = rect.y; i < rect.h; i++, k += addY){
+        for(int j = rect.x; j < rect.w; j++, t += addX){
+            if((int)k != prev_k || (int)t != prev_t){
+                Color dest_color = IMG_GET(dest, j, i);
+                Color src_color = IMG_GET(src, (int)t, (int)k);
+                res_color = (Color)ALPHA_BLEND(src_color, dest_color);
+                prev_k = (int)k;
+                prev_t = (int)t;
+            }
+            // dest.buffer[i*dest.width + j] = src.buffer[(int)k*src.width + (int)t];
+            IMG_GET(dest, j, i) = res_color;
+        }
+        t = 0.0f;
     }
 }
 
@@ -187,9 +210,14 @@ void draw_image_on_fimage(FormatImage dest, Image src, int x, int y){
     Rect rect = {.x = x, .y = y, .w = src.width, .h = src.height};
     rect = CorrectRect(rect, dest.width, dest.height);
 
-    for(int i = rect.y, k = 0; i < rect.h; i++, k++)
-    for(int j = rect.x, t = 0; j < rect.w; j++, t++){
-        IMG_GET(dest, j, i) = get_formatted_color(IMG_GET(src, t, k), dest.format);
+    int endX = rect.x + rect.w;
+    int endY = rect.y + rect.h;
+    for(int i = rect.y, k = 0; i < endY; i++, k++)
+    for(int j = rect.x, t = 0; j < endX; j++, t++){
+        Color dest_color = GET_COLOR(IMG_GET(dest, j, i), dest.format);
+        Color src_color = IMG_GET(src, (int)t, (int)k);
+        int res_fcolor = GET_FCOLOR((Color)ALPHA_BLEND(src_color, dest_color), dest.format);
+        IMG_GET(dest, j, i) = res_fcolor;//get_formatted_color(IMG_GET(src, t, k), dest.format);
     }
 }
 

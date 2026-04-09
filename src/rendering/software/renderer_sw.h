@@ -5,6 +5,8 @@
 #include "basic_text_renderer.h"
 
 // Software rendering
-void ClearWindow(Window *window, Color color);
+void clear_window(Window *window, Color color);
+void gen_light_chunk(Chunk* chunk);
+// void gen_light_space(C)
 
 #endif

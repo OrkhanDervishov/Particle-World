@@ -63,7 +63,7 @@ void ChangeColor(Color *c, Colors cs){
     switch (cs)
     {
     case WHITE:             c->rgba = 0xFFFFFFFF; break;
-    case BLACK:             c->rgba = 0xFF000000; break;
+    case BLACK:             c->rgba = 0xFF030303; break;
     case RED:               c->rgba = 0xFF0000FF; break;
     case PINK:              c->rgba = 0xFFAA46FC; break;
     case GREEN:             c->rgba = 0xFF00FF00; break;

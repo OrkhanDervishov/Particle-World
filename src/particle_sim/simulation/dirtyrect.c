@@ -32,6 +32,7 @@ Rect dr_correct(Rect rect, int w, int h){
 void dr_add(Rect* dr_list, int* dr_count, Rect rect, int chunk_width, int chunk_height){
     if(*dr_count >= MAX_RECT_COUNT) return;
     rect = CorrectRect(rect, chunk_width, chunk_height);
+    // rect = CorrectRectCustom(rect, 1, 1, 3*chunk_height-1, 6*chunk_width-1);
     dr_list[(*dr_count)++] = rect;
 }
 void dr_delete(Rect* dr_list, int* dr_count, int index){
@@ -54,13 +55,6 @@ int dr_cut(
     for(int i = 0; i < 9; i++){
         out[i] = rect;
     }
-    // for(int i = 0; i < 3; i++){
-    //     for(int j = 0; j < 3; j++){
-    //         printf("[%d %d %d %d] | ", out[i*3 + j]);
-    //     }
-    //     printf("\n");
-    // }
-    // printf("\n");
 
     int central_startx = in.x;
     int central_starty = in.y;
@@ -76,10 +70,6 @@ int dr_cut(
     int startY = in.y;
     int endX = in.x + in.w;
     int endY = in.y + in.h;
-
-    // // Center
-    // out[4] = CorrectRectCustom(in, 0, 0, chunk_endx, chunk_endy);
-    // generated_rects_count++;
 
     int ru_gen = FALSE;
     int rd_gen = FALSE;
@@ -143,7 +133,6 @@ int dr_cut(
         if(lu_gen) sy = 0 < startY ? startY : 0;
         if(ld_gen) ey = chunk_endy > endY ? endY : chunk_endy;
 
-        // Rect rect = (Rect){startX, sy, -startX, ey - sy};
         Rect lrect = CorrectRectCustom(in, minX, sy, 0, ey);
         out[3] = (Rect){
             .x = chunk_w + lrect.x,
@@ -161,7 +150,6 @@ int dr_cut(
         if(ru_gen) sy = 0;
         if(rd_gen) ey = chunk_endy;
 
-        // Rect rect = (Rect){chunk_endx, sy, maxX - chunk_endx, ey - sy};
         Rect rrect = CorrectRectCustom(in, chunk_endx, sy, maxX, ey);
         // printf("x:%d y:%d w:%d h:%d\n", rect.x, rect.y, rect.w, rect.h);
         out[5] = (Rect){
@@ -199,7 +187,6 @@ int dr_cut(
         if(ld_gen) sx = 0;
         if(rd_gen) ex = chunk_endx;
 
-        // Rect rect = (Rect){startX, sy, -startX, ey - sy};
         Rect drect = CorrectRectCustom(in, sx, chunk_endy, ex, maxY);
         // printf("x:%d y:%d w:%d h:%d\n", rect.x, rect.y, rect.w, rect.h);
         out[7] = (Rect){
@@ -221,21 +208,6 @@ int dr_cut(
     // out[4] = CorrectRectCustom(central, minX, minY, maxX, maxY);
     out[4] = central;
     generated_rects_count++;
-    
-
-
-    // for(int i = 0; i < 3; i++){
-    //     for(int j = 0; j < 3; j++){
-    //         printf("[%d %d %d %d] | ", 
-    //             out[i*3 + j].x,
-    //             out[i*3 + j].y,
-    //             out[i*3 + j].w,
-    //             out[i*3 + j].h
-    //         );
-    //     }
-    //     printf("\n");
-    // }
-    // printf("\n");
 
     return generated_rects_count;
 }

@@ -134,7 +134,8 @@ Rect SimulateChunkSpaceRect(ChunkSpace* cs, Chunk* chunk, Rect rect, int cs_x, i
         new_rect.h
     };
 
-    new_rect_correct = CorrectRectFully(new_rect_correct, cs->width_p, cs->height_p);
+    // new_rect_correct = CorrectRectFully(new_rect_correct, cs->width_p-1, cs->height_p-1);
+    new_rect_correct = CorrectRectCustom(new_rect_correct, 1, 1, cs->width_p-1, cs->height_p-1);
 
     new_rect = (Rect){
         new_rect_correct.x - cs_x,

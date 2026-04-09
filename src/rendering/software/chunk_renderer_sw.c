@@ -2,12 +2,12 @@
 
 // System
 
-Image chunk_image;
-FormatImage chunk_fimage;
+static Image chunk_image;
+static FormatImage chunk_fimage;
 
-int reqChunkWidth;
-int reqChunkHeight;
-int reqParticleSize;
+static int reqChunkWidth;
+static int reqChunkHeight;
+static int reqParticleSize;
 
 void InitChunkImage(int chunk_w, int chunk_h, int partSize){
     reqChunkWidth = chunk_w;
@@ -69,6 +69,10 @@ int ChunkToImage(Chunk* chunk){
     // }
     
     for(int i = 0; i < chunk->size; i++){
+        if(CHUNK_GETI_TYPE(*chunk, i) == AIR){
+            chunk_image.buffer[i] = (Color){0, 0, 0, 255};
+            continue;
+        }
         chunk_image.buffer[i] = chunk->c[i];
     }
 
@@ -150,8 +154,8 @@ void ShowChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
             Color color = col_toggle ? green : yellow;
             ShowChunkSW(
                 window, &cs->chunks[i*cs->width_c + j], 
-                x + j*reqChunkWidth*reqParticleSize, 
-                y + i*reqChunkHeight*reqParticleSize,
+                x + j*reqChunkWidth *reqParticleSize, 
+                y + i*reqChunkHeight *reqParticleSize,
                 color
             );
         }
@@ -169,20 +173,45 @@ void ShowChunkSpaceAllSW(Window* window, ChunkSpace* cs, int x, int y){
 
 //###########################################
 
+void add_light(Window* window, Chunk* chunk, int x, int y){
+    Image light;
+    light.buffer = NULL;
+    load_png(&light, "resources/weak_light.png");
 
-void DrawChunkSW(Window* window, Chunk* chunk, int x, int y){
-    ChunkToImage(chunk);
-    
-    // SDL_Rect srcRect = {0, 0, chunk->w, chunk->h};
-    // SDL_Rect dstRect = {x, y, chunk->w*reqParticleSize, chunk->h*reqParticleSize};
-    draw_image_on_fimage_scaled(window->context, chunk_image, x, y, reqParticleSize, reqParticleSize);
+    for(int i = 0; i < chunk->h; i++)
+    for(int j = 0; j < chunk->w; j++){
+        if(
+            CHUNK_GET_TYPE(*chunk, j, i) == LAVA ||
+            CHUNK_GET_TYPE(*chunk, j, i) == FIRE ||
+            CHUNK_GET_TYPE(*chunk, j, i) == FIRE_SMOKE
+        ){
+            int chance = rand() % 100;
+            if(chance > 50){
+                draw_image_on_fimage(
+                    window->context, light, 
+                    x + j*DEFAULT_PARTICLE_SIZE - light.width/2, 
+                    y + i*DEFAULT_PARTICLE_SIZE - light.height/2
+                );
+            }
+        }
+    }
+
+    delete_image(&light);
 }
 
-void DrawRegionSW(Window* window, Region* region, int x, int y){
+void DrawChunkSW(Image part_image, Chunk* chunk, int x, int y){
+    ChunkToImage(chunk);
+    draw_image_on_image(part_image, chunk_image, x, y);
+    // SDL_Rect srcRect = {0, 0, chunk->w, chunk->h};
+    // SDL_Rect dstRect = {x, y, chunk->w*reqParticleSize, chunk->h*reqParticleSize};
+    // draw_image_on_fimage_scaled(window->context, chunk_image, x, y, reqParticleSize, reqParticleSize);
+}
+
+void DrawRegionSW(Image part_image, Region* region, int x, int y){
     for(int i = 0; i < (int)region->h; i++){
     for(int j = 0; j < (int)region->w; j++){
             DrawChunkSW(
-                window, &region->chunks[i*region->w + j], 
+                part_image, &region->chunks[i*region->w + j], 
                 x + j*reqChunkWidth*reqParticleSize, 
                 y + i*reqChunkHeight*reqParticleSize
             );
@@ -190,13 +219,13 @@ void DrawRegionSW(Window* window, Region* region, int x, int y){
     }
 }
 
-void DrawChunkSpaceSW(Window* window, ChunkSpace* cs, int x, int y){
+void DrawChunkSpaceSW(Image part_image, ChunkSpace* cs, int x, int y){
     for(int i = 0; i < (int)cs->height_c; i++){
     for(int j = 0; j < (int)cs->width_c; j++){
             DrawChunkSW(
-                window, &cs->chunks[i*cs->width_c + j], 
-                x + j*reqChunkWidth*reqParticleSize, 
-                y + i*reqChunkHeight*reqParticleSize
+                part_image, &cs->chunks[i*cs->width_c + j], 
+                x + j*reqChunkWidth,//*reqParticleSize, 
+                y + i*reqChunkHeight//*reqParticleSize
             );
         }
     }

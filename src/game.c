@@ -10,6 +10,7 @@ int RAD = 6;
 float fps = 0;
 int drawlines = 0;
 
+
 void Guide(ParticleGame* game, Color textColor);
 void init_buttons(ParticleGame* game, Button** buttons);
 
@@ -114,18 +115,37 @@ int RunParticleGame(ParticleGame* game){
     Button* buttons[100];
     init_buttons(game, buttons);
     
+    Image light;
+    light.buffer = NULL;
+    load_png(&light, "resources/fire_light.png");
+    save_image_png(&light, "fire_light.png");
+
     // Create Objects
-    
-    
+    Image final_image;
+    Image part_map;
+    Image light_map;
+    Image blurred;
+    final_image.buffer = NULL;
+    part_map.buffer = NULL;
+    light_map.buffer = NULL;
+    blurred.buffer = NULL;
+    create_image(&final_image, win->context.width/DEFAULT_PARTICLE_SIZE, win->context.height/DEFAULT_PARTICLE_SIZE);
+    create_similar(&part_map, final_image);
+    create_similar(&light_map, final_image);
+    create_similar(&blurred, final_image);
+
     char fpstext[64];
     char typetext[64];
     char brushtext[64];
-    
     SetChunkSpace(&(game->cs));
     InitGuiRenderer();
+    start_particle_lighting_sw(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
     StartChunkRendererSW(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
+    // start_particle_lighting_sw(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, 1);
+    // StartChunkRendererSW(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, 1);
     InitBasicTextRenderer();
     Color textColor = {.r=255, .g=0, .b=0, .a=255};
+    Color textColor2 = {.r=0, .g=255, .b=0, .a=255};
     // Loop
     while(win->isrunning){
         update_global_time();
@@ -135,10 +155,20 @@ int RunParticleGame(ParticleGame* game){
         ProcessInput(game);
         
         // Rendering
-        fill_f(win->context, game->s_params.bg_color);;
-        draw_start = GetTimeNano()/1000;
-        DrawChunkSpaceSW(win, cs, 0, 0);
         
+        fill_f(win->context, game->s_params.bg_color);
+        fill_image(final_image, game->s_params.bg_color);
+        fill_image(part_map, (Color){.rgba=0xFF000000});
+        fill_image(light_map, (Color){.rgba=0xFF000000});
+        draw_start = GetTimeNano()/1000;
+        DrawChunkSpaceSW(part_map, cs, 0, 0);
+        draw_cs_lightmap(light_map, cs, 0, 0);
+        blur_lightmap2(blurred, light_map, 3);
+
+        // save_image_png(&blurred, "lightmap.png");
+        additive_blend(final_image, part_map);
+        additive_blend(final_image, blurred);
+        draw_image_on_fimage_scaled(win->context, final_image, 0, 0, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
 
         // Call ParticleGame callbacks
         call_all_callbacks(game);
@@ -146,11 +176,19 @@ int RunParticleGame(ParticleGame* game){
         Color mouse_color = {.rgba = 0xFFFFFFFF};
         int mx, my;
         int state = SDL_GetMouseState(&mx, &my);
+        int px = mx / DEFAULT_PARTICLE_SIZE;
+        int py = my / DEFAULT_PARTICLE_SIZE;
+        draw_image_on_fimage(win->context, light, mx-light.width/2, my-light.height/2);
         DrawGuiElement(win, &game->gui, 0, 0);
         draw_circle_f(win->context, mx, my, game->g_params.brush_size*DEFAULT_PARTICLE_SIZE, mouse_color, 2);
-        // draw_filled_circle_f(win->context, mx, my, 3, mouse_color);
         Rect rect = {mx-1, my-1, 2, 2};
         draw_filled_rect_f(win->context, rect, mouse_color);
+        char pointer_text[64];
+        if(px >= 0 && px < cs->width_p && py >= 0 && py < cs->height_p){
+            sprintf(pointer_text, "%s %d, %d", typeNameList[CS_GET_TYPE(cs, px, py)], px, py);
+            BasicTextRender(game->win, pointer_text, mx+5, my, 1, textColor2);
+        }  
+
         // RenderText
         BasicTextRender(game->win, fpstext,     10, 10, 2, textColor);  
         BasicTextRender(game->win, typetext,    10, 30, 2, textColor);  
@@ -218,6 +256,7 @@ int RunParticleGame(ParticleGame* game){
 
     EndBasicTextRenderer();
     EndChunkRendererSW();
+    end_particle_lighting_sw();
     
     // Delete Objects
 

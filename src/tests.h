@@ -370,7 +370,7 @@ void ChunkSpaceTest(){
     StartChunkRendererSW(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
     // ColorChunkSpace(&cs);
     CONSOLE("works\n");
-    DrawChunkSpaceSW(window, &cs, 0, 0);
+    // DrawChunkSpaceSW(window, &cs, 0, 0);
     // RegionDraw(window, &region, 0, 0);
     // RegionDraw(window, &cs.regions[0], 0, 0);
     // ChunkDraw(window, &cs.regions[0].chunks[0], 0, 0);

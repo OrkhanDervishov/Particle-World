@@ -27,7 +27,7 @@ void CreateMagicParticleCS(ChunkSpace *cs, int x, int y, int type, part_color_t 
 void DeleteParticleCS(ChunkSpace *cs, int x, int y){
     CS_GET_STATE(cs, x, y) = P_IGNORED;
     CS_GET_TYPE(cs, x, y) = AIR;
-    CS_GET_COLOR(cs, x, y).a = 0;
+    // CS_GET_COLOR(cs, x, y).a = 0;
     // CS_GET_COLOR(cs, x, y).rgba = 0xFFAAAAAA;
 }
 
@@ -156,7 +156,7 @@ void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
     for(int j = startX; j < endX; j++){
         CS_GET_STATE(cs, j, i) = P_IGNORED;
         CS_GET_TYPE(cs, j, i) = AIR;
-        CS_GET_COLOR(cs, j, i).a = 0;
+        // CS_GET_COLOR(cs, j, i).a = 0;
     }    
 }
 
@@ -187,7 +187,7 @@ void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad){
                 if(j >= 0 && i >= 0 && j < (int)cs->width_p && i < (int)cs->height_p){
                     CS_GET_STATE(cs, j, i) = P_IGNORED;
                     CS_GET_TYPE(cs, j, i) = AIR;
-                    CS_GET_COLOR(cs, j, i).a = 0;
+                    // CS_GET_COLOR(cs, j, i).a = 0;
                 }
             }
         }
