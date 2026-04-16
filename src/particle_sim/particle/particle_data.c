@@ -13,6 +13,8 @@ uint8_t typeIFlagsList[MAX_NUMBER_OF_TYPES];
 char* typeNameList[MAX_NUMBER_OF_TYPES];
 int32_t typeHeatTransferList[MAX_NUMBER_OF_TYPES];
 uint32_t typeDurabilityList[MAX_NUMBER_OF_TYPES];
+uint32_t typeLifetList[MAX_NUMBER_OF_TYPES];
+uint32_t typeEffecttList[MAX_NUMBER_OF_TYPES];
 
 
 int LIQUID_OPACITY = 100;

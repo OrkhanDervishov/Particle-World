@@ -212,8 +212,9 @@ bool BasicDistributiveFlying(int x, int y, int prob){
 bool BasicFallingBehave(int x, int y){
     part_type_t p_type = GET_PART_TYPE(x, y);
     part_type_t d_type = GET_PART_TYPE(x, y+GRAVITY_Y);
+    part_pflags_t d_pf = GET_PART_PFLAGS(x, y+GRAVITY_Y);
 
-    if(typeDensityList[d_type] < typeDensityList[p_type]){
+    if(typeDensityList[d_type]/* - CHECK_FLAG(d_pf, BURNING)*/ < typeDensityList[p_type]){
         BasicDistributiveFalling(x, y, SAND_DISTRIBUTION);
         return TRUE;
     }
@@ -431,30 +432,30 @@ bool BasicGasBehave(int x, int y){
 //     return FALSE;
 // }
 
-// bool BasicHeatReleaserBehave(int x, int y){
+bool BasicHeatReleaserBehave(int x, int y){
 
-//     // Particle** map = pmap->map;
-//     // sim->pMap[*y][*x].heat += FIRE_HEAT_RELEASE_TEMP;
-//     // int release = FIRE_HEAT_RELEASE_TEMP * deltaTime / 100;
+    // Particle** map = pmap->map;
+    // sim->pMap[*y][*x].heat += FIRE_HEAT_RELEASE_TEMP;
+    // int release = FIRE_HEAT_RELEASE_TEMP * deltaTime / 100;
 
-//     // Particle* d = GET_PARTICLE_AT(w, x, y + 1);
-//     // if(!CHECK_FLAG(d->iflags, BURNING)){
-//     //     d->heat += release;
-//     // }
-//     // Particle* u = GET_PARTICLE_AT(w, x, y - 1);
-//     // if(!CHECK_FLAG(u->iflags, BURNING)){
-//     //     u->heat += release;
-//     // }
-//     // Particle* l = GET_PARTICLE_AT(w, x - 1, y);
-//     // if(!CHECK_FLAG(l->iflags, BURNING)){
-//     //     l->heat += release;
-//     // }
-//     // Particle* r = GET_PARTICLE_AT(w, x + 1, y);
-//     // if(!CHECK_FLAG(r->iflags, BURNING)){
-//     //     r->heat += release;
-//     // }
-//     return FALSE;
-// }
+    // Particle* d = GET_PARTICLE_AT(w, x, y + 1);
+    // if(!CHECK_FLAG(d->iflags, BURNING)){
+    //     d->heat += release;
+    // }
+    // Particle* u = GET_PARTICLE_AT(w, x, y - 1);
+    // if(!CHECK_FLAG(u->iflags, BURNING)){
+    //     u->heat += release;
+    // }
+    // Particle* l = GET_PARTICLE_AT(w, x - 1, y);
+    // if(!CHECK_FLAG(l->iflags, BURNING)){
+    //     l->heat += release;
+    // }
+    // Particle* r = GET_PARTICLE_AT(w, x + 1, y);
+    // if(!CHECK_FLAG(r->iflags, BURNING)){
+    //     r->heat += release;
+    // }
+    return FALSE;
+}
 
 bool BasicAcidicBehave(int x, int y){
     
@@ -506,24 +507,16 @@ bool BasicAcidicBehave(int x, int y){
 
 bool BasicBurningBehave(int x, int y, PartType type){
     part_type_t p_type = GET_PART_TYPE(x, y);
-    part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
-    part_heat_t p_heat = GET_PART_HEAT(x, y);
     part_color_t *p_color = &GET_PART_COLOR(x, y);
     part_pflags_t *p_pf = &GET_PART_PFLAGS(x, y);
 
-    if(p_heat > 1000){
-        // printf("works\n");
-        (*p_lifet)--;
-        if(*p_lifet > BURNING_COAL_LIFE_TIME){
-            REPLACE_PART(x, y, SMOKE);
-            return TRUE;
-        }
-        ChangeColor(p_color, FIRE_COLORS);
-        SET_FLAG(*p_pf, BURNING);
+    if(CHECK_FLAG(*p_pf, BURNING)){
+        FireBehave(x, y);
         return TRUE;
     } else {
         if(CHECK_FLAG(*p_pf, BURNING)){
             // ChangeColor(&p_color, COAL_COLORS);
+            *p_color = typeColorList[p_type][0];
         }
         CLEAR_FLAG(*p_pf, BURNING);
     }
@@ -537,8 +530,9 @@ bool SandBehave(int x, int y){
 bool CoalBehave(int x, int y){
     
     bool changed = FALSE;
-    changed = (changed || BasicDustBehave(x, y)) ? 1 : 0;
-    changed = (changed || BasicBurningBehave(x, y, COAL)) ? 1 : 0;
+    changed = (BasicBurningBehave(x, y, COAL)) ? TRUE : changed;
+    if(GET_PART_TYPE(x, y) == COAL)
+        changed = (BasicDustBehave(x, y)) ? TRUE : changed;
     return changed;
 }
 
@@ -558,8 +552,9 @@ bool WaterBehave(int x, int y)
 bool OilBehave(int x, int y)
 {
     bool changed = FALSE;
-    changed = (changed || BasicBurningBehave(x, y, OIL)) ? 1 : 0;
-    changed = (changed || BasicLiquidBehave(x, y)) ? 1 : 0;
+    changed = (BasicBurningBehave(x, y, OIL)) ? TRUE : changed;
+    if(GET_PART_TYPE(x, y) == OIL)
+        changed = (BasicLiquidBehave(x, y)) ? TRUE : changed;
 
     return changed;
 }
@@ -588,10 +583,56 @@ bool SteamBehave(int x, int y)
 bool FungusBehave(int x, int y)
 {
     bool changed = FALSE;
-    changed = (changed || BasicFallingBehave(x, y)) ? 1 : 0;
-    changed = (changed || BasicBurningBehave(x, y, FUNGUS)) ? 1 : 0;
+    changed = (BasicBurningBehave(x, y, FUNGUS)) ? TRUE : changed;
+    if(GET_PART_TYPE(x, y) == FUNGUS)
+        changed = (BasicFallingBehave(x, y)) ? TRUE : changed;
 
     return changed;
+}
+
+bool fire_spread(int x, int y){
+    part_type_t l_type = GET_PART_TYPE(x-1, y);
+    part_type_t r_type = GET_PART_TYPE(x+1, y);
+    part_type_t u_type = GET_PART_TYPE(x, y-1);
+    part_type_t d_type = GET_PART_TYPE(x, y+1);
+    part_pflags_t *l_flag = &GET_PART_PFLAGS(x-1, y);
+    part_pflags_t *r_flag = &GET_PART_PFLAGS(x+1, y);
+    part_pflags_t *u_flag = &GET_PART_PFLAGS(x, y-1);
+    part_pflags_t *d_flag = &GET_PART_PFLAGS(x, y+1);
+
+    int chance = rand()%10;
+    switch (rand()%4)
+    {
+    case 0:
+        if(CHECK_FLAG(typeFlagsList[l_type], FIRE_HAS_AN_EFFECT)){
+            if(chance != 0) return FALSE;
+            SET_FLAG(*l_flag, BURNING);
+            return TRUE;
+        }
+        break;
+    case 1:
+        if(CHECK_FLAG(typeFlagsList[r_type], FIRE_HAS_AN_EFFECT)){
+            if(chance != 0) return FALSE;
+            SET_FLAG(*r_flag, BURNING);
+            return TRUE;
+        }
+        break;
+    case 2:
+        if(CHECK_FLAG(typeFlagsList[u_type], FIRE_HAS_AN_EFFECT)){
+            if(chance != 0) return FALSE;
+            SET_FLAG(*u_flag, BURNING);
+            return TRUE;
+        }
+        break;
+    case 3:
+        if(CHECK_FLAG(typeFlagsList[d_type], FIRE_HAS_AN_EFFECT)){
+            if(chance != 0) return FALSE;
+            SET_FLAG(*d_flag, BURNING);
+            return TRUE;
+        }
+        break;
+    }
+    return FALSE;
 }
 
 bool FireBehave(int x, int y){
@@ -599,37 +640,53 @@ bool FireBehave(int x, int y){
     part_lifet_t *p_lifet = &GET_PART_LIFE_T(x, y);
     part_effectt_t *p_effectt = &GET_PART_EFFECT_T(x, y);
     part_heat_t p_heat = GET_PART_HEAT(x, y);
+    ChangeColor(&GET_PART_COLOR(x, y), FIRE_COLORS);
+
+    fire_spread(x, y);
     
-    (*p_lifet)--;
-    (*p_effectt)--;
+    if(GET_PART_TYPE(x, y-1) == AIR && GET_PART_TYPE(x, y) != FIRE_SMOKE){
+        if(rand() % 2 == 0){
+            REPLACE_PART(x, y-1, FIRE_SMOKE);
+            GET_PART_LIFE_T(x, y-1) = rand()%8;
+            SET_FLAG(GET_PART_PFLAGS(x, y-1), SMOKELESS);
+        }
+    }
 
-    if((*p_effectt) == 0){
-        if(rand() % 10 > 5){
+    if((*p_lifet) <= 0){
+        if(rand() % 2 == 0 && !CHECK_FLAG(GET_PART_PFLAGS(x, y), SMOKELESS)){
             REPLACE_PART(x, y, SMOKE);
         } else {
             DELETE_PART(x, y);
         }
         return TRUE;
+    } else {
+        (*p_lifet)--;
     }
 
-    if((*p_lifet) == 0){
-        if(rand() % 10 > 5){
-            REPLACE_PART(x, y, SMOKE);
-        } else {
-            DELETE_PART(x, y);
-        }
-        return TRUE;
-    }
+    return TRUE;
+}
 
-    // if(p_heat <= 300){
-    //     if(rand() % 10 > 5){
-    //         REPLACE_PART(x, y, SMOKE);
-    //     } else {
-    //         DELETE_PART(x, y);
-    //     }
-    //     return TRUE;
-    // }
+bool FireDustBehave(int x, int y){
 
+    FireBehave(x, y);
+    BasicDustBehave(x, y);
+
+    return TRUE;
+}
+
+bool FireLiquidBehave(int x, int y){
+
+    FireBehave(x, y);
+    BasicLiquidBehave(x, y);
+
+    return TRUE;
+}
+
+
+bool FireSmokeBehave(int x, int y){
+
+    FireBehave(x, y);
+    BasicGasBehave(x, y);
 
     return TRUE;
 }
@@ -653,46 +710,49 @@ bool LavaBehave(int x, int y){
     part_heat_t p_heat = GET_PART_HEAT(x, y);
     bool changed = FALSE;
 
-    if(p_heat < 500){
-        // printf("%d\n", p_heat);
-        REPLACE_PART(x, y, OBSIDIAN);
-        changed = TRUE;
-    } else {
-        // BasicHeatReleaserBehave(sim, x, y);
-    }
+    // if(p_heat < 500){
+    //     // printf("%d\n", p_heat);
+    //     REPLACE_PART(x, y, OBSIDIAN);
+    //     changed = TRUE;
+    // } else {
+    //     // BasicHeatReleaserBehave(sim, x, y);
+    // }
+    fire_spread(x, y);
     changed = BasicLiquidBehave(x, y);
-
+    
     return changed;
 }
 
 bool WoodBehave(int x, int y){
     
     bool changed = FALSE;
-    changed = changed = (changed || BasicBurningBehave(x, y, WOOD)) ? 1 : 0;
-
+    changed = (BasicBurningBehave(x, y, WOOD)) ? TRUE : changed;
+    if(GET_PART_TYPE(x, y) == WOOD)
+        if(CHECK_FLAG(GET_PART_PFLAGS(x, y), BURNING) && GET_PART_LIFE_T(x, y) <= 0)
+            if(rand()%30 == 0){
+                REPLACE_PART(x, y, COAL);
+                SET_FLAG(GET_PART_PFLAGS(x, y), BURNING);
+            }
     return changed;
-}
-
-bool FireSmokeBehave(int x, int y){
-
-    FireBehave(x, y);
-    BasicGasBehave(x, y);
-
-    return TRUE;
 }
 
 bool PowderBehave(int x, int y){
     
     bool changed = FALSE;
-    // Particle* p = GET_PARTICLE_AT(WORLD, x, y);
-    // if(p->durability <= 0){
-    //     Explosion(sim, *x, *y, 10, 100, FIRE_SMOKE);
-    // }
-    // if(p->heat > 200){
-    //     Explosion(sim, *x, *y, 10, 100, PHANTOM);
-    //     AddDirtyRect(sim, *x, *y, 10);
-    //     changed = TRUE;
-    // }
+
+    int neighbor_count = 0;
+    if(CHECK_FLAG(GET_PART_PFLAGS(x, y), BURNING)){
+        for(int i = y-1; i < y+1; i++)
+        for(int j = x-1; j < x+1; j++){
+            if(GET_PART_TYPE(j, i) == POWDER) neighbor_count++;
+        }
+        if(neighbor_count > 4){
+            Explosion(currentCS, x, y, 15, 100, FIRE);
+        } else {
+            Explosion(currentCS, x, y, 5, 100, FIRE);
+        }
+        return changed;
+    }
     changed = BasicDustBehave(x, y);
 
     return changed;

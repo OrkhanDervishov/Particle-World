@@ -30,6 +30,7 @@ int SymbolToImage(char sym, Color color){
 }
 
 void BasicSymbolRender(Window* window, char sym, int x, int y, int scale, Color color){
+    // return;
     SymbolToImage(sym, color);
     draw_image_on_fimage_scaled(window->context, font_image, x, y, scale, scale);
 }

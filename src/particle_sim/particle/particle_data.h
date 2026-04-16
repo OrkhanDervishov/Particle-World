@@ -41,6 +41,7 @@ typedef enum{
     WALL,
     FIRE,
     FIRE_SMOKE,
+    FIRE_LIQUID,
     SMOKE,
     COAL,
     POWDER,
@@ -70,6 +71,7 @@ typedef enum{
 } Flags;
 
 typedef enum{
+    SMOKELESS = 0x40,
     BURNING = 0x80
 } iFlags;
 
@@ -82,6 +84,7 @@ typedef enum{
     WALL_FLAGS = 0x10000000,
     FIRE_FLAGS = 0x1000000,
     FIRE_SMOKE_FLAGS = 0x2000000,
+    FIRE_LIQUID_FLAGS = 0x4000000,
     SMOKE_FLAGS = 0x20000000,
     COAL_FLAGS = 0x8C000000,
     POWDER_FLAGS = 0x8C000000,
@@ -210,6 +213,8 @@ extern uint8_t typeIFlagsList[MAX_NUMBER_OF_TYPES];
 extern char* typeNameList[MAX_NUMBER_OF_TYPES];
 extern int32_t typeHeatTransferList[MAX_NUMBER_OF_TYPES];
 extern uint32_t typeDurabilityList[MAX_NUMBER_OF_TYPES];
+extern uint32_t typeLifetList[MAX_NUMBER_OF_TYPES];
+extern uint32_t typeEffecttList[MAX_NUMBER_OF_TYPES];
 
 extern int countParticleFuncs;
 bool (*GetFunc(const char* funcName))(int x, int y);

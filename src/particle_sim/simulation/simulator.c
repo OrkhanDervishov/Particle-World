@@ -203,12 +203,13 @@ void SimulateRects(ChunkSpace* cs, Chunk* chunk, int cs_x, int cs_y){
     for(int i = 0; i < chunk->dr_count; i++){
         Rect oldRect = list[i];
         Rect newRect = SimulateChunkSpaceRect(cs, chunk, list[i], cs_x_coor, cs_y_coor);
-        maxRect = CombineRects(oldRect, newRect);
+        // maxRect = CombineRects(oldRect, newRect);
         Rect rects[9];
+        int divisor = 64;
         dr_cut(
             rects, newRect, chunk->w, chunk->h,
-            -chunk->w/64, -chunk->h/64, 
-            chunk->w + chunk->w/64, chunk->h + chunk->h/64
+            -chunk->w/divisor, -chunk->h/divisor, 
+            chunk->w + chunk->w/divisor, chunk->h + chunk->h/divisor
         );
 
         if(newRect.h <= 1 || newRect.w <= 1){

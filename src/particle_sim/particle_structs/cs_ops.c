@@ -1,6 +1,6 @@
 #include "cs_ops.h"
 
-
+#define RANDOMIZATION_CONST 100
 
 // TODO: Clever rect creation and deletion, using individual chunks
 
@@ -12,9 +12,10 @@ void CreateParticleCS(ChunkSpace *cs, int x, int y, int type){
     CS_GET_STATE(cs, x, y) = P_FRESH;
     CS_GET_TYPE(cs, x, y) = type;
     CS_GET_COLOR(cs, x, y) = typeColorList[type][0];
-    CS_GET_LIFE_T(cs, x, y) = 500;
-    CS_GET_EFFECT_T(cs, x, y) = 500;
+    CS_GET_LIFE_T(cs, x, y) = typeLifetList[type] + rand()%RANDOMIZATION_CONST;
+    CS_GET_EFFECT_T(cs, x, y) = typeEffecttList[type] + rand()%RANDOMIZATION_CONST;
     CS_GET_HEAT(cs, x, y) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;;
+    CS_GET_PFLAGS(cs, x, y) = typeIFlagsList[type];
 }
 
 void CreateMagicParticleCS(ChunkSpace *cs, int x, int y, int type, part_color_t color, part_lifet_t life_t){
@@ -27,6 +28,7 @@ void CreateMagicParticleCS(ChunkSpace *cs, int x, int y, int type, part_color_t 
 void DeleteParticleCS(ChunkSpace *cs, int x, int y){
     CS_GET_STATE(cs, x, y) = P_IGNORED;
     CS_GET_TYPE(cs, x, y) = AIR;
+    CS_GET_PFLAGS(cs, x, y) = typeIFlagsList[AIR];
     // CS_GET_COLOR(cs, x, y).a = 0;
     // CS_GET_COLOR(cs, x, y).rgba = 0xFFAAAAAA;
 }
@@ -68,9 +70,10 @@ void ReplaceParticleCS(ChunkSpace *cs, int x, int y, int type){
     CS_GET_STATE(cs, x, y) = P_FRESH;
     CS_GET_TYPE(cs, x, y) = type;
     CS_GET_COLOR(cs, x, y) = typeColorList[type][0];
-    CS_GET_LIFE_T(cs, x, y) = 500;
-    CS_GET_EFFECT_T(cs, x, y) = 500;
+    CS_GET_LIFE_T(cs, x, y) = typeLifetList[type] + rand()%RANDOMIZATION_CONST;
+    CS_GET_EFFECT_T(cs, x, y) = typeEffecttList[type] + rand()%RANDOMIZATION_CONST;
     CS_GET_HEAT(cs, x, y) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;
+    CS_GET_PFLAGS(cs, x, y) = typeIFlagsList[type];
 }
 
 
@@ -98,9 +101,10 @@ void CreateParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
         CS_GET_STATE(cs, j, i) = P_FRESH;
         CS_GET_TYPE(cs, j, i) = type;
         CS_GET_COLOR(cs, j, i) = typeColorList[type][0];
-        CS_GET_LIFE_T(cs, j, i) = 500;
-        CS_GET_EFFECT_T(cs, j, i) = 500;
+        CS_GET_LIFE_T(cs, j, i) = typeLifetList[type] + rand()%RANDOMIZATION_CONST;
+        CS_GET_EFFECT_T(cs, j, i) = typeEffecttList[type] + rand()%RANDOMIZATION_CONST;
         CS_GET_HEAT(cs, j, i) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;
+        CS_GET_PFLAGS(cs, j, i) = typeIFlagsList[type];
         // TODO: Init particle data.
     }
 }
@@ -134,9 +138,10 @@ void CreateParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad, int type){
                     CS_GET_STATE(cs, j, i) = P_FRESH;
                     CS_GET_TYPE(cs, j, i) = type;
                     CS_GET_COLOR(cs, j, i) = typeColorList[type][0];
-                    CS_GET_LIFE_T(cs, j, i) = 500 + rand()%100;
-                    CS_GET_EFFECT_T(cs, j, i) = 50 + rand()%50;
+                    CS_GET_LIFE_T(cs, j, i) = typeLifetList[type] + rand()%RANDOMIZATION_CONST;
+                    CS_GET_EFFECT_T(cs, j, i) = typeEffecttList[type] + rand()%RANDOMIZATION_CONST;
                     CS_GET_HEAT(cs, j, i) = CHECK_FLAG(typeFlagsList[type], HEAT_RELEASER) ? 2000 : 0;
+                    CS_GET_PFLAGS(cs, j, i) = typeIFlagsList[type];
                 }
             }
         }
@@ -156,6 +161,7 @@ void DeleteParticlesRectCS(ChunkSpace *cs, int startX, int startY, int width, in
     for(int j = startX; j < endX; j++){
         CS_GET_STATE(cs, j, i) = P_IGNORED;
         CS_GET_TYPE(cs, j, i) = AIR;
+        CS_GET_PFLAGS(cs, j, i) = 0x0000;
         // CS_GET_COLOR(cs, j, i).a = 0;
     }    
 }
@@ -187,6 +193,8 @@ void DeleteParticlesCircleCS(ChunkSpace *cs, int cX, int cY, int rad){
                 if(j >= 0 && i >= 0 && j < (int)cs->width_p && i < (int)cs->height_p){
                     CS_GET_STATE(cs, j, i) = P_IGNORED;
                     CS_GET_TYPE(cs, j, i) = AIR;
+                    CS_GET_PFLAGS(cs, j, i) = 0x0000;
+                    
                     // CS_GET_COLOR(cs, j, i).a = 0;
                 }
             }
@@ -231,6 +239,8 @@ void Explosion(ChunkSpace *cs, int px, int py, int rad, int power, int replaceWi
     int dx = 1;
     int dy = 1;
     int err = dx - (rad << 1);
+    Chunk* chunk = &CS_GET_CHUNK(cs, px, py);
+    // dr_add(chunk->dirty_rect_list, &chunk->dr_count);
 
     while(x >= y){
         int cx = x;

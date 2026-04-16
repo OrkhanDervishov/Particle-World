@@ -23,6 +23,10 @@
 #define P_BUTTON (event.key.keysym.sym == SDLK_p)
 #define TAB_BUTTON (event.key.keysym.sym == SDLK_TAB)
 #define SPACE_BUTTON (event.key.keysym.sym == SDLK_SPACE)
+#define UP_BUTTON (event.key.keysym.sym == SDLK_UP)
+#define DOWN_BUTTON (event.key.keysym.sym == SDLK_DOWN)
+#define LEFT_BUTTON (event.key.keysym.sym == SDLK_LEFT)
+#define RIGHT_BUTTON (event.key.keysym.sym == SDLK_RIGHT)
 
 
 #define PARTICLE_GENERATION_BUTTON      LEFT_BUTTON

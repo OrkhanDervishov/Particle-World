@@ -16,6 +16,7 @@ void draw_chunk_lightmap(Image lightmap, Chunk* chunk, int x, int y);
 void draw_cs_lightmap(Image lightmap, ChunkSpace* cs, int x, int y);
 
 void blur_lightmap(Image dest, int times);
-void blur_lightmap2(Image dest, Image light_map, int times);
+void blur_lightmap2(Image* dest, Image light_map, int times);
+void blur_lightmap_strong(Image* dest, Image light_map, int kernel_size, int times);
 
 #endif

@@ -110,6 +110,7 @@ void ClearChunkFull(Chunk* chunk){
     for(int i = 0; i < chunk->size; i++){
         chunk->state[i] = P_IGNORED;
         chunk->type[i] = AIR;
+        chunk->pflags[i] = 0x0000;
         // chunk->c[i].a = 0;
     }
 }

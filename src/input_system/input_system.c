@@ -106,6 +106,10 @@ void ProcessInput(ParticleGame* game)
             if(A_BUTTON){
                 aButtonEvent(game);
             }
+            if(UP_BUTTON) game->camera.pos.y -= 1.0f;
+            if(DOWN_BUTTON) game->camera.pos.y += 1.0f;
+            if(LEFT_BUTTON) game->camera.pos.x -= 1.0f;
+            if(RIGHT_BUTTON) game->camera.pos.x += 1.0f;
             if(BRUSH_INCREASE_BUTTON) oneButtonEvent(game);
             if(BRUSH_DECREASE_BUTTON) twoButtonEvent(game);
             // if(DELAY_INCREASE_BUTTON) SpeedUpParticleSimulator();

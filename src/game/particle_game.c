@@ -46,6 +46,13 @@ int CreateParticleGame(ParticleGame** game){
     //******************************************/
     
     //******************************************/
+    // Initializing camera
+    (*game)->camera.pos = (vec2f){0.0f, 0.0f};
+    //******************************************/
+    
+
+
+    //******************************************/
     // Initializing gui system
     GuiBox* gb;
     init_gui_handler();

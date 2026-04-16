@@ -192,6 +192,8 @@ void draw_line_f(FormatImage fimg, Color c, int x0, int y0, int x1, int y1);
 
 // RGBA image functions
 int create_similar(Image* dest, Image src);
+int copy_image_content(Image dest, Image src);
+int copy_image(Image* dest, Image src);
 int create_image(Image* img, size_t w, size_t h);
 void delete_image(Image* img);
 void draw_image_on_image(Image dest, Image src, int x, int y);

@@ -88,9 +88,34 @@ vec2 correct_line_end(int x, int y, int dx, int dy, int width, int height){
 int create_similar(Image* dest, Image src){
     if(dest->buffer != NULL){
         delete_image(dest);
-
     }
     return create_image(dest, src.width, src.height);
+}
+
+int copy_image_content(Image dest, Image src){
+    if(dest.buffer == NULL || src.buffer == NULL) return 1;
+    if(dest.width != src.width || dest.height != src.height) return 2;
+
+    for(int i = 0; i < dest.height; i++)
+    for(int j = 0; j < dest.width; j++)
+        IMG_GET(dest, j, i) = IMG_GET(src, j, i);
+
+    return 0;
+}
+
+int copy_image(Image* dest, Image src){
+    if(dest->buffer != NULL){
+        delete_image(dest);
+    }
+    int res = create_image(dest, src.width, src.height);
+    if(!res) return res;
+
+    for(int i = 0; i < src.height; i++)
+    for(int j = 0; j < src.width; j++){
+        IMGP_GET(dest, j, i) = IMG_GET(src, j, i);
+    }
+
+    return res;
 }
 
 int create_image(Image* img, size_t w, size_t h){
@@ -223,18 +248,22 @@ void draw_image_on_fimage(FormatImage dest, Image src, int x, int y){
 
 void draw_image_on_fimage_scaled(FormatImage dest, Image src, int x, int y, int scaleX, int scaleY){
     Rect rect = {.x = x, .y = y, .w = src.width*scaleX, .h = src.height*scaleY};
-    rect = CorrectRect(rect, dest.width, dest.height);
-
+    Rect rect2 = {.x = 0, .y = 0, .w = dest.width, .h = dest.height};
+    vec2 start_pos = {.x = x, .y = y};
+    Rect rect3 = get_intersection_rect2(rect, rect2);
+    start_pos = correct_start_pos(rect2, start_pos);
+    
     float addX = 1.0f/(float)scaleX;
     float addY = 1.0f/(float)scaleY;
-    float k = 0.0f, t = 0.0f;
+    float base_t = (float)rect3.x*addX;
+    float base_k = (float)rect3.y*addY;
+    float t = base_t, k = base_k;
     int prev_k = -1, prev_t = -1;
-    int endX = rect.x + rect.w;
-    int endY = rect.y + rect.h;
+    int endX = rect.x + rect2.w;
+    int endY = rect.y + rect2.h;
     int res_fcolor;
-    for(int i = rect.y; i < endY; i++, k += addY){
-        // k += addY;
-        for(int j = rect.x; j < endX; j++, t += addX){
+    for(int i = start_pos.y; i < rect3.h; i++, k += addY){
+        for(int j = start_pos.x; j < rect3.w; j++, t += addX){
             if((int)k != prev_k || (int)t != prev_t){
                 Color dest_color = GET_COLOR(IMG_GET(dest, j, i), dest.format);
                 Color src_color = IMG_GET(src, (int)t, (int)k);
@@ -242,9 +271,10 @@ void draw_image_on_fimage_scaled(FormatImage dest, Image src, int x, int y, int 
                 prev_k = (int)k;
                 prev_t = (int)t;
             }
+            // IMG_GET(dest, j, i) = GET_FCOLOR(IMG_GET(src, (int)t, (int)k), dest.format);
             IMG_GET(dest, j, i) = res_fcolor;
         }
-        t = 0.0f;
+        t = base_t;
     }
 }
 

@@ -19,7 +19,9 @@ void AddType(
     uint8_t iflags, 
     bool (*func)(int x, int y),
     int32_t ht,
-    uint32_t durability
+    uint32_t durability,
+    uint32_t life_t,
+    uint32_t effect_t
 );
 
 

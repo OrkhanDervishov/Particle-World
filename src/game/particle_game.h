@@ -23,6 +23,7 @@
 #include "simulator.h"
 #include "gui_handler.h"
 #include "mouse.h"
+#include "camera.h"
 
 #define ICON_PATH "./src/images/sand.bmp"
 #define BG_PATH "./src/images/background.bmp"
@@ -51,6 +52,7 @@ typedef struct ParticleGame{
     GameSystemParameters s_params;
     GameParameters g_params;
     Mouse mouse;
+    Camera2D camera;
     int cbCount;
     void (*callbacks[CB_COUNT_MAX])(struct ParticleGame* game);
 } ParticleGame;

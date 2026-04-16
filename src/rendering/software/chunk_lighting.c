@@ -38,16 +38,18 @@ void end_particle_lighting_sw(){
 
 void chunk_to_lightmap(Chunk* chunk){
     if(chunk == NULL){
-        return 1;
+        return;
     }
     for(int i = 0; i < chunk->size; i++){
         part_type_t type = CHUNK_GETI_TYPE(*chunk, i);
-        if(type == LAVA || type == FIRE || type == FIRE_SMOKE || type == ACID || type == PHANTOM || type == FUNGUS)
+        if( type == LAVA || type == FIRE || type == FIRE_LIQUID || 
+            type == FIRE_SMOKE || type == ACID || type == PHANTOM || 
+            type == FUNGUS || CHECK_FLAG(CHUNK_GETI_PFLAGS(*chunk, i), BURNING))
             chunk_lightmap.buffer[i] = CHUNK_GETI_COLOR(*chunk, i);
         else
             chunk_lightmap.buffer[i] = (Color){0, 0, 0, 255};
     }
-    return 0;
+    return;
 }
 
 void draw_chunk_lightmap(Image lightmap, Chunk* chunk, int x, int y){
@@ -75,10 +77,47 @@ void blur_lightmap(Image dest, int times){
     }
 }
 
-void blur_lightmap2(Image dest, Image light_map, int times){
+void blur_lightmap2(Image* dest, Image light_map, int times){
     if(times == 0) return;
-    gaussian_blur_3x3(dest, light_map);
+    Image dest2;
+    dest2.buffer = NULL;
+    create_similar(&dest2, *dest);
+    bool must_copy = FALSE;
+
+    gaussian_blur_3x3(*dest, light_map);
     for(int i = 1; i < times; i++){
-        gaussian_blur_3x3(dest, dest);
+        // gaussian_blur_3x3(dest, dest);
+        if(!must_copy){
+            gaussian_blur_3x3(dest2, *dest);
+            must_copy = TRUE;
+        }
+        else{
+            gaussian_blur_3x3(*dest, dest2);
+            must_copy = FALSE;
+        }
     }
+
+    if(must_copy){
+        delete_image(dest);
+        (*dest).buffer = dest2.buffer;
+        return;
+    }
+    delete_image(&dest2);
+}
+
+void blur_lightmap_strong(Image* dest, Image light_map, int kernel_size, int times){
+    if(times == 0) return;
+    Image dest2;
+    dest2.buffer = NULL;
+    create_similar(&dest2, *dest);
+
+    gaussian_blur_horizontal(*dest, light_map, kernel_size);
+    gaussian_blur_vertical(dest2, *dest, kernel_size);
+    for(int i = 1; i < times; i++){
+        gaussian_blur_horizontal(*dest, dest2, kernel_size);
+        gaussian_blur_vertical(dest2, *dest, kernel_size);
+    }
+
+    copy_image_content(*dest, dest2);
+    delete_image(&dest2);
 }
