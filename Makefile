@@ -39,6 +39,9 @@ main: $(SRC)
 main2: $(OBJ)
 	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINKER_LIBS)
 
+linux: $(OBJ)
+	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINKER_LIBS)
+
 bin/%.o: %.c
 	@if not exist "$(dir $@)" mkdir "$(dir $@)"
 	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) -c $< -o $@

@@ -72,7 +72,7 @@ int CreateParticleGame(ParticleGame** game){
     
     //******************************************/
     // Initializing game's system parameters
-    (*game)->s_params.bg_color.rgba = 0xFF181818;
+    (*game)->s_params.bg_color.rgba = 0x00181818;
     (*game)->s_params.hm_mode = FALSE;
     (*game)->s_params.paused = FALSE;
     (*game)->s_params.delay = 0;

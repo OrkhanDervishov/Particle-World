@@ -15,13 +15,13 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
     (*win)->w = w;
     (*win)->h = h;
     
-    (*win)->window = SDL_CreateWindow   (
+    (*win)->window = SDL_CreateWindow(
         title,
         SDL_WINDOWPOS_CENTERED, 
         SDL_WINDOWPOS_CENTERED,
         w,
         h,
-        SDL_WINDOW_SHOWN
+        SDL_WINDOW_OPENGL
     );
 
     

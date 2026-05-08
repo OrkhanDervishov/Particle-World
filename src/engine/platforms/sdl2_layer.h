@@ -11,4 +11,6 @@ typedef SDL_Texture Texture;
 
 vec2i mouse_get_pos();
 
+int sdl2_init_opengl();
+
 #endif

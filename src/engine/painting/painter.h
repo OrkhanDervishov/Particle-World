@@ -77,12 +77,12 @@ do{\
                                         .a = (fcolor) >> (format).a_shift    \
                                     }
                                     
-#define ALPHA_BLEND(color_up, color_down)   {                                                                                   \
-                                            .r = ((color_down).r * (255-(color_up).a) + (color_up).r * (color_up).a) >> 8,      \
-                                            .g = ((color_down).g * (255-(color_up).a) + (color_up).g * (color_up).a) >> 8,      \
-                                            .b = ((color_down).b * (255-(color_up).a) + (color_up).b * (color_up).a) >> 8,      \
-                                            .a = 255                                                                             \
-                                            }
+#define ALPHA_BLEND(color_up, color_down)   {                                                                                \
+                                            .r = ((color_down).r * (255-(color_up).a) + ((color_up).r * (color_up).a) >> 8), \
+                                            .g = ((color_down).g * (255-(color_up).a) + ((color_up).g * (color_up).a) >> 8), \
+                                            .b = ((color_down).b * (255-(color_up).a) + ((color_up).b * (color_up).a) >> 8), \
+                                            .a = ((color_down).a * (255-(color_up).a) + ((color_up).a * (color_up).a) >> 8), \
+                                        }
 
 #define GET_RANDOM_COLOR    (Color){                \
                                 .r = rand() & 255,  \
@@ -98,79 +98,89 @@ do{\
                                 .a = color.a,       \
                             }
 
-static inline Colorf color_to_colorf(Color color){
-    return (Colorf){
-        .r = ((float)color.r / 255.0f),
-        .g = ((float)color.g / 255.0f),
-        .b = ((float)color.b / 255.0f),
-        .a = ((float)color.a / 255.0f)
-    };
-}
+// static inline Colorf color_to_colorf(Color color){
+//     return (Colorf){
+//         .r = ((float)color.r / 255.0f),
+//         .g = ((float)color.g / 255.0f),
+//         .b = ((float)color.b / 255.0f),
+//         .a = ((float)color.a / 255.0f)
+//     };
+// }
 
-static inline Color colorf_to_color(Colorf colorf){
-    return (Color){
-        .r = (uint16_t)(colorf.r * 255.0f) > 255 ? 255 : (uint8_t)(colorf.r * 255.0f),
-        .g = (uint16_t)(colorf.g * 255.0f) > 255 ? 255 : (uint8_t)(colorf.g * 255.0f),
-        .b = (uint16_t)(colorf.b * 255.0f) > 255 ? 255 : (uint8_t)(colorf.b * 255.0f),
-        .a = (uint8_t)(colorf.a * 255.0f)
-    };
-}
+// static inline Color colorf_to_color(Colorf colorf){
+//     return (Color){
+//         .r = (uint16_t)(colorf.r * 255.0f) > 255 ? 255 : (uint8_t)(colorf.r * 255.0f),
+//         .g = (uint16_t)(colorf.g * 255.0f) > 255 ? 255 : (uint8_t)(colorf.g * 255.0f),
+//         .b = (uint16_t)(colorf.b * 255.0f) > 255 ? 255 : (uint8_t)(colorf.b * 255.0f),
+//         .a = (uint16_t)(colorf.a * 255.0f) > 255 ? 255 : (uint8_t)(colorf.a * 255.0f)
+//     };
+// }
 
-static inline Colorf add_colorf(Colorf a, Colorf b, float scale){
-    return (Colorf){
-        a.r + b.r*scale,
-        a.g + b.g*scale,
-        a.b + b.b*scale,
-        a.a// + b.a*scale
-    };
-}
+// static inline Colorf add_colorf(Colorf a, Colorf b, float scale){
+//     return (Colorf){
+//         a.r + b.r*scale,
+//         a.g + b.g*scale,
+//         a.b + b.b*scale,
+//         a.a + b.a*scale// + b.a*scale
+//     };
+// }
 
-static inline Color add_color(Color a, Color b){
-    return (Color){
-        .r = ((uint16_t)a.r + (uint16_t)b.r) >= 255 ? 255 : a.r + b.r,
-        .g = ((uint16_t)a.g + (uint16_t)b.g) >= 255 ? 255 : a.g + b.g,
-        .b = ((uint16_t)a.b + (uint16_t)b.b) >= 255 ? 255 : a.b + b.b,
-        .a = a.a
-    };
-}
+// static inline Color add_color(Color a, Color b){
+//     return (Color){
+//         .r = ((uint16_t)a.r + (uint16_t)b.r) >= 255 ? 255 : a.r + b.r,
+//         .g = ((uint16_t)a.g + (uint16_t)b.g) >= 255 ? 255 : a.g + b.g,
+//         .b = ((uint16_t)a.b + (uint16_t)b.b) >= 255 ? 255 : a.b + b.b,
+//         .a = ((uint16_t)a.a + (uint16_t)b.a) >= 255 ? 255 : a.a + b.a
+//     };
+// }
 
-static inline Color get_random_color(){
-    return (Color){
-        .r = rand() & 255,
-        .g = rand() & 255,
-        .b = rand() & 255,
-        .a = 255
-    };
-}
+// static inline Color get_random_color(){
+//     return (Color){
+//         .r = rand() & 255,
+//         .g = rand() & 255,
+//         .b = rand() & 255,
+//         .a = 255
+//     };
+// }
 
-static inline Color get_negative(Color color){
-    return (Color){
-        .r = 255 - color.r,
-        .g = 255 - color.g,
-        .b = 255 - color.b,
-        .a = color.a,
-    };
-}
+// static inline Color get_negative(Color color){
+//     return (Color){
+//         .r = 255 - color.r,
+//         .g = 255 - color.g,
+//         .b = 255 - color.b,
+//         .a = color.a,
+//     };
+// }
 
-static inline int get_negative_f(int fcolor, MyPixelFormat format){
+// static inline int get_negative_f(int fcolor, MyPixelFormat format){
 
-    int r = 0xFF - fcolor >> (format).r_shift;
-    int b = 0xFF - fcolor >> (format).g_shift;
-    int g = 0xFF - fcolor >> (format).b_shift;
-    int a = fcolor >> (format).a_shift;
+//     int r = 0xFF - fcolor >> (format).r_shift;
+//     int b = 0xFF - fcolor >> (format).g_shift;
+//     int g = 0xFF - fcolor >> (format).b_shift;
+//     int a = fcolor >> (format).a_shift;
 
-    return r<<(format).r_shift | g<<(format).g_shift | b<<(format).b_shift | a<<(format).a_shift;
-}
+//     return r<<(format).r_shift | g<<(format).g_shift | b<<(format).b_shift | a<<(format).a_shift;
+// }
 
-static inline Color get_color(Image image, int x, int y){
-    if(
-        x < 0 || x >= image.width ||
-        y < 0 || y >= image.height
-    ){
-        return (Color){.rgba=0xFF000000};
-    }
-    return IMG_GET(image, x, y);
-}
+// static inline Color get_color(Image image, int x, int y){
+//     if(
+//         x < 0 || x >= image.width ||
+//         y < 0 || y >= image.height
+//     ){
+//         return (Color){.rgba=0xFF000000};
+//     }
+//     return IMG_GET(image, x, y);
+// }
+
+extern Colorf color_to_colorf(Color color);
+extern Color colorf_to_color(Colorf colorf);
+extern Colorf add_colorf(Colorf a, Colorf b, float scale);
+extern Color add_color(Color a, Color b);
+extern Color get_random_color();
+extern Color get_negative(Color color);
+extern int get_negative_f(int fcolor, MyPixelFormat format);
+extern Color get_color(Image image, int x, int y);
+extern Color colors_alpha_blend(Color down, Color up);
 
 MyPixelFormat create_format(int r_mask, int g_mask, int b_mask, int a_mask);
 int get_formatted_color(Color color, MyPixelFormat format);

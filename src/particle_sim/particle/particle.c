@@ -369,6 +369,8 @@ bool BasicGasBehave(int x, int y){
     part_type_t p_type = GET_PART_TYPE(x, y);
     part_xvel_t *p_xvel = &GET_PART_XVEL(x, y);
 
+    if(rand()%10 > 7) return TRUE;
+
     if(BasicDistributiveFlying(x, y, STEAM_DISTRIBUTION) == TRUE) return TRUE;
 
     part_type_t l_type = GET_PART_TYPE(x-1, y);
@@ -408,29 +410,29 @@ bool BasicGasBehave(int x, int y){
     return FALSE;
 }
 
-// bool BasicHeatAbsorberBehave(int x, int y){
+bool BasicHeatAbsorberBehave(int x, int y){
 
-//     // int absorb = WATER_HEAT_ABSORB * deltaTime / 100;
+    // int absorb = WATER_HEAT_ABSORB * deltaTime / 100;
 
-//     // Particle* d = GET_PARTICLE_AT(w, x, y + 1);
-//     // if(CHECK_FLAG(d->iflags, BURNING)){
-//     //     d->heat -= absorb;
-//     // }
-//     // Particle* u = GET_PARTICLE_AT(w, x, y - 1);
-//     // if(CHECK_FLAG(u->iflags, BURNING)){
-//     //     u->heat -= absorb;
-//     // }
-//     // Particle* l = GET_PARTICLE_AT(w, x - 1, y);
-//     // if(CHECK_FLAG(l->iflags, BURNING)){
-//     //     l->heat -= absorb;
-//     // }
-//     // Particle* r = GET_PARTICLE_AT(w, x + 1, y);
-//     // if(CHECK_FLAG(r->iflags, BURNING)){
-//     //     r->heat -= absorb;
-//     // }
+    // Particle* d = GET_PARTICLE_AT(w, x, y + 1);
+    // if(CHECK_FLAG(d->iflags, BURNING)){
+    //     d->heat -= absorb;
+    // }
+    // Particle* u = GET_PARTICLE_AT(w, x, y - 1);
+    // if(CHECK_FLAG(u->iflags, BURNING)){
+    //     u->heat -= absorb;
+    // }
+    // Particle* l = GET_PARTICLE_AT(w, x - 1, y);
+    // if(CHECK_FLAG(l->iflags, BURNING)){
+    //     l->heat -= absorb;
+    // }
+    // Particle* r = GET_PARTICLE_AT(w, x + 1, y);
+    // if(CHECK_FLAG(r->iflags, BURNING)){
+    //     r->heat -= absorb;
+    // }
 
-//     return FALSE;
-// }
+    return FALSE;
+}
 
 bool BasicHeatReleaserBehave(int x, int y){
 
@@ -590,7 +592,7 @@ bool FungusBehave(int x, int y)
     return changed;
 }
 
-bool fire_spread(int x, int y){
+bool fire_spread(int x, int y, int chance_arg){
     part_type_t l_type = GET_PART_TYPE(x-1, y);
     part_type_t r_type = GET_PART_TYPE(x+1, y);
     part_type_t u_type = GET_PART_TYPE(x, y-1);
@@ -600,7 +602,7 @@ bool fire_spread(int x, int y){
     part_pflags_t *u_flag = &GET_PART_PFLAGS(x, y-1);
     part_pflags_t *d_flag = &GET_PART_PFLAGS(x, y+1);
 
-    int chance = rand()%10;
+    int chance = rand()%chance_arg;
     switch (rand()%4)
     {
     case 0:
@@ -642,12 +644,12 @@ bool FireBehave(int x, int y){
     part_heat_t p_heat = GET_PART_HEAT(x, y);
     ChangeColor(&GET_PART_COLOR(x, y), FIRE_COLORS);
 
-    fire_spread(x, y);
+    fire_spread(x, y, 25);
     
     if(GET_PART_TYPE(x, y-1) == AIR && GET_PART_TYPE(x, y) != FIRE_SMOKE){
-        if(rand() % 2 == 0){
+        if(rand() % 5 == 0){
             REPLACE_PART(x, y-1, FIRE_SMOKE);
-            GET_PART_LIFE_T(x, y-1) = rand()%8;
+            GET_PART_LIFE_T(x, y-1) = rand()%20;
             SET_FLAG(GET_PART_PFLAGS(x, y-1), SMOKELESS);
         }
     }
@@ -710,14 +712,7 @@ bool LavaBehave(int x, int y){
     part_heat_t p_heat = GET_PART_HEAT(x, y);
     bool changed = FALSE;
 
-    // if(p_heat < 500){
-    //     // printf("%d\n", p_heat);
-    //     REPLACE_PART(x, y, OBSIDIAN);
-    //     changed = TRUE;
-    // } else {
-    //     // BasicHeatReleaserBehave(sim, x, y);
-    // }
-    fire_spread(x, y);
+    fire_spread(x, y, 4);
     changed = BasicLiquidBehave(x, y);
     
     return changed;
@@ -746,10 +741,11 @@ bool PowderBehave(int x, int y){
         for(int j = x-1; j < x+1; j++){
             if(GET_PART_TYPE(j, i) == POWDER) neighbor_count++;
         }
+        // If there are other powder particles around, create a big explosion
         if(neighbor_count > 4){
-            Explosion(currentCS, x, y, 15, 100, FIRE);
+            Explosion(currentCS, x, y, 15, 10000, FIRE);
         } else {
-            Explosion(currentCS, x, y, 5, 100, FIRE);
+            Explosion(currentCS, x, y, 5, 10000, FIRE);
         }
         return changed;
     }
@@ -807,28 +803,3 @@ bool SourceBehave(int x, int y){
     return TRUE;
 }
 
-
-// void (*CreateParticle)(Chunk* chunk, ParticleType type, int px, int py) = NULL;
-// void (*CreateReplaceParticle)(Chunk* chunk, ParticleType type, int px, int py) = NULL;
-// void (*ReplaceParticle)(Chunk* chunk, int sx, int sy, int dx, int dy) = NULL;
-// void (*DeleteParticle)(Chunk* chunk, int px, int py) = NULL;
-
-// void SwapParticles2(Particle* p1, Particle* p2){
-//     Particle tp;
-//     int t;
-
-//     SWAP(*p1, *p2, tp);
-//     SWAP(p1->p.x, p2->p.x, t);
-//     SWAP(p1->p.y, p2->p.y, t);
-// }
-
-// void SwapParticles(Chunk* chunk, int x1, int y1, int x2, int y2){
-//     Particle tp;
-//     Particle* p1 = GET_PARTICLE_AT(chunk, x1, y1);
-//     Particle* p2 = GET_PARTICLE_AT(chunk, x2, y2);
-//     int t;
-
-//     SWAP(*p1, *p2, tp);
-//     SWAP(p1->p.x, p2->p.x, t);
-//     SWAP(p1->p.y, p2->p.y, t);
-// }

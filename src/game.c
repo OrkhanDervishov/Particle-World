@@ -24,12 +24,18 @@ void toggle_guide(ParticleGame* game){
     guide_enabled = guide_enabled ? FALSE : TRUE;
 }
 
+bool is_controlled = FALSE;
+void toggle_control(ParticleGame* game){
+    is_controlled = is_controlled ? FALSE : TRUE;
+}
+
 void call_all_callbacks(ParticleGame* game){
     for(int i = 0; i < CB_COUNT_MAX; i++){
         if(game->callbacks[i] != NULL)
             game->callbacks[i](game);
     }
 }
+
 
 void func(){
     printf("Hello\n");
@@ -132,9 +138,30 @@ int RunParticleGame(ParticleGame* game){
     create_similar(&light_map, final_image);
     create_similar(&blurred, final_image);
 
+    Image background;
+    background.buffer = NULL;
+    load_png(&background, "resources/background.png");
+    Image minimized_bg = minimize_resolution(background, 16, 16);
+    
+    Image barrel;
+    barrel.buffer = NULL;
+    load_png(&barrel, "resources/bomb.png");
+    RectCollider entity_collider2 = {.collider = (Rectf){500.0f, 10.0f, (float)barrel.width*2, (float)barrel.height*2}};
+    bool deleted = FALSE;
+
+    Image wizard;
+    wizard.buffer = NULL;
+    load_png(&wizard, "resources/wizard.png");
+    RectCollider entity_collider = {.collider = (Rectf){10.0f, 10.0f, (float)wizard.width*2, (float)wizard.height*2}};
+    game->camera.pos.x = 100.0f;
+    game->camera.pos.y = 100.0f;
+
+    EntityObj bombs[100];
+
     char fpstext[64];
     char typetext[64];
     char brushtext[64];
+    char controltext[64];
     SetChunkSpace(&(game->cs));
     InitGuiRenderer();
     start_particle_lighting_sw(DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_SIZE, DEFAULT_PARTICLE_SIZE);
@@ -151,55 +178,7 @@ int RunParticleGame(ParticleGame* game){
         start = clock();
         
         ProcessInput(game);
-        
-        // Rendering
-        
-        draw_start = GetTimeNano()/1000;
-        fill_f(win->context, (Color){.rgba = 0xFFFFFFFF});
-        fill_image(final_image, game->s_params.bg_color);
-        fill_image(part_map, (Color){.rgba=0xFF000000});
-        fill_image(light_map, (Color){.rgba=0xFF000000});
-        DrawChunkSpaceSW(part_map, cs, 0, 0);
-        draw_cs_lightmap(light_map, cs, 0, 0);
-        // blur_lightmap2(&blurred, light_map, 3);
-        blur_lightmap_strong(&blurred, light_map, 9, 1);
-        // save_image_png(&blurred, "lightmap.png");
-        additive_blend(final_image, part_map);
-        additive_blend(final_image, blurred);
-        // printf("works\n");
-        // printf("xf:%f yf:%f\n", game->camera.pos.x, game->camera.pos.y);
-        draw_image_on_fimage_scaled(win->context, final_image, (int)game->camera.pos.x, (int)game->camera.pos.y, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
-        // draw_image_on_fimage_scaled(win->context, final_image, -10, 0, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
 
-        // Call ParticleGame callbacks
-        call_all_callbacks(game);
-        
-        Color mouse_color = {.rgba = 0xFFFFFFFF};
-        int mx, my;
-        int state = SDL_GetMouseState(&mx, &my);
-        int px = mx / DEFAULT_PARTICLE_SIZE;
-        int py = my / DEFAULT_PARTICLE_SIZE;
-        DrawGuiElement(win, &game->gui, 0, 0);
-        draw_circle_f(win->context, mx, my, game->g_params.brush_size*DEFAULT_PARTICLE_SIZE, mouse_color, 2);
-        Rect rect = {mx-1, my-1, 2, 2};
-        draw_filled_rect_f(win->context, rect, mouse_color);
-        char pointer_text[64];
-        if(px >= 0 && px < cs->width_p && py >= 0 && py < cs->height_p){
-            sprintf(pointer_text, "%s %d, %d", typeNameList[CS_GET_TYPE(cs, px, py)], px, py);
-            BasicTextRender(game->win, pointer_text, mx+5, my, 1, textColor2);
-        }  
-
-        // RenderText
-        BasicTextRender(game->win, fpstext,     10, 10, 2, textColor);  
-        BasicTextRender(game->win, typetext,    10, 30, 2, textColor);  
-        BasicTextRender(game->win, brushtext,   10, 50, 2, textColor); 
-        if(guide_enabled) Guide(game, textColor);
-        
-        if(cursor_enabled) draw_cursor(win->context, game->mouse);
-
-        SDL_UpdateWindowSurface(win->window);
-        draw_end = GetTimeNano()/1000;
-        
         // Simulations
         if(!game->s_params.paused){
             WallBoxCS(cs);
@@ -214,6 +193,125 @@ int RunParticleGame(ParticleGame* game){
             simh_start = GetTimeNano()/1000;
             simh_end = GetTimeNano()/1000;
         }
+        
+        draw_start = GetTimeNano()/1000;
+        // Entities
+        fill_f(win->context, game->s_params.bg_color);
+        {
+            draw_image_on_fimage_scaled(
+                win->context, wizard, 
+                (int)(entity_collider.collider.x), (int)(entity_collider.collider.y),
+                2, 2
+            );
+            // draw_rect_collider_f(win->context, entity_collider, (Color){.rgba=0xFF00FFFF});
+            if(!deleted){
+                draw_image_on_fimage_scaled(
+                    win->context, barrel, 
+                    (int)(entity_collider2.collider.x), (int)(entity_collider2.collider.y),
+                    2, 2
+                );
+                // draw_rect_collider_f(win->context, entity_collider2, (Color){.rgba=0xFF00FFFF});
+            }
+        }
+
+        {
+            //     entity_collider.collider.x = game->camera.pos.x;
+            // if(is_controlled){
+                //     entity_collider.collider.y = game->camera.pos.y;
+                // } else {
+                if(
+                    is_controlled ||
+                    (!collide_rect_to_particle(cs, entity_collider) && 
+                    !collide_rect_to_rect(entity_collider, entity_collider2))
+                ){
+                    entity_collider.collider.y += 400.0f * get_global_delta();
+                    // game->camera.pos.x = entity_collider.collider.x;
+                    // game->camera.pos.y = entity_collider.collider.y;
+                    entity_collider.collider.x += game->camera.pos.x;
+                    entity_collider.collider.y += game->camera.pos.y;
+                }
+                game->camera.pos = (vec2f){0.0, 0.0};
+            if(!deleted){
+                if(
+                    !collide_rect_to_particle(cs, entity_collider2) && 
+                    !collide_rect_to_rect(entity_collider2, entity_collider)
+                ){
+                    entity_collider2.collider.y += 100.0f * get_global_delta();
+                } else {
+                    deleted = TRUE;
+                    CreateParticlesCircleCS(
+                        cs, 
+                        (int)entity_collider2.collider.x/DEFAULT_PARTICLE_SIZE, 
+                        (int)entity_collider2.collider.y/DEFAULT_PARTICLE_SIZE,
+                        10,
+                        FIRE
+                    );
+                    Explosion(
+                        cs, 
+                        (int)entity_collider2.collider.x/DEFAULT_PARTICLE_SIZE, 
+                        (int)entity_collider2.collider.y/DEFAULT_PARTICLE_SIZE,
+                        1000, 1000000, FIRE_SMOKE
+                    );
+                }
+            }
+        }
+
+        
+        // fill_f(win->context, game->s_params.bg_color);
+        // Rendering
+        {
+            // draw_image_on_fimage_scaled(win->context, background, 0, 0, 2, 2);
+            // draw_image_on_image_scaled(final_image, minimized_bg, 0, 0, 4, 4);
+            // fill_image(final_image, game->s_params.bg_color);
+            fill_image(final_image, (Color){.rgba=0x00000000});
+            // draw_image_on_image(final_image, background, 0, 0);
+            // fill_image(part_map, (Color){.rgba=0x00000000});
+            // fill_image(light_map, (Color){.rgba=0x00000000});
+            DrawChunkSpaceSW(part_map, cs, 0, 0);
+            draw_cs_lightmap(light_map, cs, 0, 0);
+            blur_lightmap_strong(&blurred, light_map, 9, 1);
+            // blur_lightmap2(&blurred, light_map, 3);
+            // save_image_png(&light_map, "lightmap.png");
+            // additive_blend(final_image, part_map);
+            alpha_blend(final_image, part_map);
+            additive_blend(final_image, blurred);
+            // draw_image_on_fimage_scaled(win->context, final_image, (int)game->camera.pos.x, (int)game->camera.pos.y, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
+            draw_image_on_fimage_scaled(win->context, final_image, 0, 0, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
+        }
+        // Call ParticleGame callbacks
+        call_all_callbacks(game);
+
+
+
+        
+        {
+            Color mouse_color = {.rgba = 0xFFFFFFFF};
+            int mx, my;
+            int state = SDL_GetMouseState(&mx, &my);
+            int px = mx / DEFAULT_PARTICLE_SIZE;
+            int py = my / DEFAULT_PARTICLE_SIZE;
+            DrawGuiElement(win, &game->gui, 0, 0);
+            draw_circle_f(win->context, mx, my, game->g_params.brush_size*DEFAULT_PARTICLE_SIZE, mouse_color, 2);
+            Rect rect = {mx-1, my-1, 2, 2};
+            draw_filled_rect_f(win->context, rect, mouse_color);
+            char pointer_text[64];
+            if(px >= 0 && px < cs->width_p && py >= 0 && py < cs->height_p){
+                sprintf(pointer_text, "%s %d, %d", typeNameList[CS_GET_TYPE(cs, px, py)], px, py);
+                BasicTextRender(game->win, pointer_text, mx+5, my, 1, textColor2);
+            }  
+
+            // RenderText
+            BasicTextRender(game->win, fpstext,     10, 10, 2, textColor);  
+            BasicTextRender(game->win, typetext,    10, 30, 2, textColor);  
+            BasicTextRender(game->win, brushtext,   10, 50, 2, textColor); 
+            BasicTextRender(game->win, controltext, 10, 70, 2, textColor); 
+            if(guide_enabled) Guide(game, textColor);
+            
+            if(cursor_enabled) draw_cursor(win->context, game->mouse);
+        }
+
+        SDL_UpdateWindowSurface(win->window);
+        draw_end = GetTimeNano()/1000;
         
         
         end = clock();
@@ -250,8 +348,9 @@ int RunParticleGame(ParticleGame* game){
             sprintf(fpstext, "fps: %.0f / draw_time: %.2fms / sim_time: %.2fms", 
                 fps, (float)(draw_end - draw_start)/1000.f, (float)(sim_end - sim_start)/1000.f);
         }
-        sprintf(typetext, "selected type: %s", typeNameList[game->g_params.selectedParticleType]);
-        sprintf(brushtext, "brush radius: %d", game->g_params.brush_size);
+        sprintf(typetext,   "selected type: %s", typeNameList[game->g_params.selectedParticleType]);
+        sprintf(brushtext,  "brush radius: %d", game->g_params.brush_size);
+        sprintf(controltext,"is controlled: %s", is_controlled ? "true" : "false");
     }
 
     EndBasicTextRenderer();
@@ -310,6 +409,7 @@ void init_buttons(ParticleGame* game, Button** buttons){
     CreateButton(&buttons[0],   "Clear",      buttonColor,                  TRUE, (Pos){10+(sizes.x+5)*0,   game->win->h -(sizes.y+5)*2 - 5},   sizes, (GENERIC_FUNC_POINTER)clear_space);
     CreateButton(&buttons[18],  "Cursor",     buttonColor,                  TRUE, (Pos){10+(sizes.x+5)*1,   game->win->h -(sizes.y+5)*2 - 5},   sizes, (GENERIC_FUNC_POINTER)toggle_cursor);
     CreateButton(&buttons[19],  "Guide",      buttonColor,                  TRUE, (Pos){10+(sizes.x+5)*2,   game->win->h -(sizes.y+5)*2 - 5},   sizes, (GENERIC_FUNC_POINTER)toggle_guide);
+    CreateButton(&buttons[20],  "Control",    buttonColor,                  TRUE, (Pos){10+(sizes.x+5)*3,   game->win->h -(sizes.y+5)*2 - 5},   sizes, (GENERIC_FUNC_POINTER)toggle_control);
     
     CreateButton(&buttons[1],   "Sand",       typeColorList[SAND][0],           TRUE, (Pos){10+(sizes.x+5)*0,   game->win->h -(sizes.y+5)*1 - 5},   sizes, (GENERIC_FUNC_POINTER)select_sand);
     CreateButton(&buttons[2],   "Water",      typeColorList[WATER][0],          TRUE, (Pos){10+(sizes.x+5)*1,   game->win->h -(sizes.y+5)*1 - 5},   sizes, (GENERIC_FUNC_POINTER)select_water);
@@ -330,7 +430,7 @@ void init_buttons(ParticleGame* game, Button** buttons){
     CreateButton(&buttons[17],  "Source",     typeColorList[SOURCE][0],         TRUE, (Pos){10+(sizes.x+5)*16,  game->win->h -(sizes.y+5)*1 - 5},   sizes, (GENERIC_FUNC_POINTER)select_source);
     
     // PrintButtonParams(buttons[0]);
-    for(int i = 0; i < 20; i++){
+    for(int i = 0; i < 21; i++){
         add_button_gui(&game->gui, buttons[i], 0.2f);
     }
     // add_button_gui(&game->gui, button2);

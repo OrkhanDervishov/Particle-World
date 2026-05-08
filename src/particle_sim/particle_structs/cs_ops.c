@@ -240,7 +240,12 @@ void Explosion(ChunkSpace *cs, int px, int py, int rad, int power, int replaceWi
     int dy = 1;
     int err = dx - (rad << 1);
     Chunk* chunk = &CS_GET_CHUNK(cs, px, py);
-    // dr_add(chunk->dirty_rect_list, &chunk->dr_count);
+    Rect rect = (Rect){
+        px%chunk->w,
+        py%chunk->h,
+        1, 1
+    };
+    dr_add(chunk->dirty_rect_list, &chunk->dr_count, rect, chunk->w, chunk->h);
 
     while(x >= y){
         int cx = x;
@@ -277,9 +282,10 @@ void DestructionLine(ChunkSpace *cs, int x0, int y0, int x1, int y1, int power, 
     
     while(1){
         if(x0 >= 0 && y0 >= 0 && x0 < cs->width_p && y0 < cs->height_p){
-            if(GetTypeCS(cs, x0, y0) == WALL) break;
+            if(cs_get_type(cs, x0, y0) == WALL) break;
             CreateParticleCS(cs, x0, y0, replaceWith);
-            SetHeatCS(cs, x0, y0, power * 10);
+            CS_GET_LIFE_T(cs, x0, y0) = rand()%10;
+            cs_set_heat(cs, x0, y0, power * 10);
             if (x0 == x1 && y0 == y1) break;
             int e2 = 2 * error;
             if(e2 >= dy){
@@ -368,6 +374,7 @@ void DeletionLineCS(ChunkSpace* cs, int x0, int y0, int x1, int y1, int width){
     while(1){
         if(x0 >= 0 && y0 >= 0 && x0 < cs->width_p && y0 < cs->height_p){
             DeleteParticlesCircleCS(cs, x0, y0, width);
+            
             if (x0 == x1 && y0 == y1) break;
             int e2 = 2 * error;
             if(e2 >= dy){

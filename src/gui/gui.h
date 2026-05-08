@@ -20,7 +20,7 @@ typedef struct
 } GuiElement;
 
 
-#define MAX_GUIBOX_ELEMENTS 20
+#define MAX_GUIBOX_ELEMENTS 30
 typedef struct{
     char* name;
     Color color;

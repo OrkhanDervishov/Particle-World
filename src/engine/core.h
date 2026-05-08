@@ -64,6 +64,12 @@ typedef struct
     int w, h;
 } Rect;
 
+typedef struct
+{
+    float x, y;
+    float w, h;
+} Rectf;
+
 typedef struct{
     int x0, y0;
     int x1, y1;

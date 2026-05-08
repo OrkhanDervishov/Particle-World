@@ -10,6 +10,89 @@
 // Basics
 //##################################################################
 
+inline Colorf color_to_colorf(Color color){
+    return (Colorf){
+        .r = ((float)color.r / 255.0f),
+        .g = ((float)color.g / 255.0f),
+        .b = ((float)color.b / 255.0f),
+        .a = ((float)color.a / 255.0f)
+    };
+}
+
+inline Color colorf_to_color(Colorf colorf){
+    return (Color){
+        .r = (uint16_t)(colorf.r * 255.0f) > 255 ? 255 : (uint8_t)(colorf.r * 255.0f),
+        .g = (uint16_t)(colorf.g * 255.0f) > 255 ? 255 : (uint8_t)(colorf.g * 255.0f),
+        .b = (uint16_t)(colorf.b * 255.0f) > 255 ? 255 : (uint8_t)(colorf.b * 255.0f),
+        .a = (uint16_t)(colorf.a * 255.0f) > 255 ? 255 : (uint8_t)(colorf.a * 255.0f)
+    };
+}
+
+inline Colorf add_colorf(Colorf a, Colorf b, float scale){
+    return (Colorf){
+        a.r + b.r*scale,
+        a.g + b.g*scale,
+        a.b + b.b*scale,
+        a.a + b.a*scale// + b.a*scale
+    };
+}
+
+inline Color add_color(Color a, Color b){
+    return (Color){
+        .r = ((uint16_t)a.r + (uint16_t)b.r) >= 255 ? 255 : a.r + b.r,
+        .g = ((uint16_t)a.g + (uint16_t)b.g) >= 255 ? 255 : a.g + b.g,
+        .b = ((uint16_t)a.b + (uint16_t)b.b) >= 255 ? 255 : a.b + b.b,
+        // .a = ((uint16_t)a.a + (uint16_t)b.a) >= 255 ? 255 : a.a + b.a
+        .a = a.a
+    };
+}
+
+inline Color get_random_color(){
+    return (Color){
+        .r = rand() & 255,
+        .g = rand() & 255,
+        .b = rand() & 255,
+        .a = 255
+    };
+}
+
+inline Color get_negative(Color color){
+    return (Color){
+        .r = 255 - color.r,
+        .g = 255 - color.g,
+        .b = 255 - color.b,
+        .a = color.a,
+    };
+}
+
+inline int get_negative_f(int fcolor, MyPixelFormat format){
+
+    int r = 0xFF - fcolor >> (format).r_shift;
+    int b = 0xFF - fcolor >> (format).g_shift;
+    int g = 0xFF - fcolor >> (format).b_shift;
+    int a = fcolor >> (format).a_shift;
+
+    return r<<(format).r_shift | g<<(format).g_shift | b<<(format).b_shift | a<<(format).a_shift;
+}
+
+inline Color get_color(Image image, int x, int y){
+    if(
+        x < 0 || x >= image.width ||
+        y < 0 || y >= image.height
+    ){
+        return (Color){.rgba=0x00000000};
+    }
+    return IMG_GET(image, x, y);
+}
+
+inline Color colors_alpha_blend(Color down, Color up){
+    return (Color){
+            .r = (((down).r * (255-(up).a)) + ((up).r * (up).a) >> 8),
+            .g = (((down).g * (255-(up).a)) + ((up).g * (up).a) >> 8),
+            .b = (((down).b * (255-(up).a)) + ((up).b * (up).a) >> 8),
+            .a = (((down).a * (255-(up).a)) + ((up).a * (up).a) >> 8)
+        };
+}
 
 
 MyPixelFormat create_format(int r_mask, int g_mask, int b_mask, int a_mask){
@@ -220,7 +303,7 @@ void draw_image_on_image_scaled(Image dest, Image src, int x, int y, int scaleX,
             if((int)k != prev_k || (int)t != prev_t){
                 Color dest_color = IMG_GET(dest, j, i);
                 Color src_color = IMG_GET(src, (int)t, (int)k);
-                res_color = (Color)ALPHA_BLEND(src_color, dest_color);
+                res_color = colors_alpha_blend(src_color, dest_color);
                 prev_k = (int)k;
                 prev_t = (int)t;
             }
@@ -241,7 +324,7 @@ void draw_image_on_fimage(FormatImage dest, Image src, int x, int y){
     for(int j = rect.x, t = 0; j < endX; j++, t++){
         Color dest_color = GET_COLOR(IMG_GET(dest, j, i), dest.format);
         Color src_color = IMG_GET(src, (int)t, (int)k);
-        int res_fcolor = GET_FCOLOR((Color)ALPHA_BLEND(src_color, dest_color), dest.format);
+        int res_fcolor = GET_FCOLOR(colors_alpha_blend(src_color, dest_color), dest.format);
         IMG_GET(dest, j, i) = res_fcolor;//get_formatted_color(IMG_GET(src, t, k), dest.format);
     }
 }
@@ -262,16 +345,21 @@ void draw_image_on_fimage_scaled(FormatImage dest, Image src, int x, int y, int 
     int endX = rect.x + rect2.w;
     int endY = rect.y + rect2.h;
     int res_fcolor;
+    Color src_color;
     for(int i = start_pos.y; i < rect3.h; i++, k += addY){
         for(int j = start_pos.x; j < rect3.w; j++, t += addX){
+            // This condition breaks alpha blending
             if((int)k != prev_k || (int)t != prev_t){
-                Color dest_color = GET_COLOR(IMG_GET(dest, j, i), dest.format);
-                Color src_color = IMG_GET(src, (int)t, (int)k);
-                res_fcolor = GET_FCOLOR((Color)ALPHA_BLEND(src_color, dest_color), dest.format);
+                src_color = IMG_GET(src, (int)t, (int)k);
                 prev_k = (int)k;
                 prev_t = (int)t;
             }
+
+            if(src_color.a == 0) continue;
             // IMG_GET(dest, j, i) = GET_FCOLOR(IMG_GET(src, (int)t, (int)k), dest.format);
+            Color dest_color = GET_COLOR(IMG_GET(dest, j, i), dest.format);
+            res_fcolor = GET_FCOLOR(colors_alpha_blend(dest_color, src_color), dest.format);
+        
             IMG_GET(dest, j, i) = res_fcolor;
         }
         t = base_t;
@@ -502,7 +590,10 @@ void draw_filled_rect(Image img, Rect rect, Color color){
     for(int i = rect.y; i < endY; i++)
     for(int j = rect.x; j < endX; j++){
         IMG_GET(img, j, i) = color;
+        // printf("worked\n");
     }
+    // printf("---------\n");
+
 }
 
 void draw_filled_rect_f(FormatImage fimg, Rect rect, Color color){

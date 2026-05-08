@@ -119,7 +119,7 @@ void InitParticles(){
     ChangeColor(&c, GRAY);
     AddType("wall", WALL, c, c, 1000000, WALL_FLAGS, 0x00, NULL, WALL_HT, 1000000, 0, 0);
     ChangeColor(&c, BROWN);
-    AddType("wood", WOOD, c, c, 1000000, WOOD_FLAGS, 0x00, WoodBehave, WOOD_HT, 100, 500, 500);
+    AddType("wood", WOOD, c, c, 1000000, WOOD_FLAGS, 0x00, WoodBehave, WOOD_HT, 100, 1500, 500);
     ChangeColor(&c, RED);
     AddType("fire", FIRE, c, c, 80, FIRE_FLAGS, 0x80, FireBehave, FIRE_HT, 100, 50, 0);
     ChangeColor(&c, RED);
@@ -129,15 +129,15 @@ void InitParticles(){
     ChangeColor(&c, BLACK);
     AddType("smoke", SMOKE, c, c, 45, SMOKE_FLAGS, 0x00, SmokeBehave, SMOKE_HT, 100, 1000, 0);
     ChangeColor(&c, BLACK);
-    AddType("coal", COAL, c, c, 600, COAL_FLAGS, 0x00, CoalBehave, COAL_HT, 100, 1500, 700);
+    AddType("coal", COAL, c, c, 600, COAL_FLAGS, 0x00, CoalBehave, COAL_HT, 100, 2500, 700);
     ChangeColor(&c, GRAY);  
     AddType("powder", POWDER, c, c, 600, POWDER_FLAGS, 0x00, PowderBehave, POWDER_HT, 100, 0, 0);
     ChangeColor(&c, OIL_BROWN);
-    AddType("oil", OIL, c, c, 180, OIL_FLAGS, 0x00, OilBehave, OIL_HT, 100, 1000, 450);
+    AddType("oil", OIL, c, c, 180, OIL_FLAGS, 0x00, OilBehave, OIL_HT, 100, 2000, 450);
     ChangeColor(&c, ORANGE);
     AddType("lava", LAVA, c, c, 400, LAVA_FLAGS, 0x80, LavaBehave, LAVA_HT, 100, 0, 0);
     ChangeColor(&c, PINK);
-    AddType("fungus", FUNGUS, c, c, 250, FUNGUS_FLAGS, 0x00, FungusBehave, FUNGUS_HT, 100, 200, 200);
+    AddType("fungus", FUNGUS, c, c, 250, FUNGUS_FLAGS, 0x00, FungusBehave, FUNGUS_HT, 100, 400, 200);
     ChangeColor(&c, OBSIDIAN_GRAY);
     AddType("obsidian", OBSIDIAN, c, c, 1000, OBSIDIAN_FLAGS, 0x00, ObsidianBehave, OBSIDIAN_HT, 100, 0, 0);
     ChangeColor(&c, WHITE);

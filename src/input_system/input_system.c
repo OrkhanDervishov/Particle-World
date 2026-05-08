@@ -59,11 +59,20 @@ void ProcessInput(ParticleGame* game)
     int mx, my;
     int state = SDL_GetMouseState(&mx, &my);
 
-    
     // Particle generation and GUI Interraction
     if(state & SDL_BUTTON(SDL_BUTTON_LEFT)) MouseLeftEvent(game);
     if(state & SDL_BUTTON(SDL_BUTTON_RIGHT)) MouseRightEvent(game);
 
+    SDL_PumpEvents();
+    const uint8_t* keystate = SDL_GetKeyboardState(NULL);
+    // printf("works2\n");
+    
+
+    float delta = get_global_delta();
+    if(keystate[SDL_SCANCODE_UP])       game->camera.pos.y -= 700.0f * delta;
+    if(keystate[SDL_SCANCODE_DOWN])     game->camera.pos.y += 700.0f * delta;
+    if(keystate[SDL_SCANCODE_LEFT])     game->camera.pos.x -= 300.0f * delta;
+    if(keystate[SDL_SCANCODE_RIGHT])    game->camera.pos.x += 300.0f * delta;
 
     // Other events
     while(SDL_PollEvent(&event)){
@@ -106,10 +115,10 @@ void ProcessInput(ParticleGame* game)
             if(A_BUTTON){
                 aButtonEvent(game);
             }
-            if(UP_BUTTON) game->camera.pos.y -= 1.0f;
-            if(DOWN_BUTTON) game->camera.pos.y += 1.0f;
-            if(LEFT_BUTTON) game->camera.pos.x -= 1.0f;
-            if(RIGHT_BUTTON) game->camera.pos.x += 1.0f;
+            // if(UP_BUTTON) game->camera.pos.y -= 1.0f;
+            // if(DOWN_BUTTON) game->camera.pos.y += 1.0f;
+            // if(LEFT_BUTTON) game->camera.pos.x -= 1.0f;
+            // if(RIGHT_BUTTON) game->camera.pos.x += 1.0f;
             if(BRUSH_INCREASE_BUTTON) oneButtonEvent(game);
             if(BRUSH_DECREASE_BUTTON) twoButtonEvent(game);
             // if(DELAY_INCREASE_BUTTON) SpeedUpParticleSimulator();

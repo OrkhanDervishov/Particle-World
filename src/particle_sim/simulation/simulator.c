@@ -113,7 +113,7 @@ Rect SimulateChunkSpaceRect(ChunkSpace* cs, Chunk* chunk, Rect rect, int cs_x, i
     }
 
     
-    int add = 2;
+    int add = 5;
     Rect new_rect;
     new_rect.x = minx - add;
     new_rect.y = miny - add;
@@ -182,7 +182,7 @@ Rect SimulateRect(Chunk* chunk, Rect rect, int cs_x, int cs_y){
             }
         }
     }
-    int add = 5;
+    int add = 100;
     new_rect.x = minx - add;
     new_rect.y = miny - add;
     new_rect.w = maxx - new_rect.x + add;
@@ -200,12 +200,13 @@ void SimulateRects(ChunkSpace* cs, Chunk* chunk, int cs_x, int cs_y){
     int cs_x_coor = cs_x*cs->chunk_width;
     int cs_y_coor = cs_y*cs->chunk_height;
 
-    for(int i = 0; i < chunk->dr_count; i++){
+    int count = chunk->dr_count;
+    for(int i = 0; i < count; i++){
         Rect oldRect = list[i];
         Rect newRect = SimulateChunkSpaceRect(cs, chunk, list[i], cs_x_coor, cs_y_coor);
         // maxRect = CombineRects(oldRect, newRect);
         Rect rects[9];
-        int divisor = 64;
+        int divisor = chunk->w;
         dr_cut(
             rects, newRect, chunk->w, chunk->h,
             -chunk->w/divisor, -chunk->h/divisor, 

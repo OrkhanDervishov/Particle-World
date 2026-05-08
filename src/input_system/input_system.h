@@ -6,8 +6,8 @@
 #include "particle_game.h"
 #include "gui_handler.h"
 
-#define LEFT_BUTTON (event.button.button == SDL_BUTTON_LEFT)
-#define RIGHT_BUTTON (event.button.button == SDL_BUTTON_RIGHT)
+#define MOUSE_LEFT_BUTTON (event.button.button == SDL_BUTTON_LEFT)
+#define MOUSE_RIGHT_BUTTON (event.button.button == SDL_BUTTON_RIGHT)
 #define C_BUTTON (event.key.keysym.sym == SDLK_c)
 #define X_BUTTON (event.key.keysym.sym == SDLK_x)
 #define V_BUTTON (event.key.keysym.sym == SDLK_v)

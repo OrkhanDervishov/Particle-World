@@ -10,6 +10,8 @@
 #include "mouse.h"
 #include "renderer_sw.h"
 #include "chunk_lighting.h"
+#include "image_manipulation.h"
+#include "entity.h"
 
 int RunParticleGame(ParticleGame* game);
 

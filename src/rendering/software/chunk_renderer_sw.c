@@ -67,10 +67,24 @@ int ChunkToImage(Chunk* chunk){
     //     printf("Chunk sizes differ from required ones\n");
     //     return 2;
     // }
-    
+
+    for(int i = 0; i < chunk->size; i++){
+        chunk_image.buffer[i] = (Color){.rgba = 0x00000000};
+    }
+
     for(int i = 0; i < chunk->size; i++){
         if(CHUNK_GETI_TYPE(*chunk, i) == AIR){
-            chunk_image.buffer[i] = (Color){0, 0, 0, 255};
+            continue;
+        }
+        if(CHECK_FLAG(typeFlagsList[CHUNK_GETI_TYPE(*chunk, i)], IS_GAS)){
+            Rect r = (Rect){
+                .x=i%chunk->w, 
+                .y=i/chunk->w, 
+                .w=2, 
+                .h=1
+            };
+            chunk->c[i].a = 200;
+            draw_filled_rect(chunk_image, r, chunk->c[i]);
             continue;
         }
         chunk_image.buffer[i] = chunk->c[i];

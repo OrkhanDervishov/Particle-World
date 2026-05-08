@@ -402,7 +402,7 @@ void gaussian_blur_horizontal(Image dest, Image src, int kernel_size){
 
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        Colorf sum_color = {0.0f, 0.0f, 0.0f, 0.0f};
         for(int t = 0; t < kernel_size; t++){
             Color c = get_color(src, j+t-kernel_size/2, i);
             Colorf cf = color_to_colorf(c);
@@ -436,7 +436,7 @@ void gaussian_blur_vertical(Image dest, Image src, int kernel_size){
 
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        Colorf sum_color = {0.0f, 0.0f, 0.0f, 0.0f};
         for(int k = 0; k < kernel_size; k++){
             Color c = get_color(src, j, i+k-kernel_size/2);
             Colorf cf = color_to_colorf(c);
