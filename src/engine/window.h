@@ -11,8 +11,8 @@
 // #include <SDL2/SDL.h>
 
 
-#define SCR_WIDTH 1080
-#define SCR_HEIGHT 800
+#define SCR_WIDTH 1600
+#define SCR_HEIGHT 1000
 
 #define WIN_TITLE "SDL Playground"
 #define MAX_TITLE_LEN 512
