@@ -9,9 +9,18 @@
 -----------------
 <h4>Build and Run</h4>
 
-Currently project only supports windows
+<h4>Windows</h4>
 
 Put SDL2.dll to the main directory and run
 ```
-make all
+make windows
+```
+
+<h4>Linux</h4>
+
+NOTE: at least in ubuntu it must work
+
+Install SDL2
+```
+make linux
 ```

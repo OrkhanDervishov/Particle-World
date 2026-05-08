@@ -25,9 +25,10 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
     );
 
     
-    if(fs)
-    SDL_SetWindowFullscreen((*win)->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-    
+    if(fs){
+        //SDL_SetWindowFullscreen((*win)->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    }
+
     if((*win)->window == NULL){
         fprintf(stderr, "Error: %s\n", SDL_GetError());
         return 1;
@@ -38,13 +39,14 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
     (*win)->context.width = surf->w;
     (*win)->context.height = surf->h;
     (*win)->context.format = create_format(0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+    //(*win)->context.format = create_format(0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
     (*win)->context.buffer = surf->pixels;
     (*win)->w = surf->w;
     (*win)->h = surf->h;
 
 
 
-    SDL_ShowCursor(SDL_DISABLE);
+    //SDL_ShowCursor(SDL_DISABLE);
     // (*win)->renderer = SDL_CreateRenderer((*win)->window, -1, SDL_RENDERER_SOFTWARE);
     // if((*win)->renderer == NULL){
     //     fprintf(stderr, "Error: %s\n", SDL_GetError());
