@@ -30,8 +30,8 @@ win_build: $(OBJ)
 linux_build: $(SRC)
 	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINUX_LINKER_LIBS)
 
-linux: $(OBJ)
-	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINKER_LIBS)
+#linux: $(OBJ)
+#	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINKER_LIBS)
 
 bin/%.o: %.c
 	@if not exist "$(dir $@)" mkdir "$(dir $@)"
