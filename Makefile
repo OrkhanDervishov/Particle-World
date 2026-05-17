@@ -2,11 +2,9 @@ CPP_COMPILER = g++
 C_COMPILER = gcc
 FLAGS = -O3
 THIRDPARTY_INCLUDE_FOLDER = -Ithird_party/include
-#LIB_FOLDER = -Lthird_party/lib
+LIB_FOLDER = -Lthird_party/lib
 WINDOWS_LINKER_LIBS = -lmingw32 -lSDL2main -lSDL2 -lm
 LINUX_LINKER_LIBS = -lSDL2 -lm
-
-C_TEST_FILES = src/main.c src/engine/core.c src/list.c src/engine/window.c
 
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 SRC := $(call rwildcard,src/,*.c)
@@ -29,9 +27,6 @@ win_build: $(OBJ)
 
 linux_build: $(SRC)
 	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINUX_LINKER_LIBS)
-
-linux: $(OBJ)
-	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINKER_LIBS)
 
 bin/%.o: %.c
 	@if not exist "$(dir $@)" mkdir "$(dir $@)"

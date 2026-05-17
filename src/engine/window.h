@@ -7,12 +7,8 @@
 #include "sdl2_layer.h"
 
 
-// Third party
-// #include <SDL2/SDL.h>
-
-
-#define SCR_WIDTH 1600
-#define SCR_HEIGHT 1000
+#define SCR_WIDTH 1536
+#define SCR_HEIGHT 1024
 
 #define WIN_TITLE "SDL Playground"
 #define MAX_TITLE_LEN 512
@@ -25,7 +21,7 @@ typedef struct{
     bool isrunning;
     FormatImage context;
     SDL_Window* window;
-    SDL_Renderer* renderer;
+    // SDL_Renderer* renderer;
 } Window;
 
 

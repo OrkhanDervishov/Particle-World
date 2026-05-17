@@ -145,7 +145,7 @@ int RunParticleGame(ParticleGame* game){
     
     Image barrel;
     barrel.buffer = NULL;
-    load_png(&barrel, "resources/bomb.png");
+    load_png(&barrel, "resources/barrel.png");
     RectCollider entity_collider2 = {.collider = (Rectf){500.0f, 10.0f, (float)barrel.width*2, (float)barrel.height*2}};
     bool deleted = FALSE;
 
@@ -156,7 +156,7 @@ int RunParticleGame(ParticleGame* game){
     game->camera.pos.x = 100.0f;
     game->camera.pos.y = 100.0f;
 
-    EntityObj bombs[100];
+    Entity bombs[100];
 
     char fpstext[64];
     char typetext[64];
@@ -268,13 +268,13 @@ int RunParticleGame(ParticleGame* game){
             // fill_image(part_map, (Color){.rgba=0x00000000});
             // fill_image(light_map, (Color){.rgba=0x00000000});
             DrawChunkSpaceSW(part_map, cs, 0, 0);
-            draw_cs_lightmap(light_map, cs, 0, 0);
-            blur_lightmap_strong(&blurred, light_map, 9, 1);
+            // draw_cs_lightmap(light_map, cs, 0, 0);
+            // blur_lightmap_strong(&blurred, light_map, 9, 1);
             // blur_lightmap2(&blurred, light_map, 3);
             // save_image_png(&light_map, "lightmap.png");
             // additive_blend(final_image, part_map);
             alpha_blend(final_image, part_map);
-            additive_blend(final_image, blurred);
+            // additive_blend(final_image, blurred);
             // draw_image_on_fimage_scaled(win->context, final_image, (int)game->camera.pos.x, (int)game->camera.pos.y, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
             draw_image_on_fimage_scaled(win->context, final_image, 0, 0, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
         }

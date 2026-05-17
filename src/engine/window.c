@@ -26,7 +26,7 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
 
     
     if(fs){
-        //SDL_SetWindowFullscreen((*win)->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        SDL_SetWindowFullscreen((*win)->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     }
 
     if((*win)->window == NULL){
@@ -69,8 +69,8 @@ void DestroyWindow(Window** win){
 }
 
 void Clear(Window* win){
-    SDL_SetRenderDrawColor(win->renderer, MGOOD_GRAY);
-    SDL_RenderClear(win->renderer);
+    // SDL_SetRenderDrawColor(win->renderer, MGOOD_GRAY);
+    // SDL_RenderClear(win->renderer);
 }
 
 
@@ -85,8 +85,8 @@ int SetWindowIcon(Window* window, char* path){
 }
 
 void GetWindowInfo(Window* window){
-    SDL_RendererInfo info;
-    if(window->renderer == NULL) printf("Renderer is null\n");
-    SDL_GetRendererInfo(window->renderer, &info);
-    printf("%s\n", info.name);
+    // SDL_RendererInfo info;
+    // if(window->renderer == NULL) printf("Renderer is null\n");
+    // SDL_GetRendererInfo(window->renderer, &info);
+    // printf("%s\n", info.name);
 }

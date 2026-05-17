@@ -1,10 +1,49 @@
 #include "entity.h"
 
-int entity_count = 0;
 
-Entity  entities[MAX_ENTITY_COUNT];
-Posf    positions[MAX_ENTITY_COUNT];
 
+
+/************************************************************/
+// Storing entities as objects
+
+entity_id_t entity_add(EntityPool* pool, Entity item){
+    if(pool->free_indices.count > 0){
+        entity_id_t index = da_back(pool->free_indices);
+        pool->entities.items[index] = item;
+        pool->slots.items[index] = TRUE;
+        pool->free_indices.count--;
+        return index;
+    }
+    da_append(pool->entities, item);
+    da_append(pool->slots, TRUE);
+    return pool->entities.count-1;
+}
+
+void entity_delete(EntityPool* pool, entity_id_t index){
+    if(index >= pool->entities.count || pool->slots.items[index] == FALSE) return;
+    pool->slots.items[index] = FALSE;
+    da_append(pool->free_indices, index);
+}
+
+void entity_pool_print_stats(EntityPool* pool){
+    printf("Entity count: %zu\n", pool->entities.count - pool->free_indices.count);
+}   
+
+/************************************************************/
+
+
+
+
+
+
+
+
+
+
+
+
+/************************************************************/
+// Other
 
 void draw_rect_collider(Image image, RectCollider rc, Color color){
     Rect rect = {
@@ -34,7 +73,7 @@ bool collide_rect_to_particle(ChunkSpace* cs, RectCollider rc){
         (int)rect.w/DEFAULT_PARTICLE_SIZE,
         (int)rect.h/DEFAULT_PARTICLE_SIZE
     };
-
+    
     // int i = fit_rect.y + fit_rect.h;
     for(int i = fit_rect.y + fit_rect.h-2; i < fit_rect.y + fit_rect.h+1; i++)
     for(int j = fit_rect.x; j < fit_rect.x + fit_rect.w; j++){
@@ -52,13 +91,14 @@ bool collide_rect_to_rect(RectCollider a, RectCollider b){
     float a_endy = a.collider.y + a.collider.h;
     float b_endx = b.collider.x + b.collider.w;
     float b_endy = b.collider.y + b.collider.h;
-
+    
     if(
         a.collider.x < b_endx && a_endx > b.collider.x && 
         a.collider.y < b_endy && a_endy > b.collider.y
     ){
         return TRUE;
     }
-
+    
     return FALSE;
 }
+/************************************************************/

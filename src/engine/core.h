@@ -13,7 +13,7 @@
 #include <pthread.h>
 
 // Third party
-#include <SDL2/SDL.h>
+// #include <SDL2/SDL.h>
 // typedef SDL_Surface Surface;
 // typedef SDL_Texture Texture;
 
