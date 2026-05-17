@@ -28,6 +28,12 @@ win_build: $(OBJ)
 linux_build: $(SRC)
 	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINUX_LINKER_LIBS)
 
+<<<<<<< HEAD
+=======
+#linux: $(OBJ)
+#	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINKER_LIBS)
+
+>>>>>>> 4062d2a8fdffb613c5224f68f34bc7e838dd93bd
 bin/%.o: %.c
 	@if not exist "$(dir $@)" mkdir "$(dir $@)"
 	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) -c $< -o $@
