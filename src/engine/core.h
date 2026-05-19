@@ -9,13 +9,8 @@
 #include <time.h>
 #include <math.h>
 #include <assert.h>
-#include <unistd.h>
-#include <pthread.h>
-
-// Third party
-// #include <SDL2/SDL.h>
-// typedef SDL_Surface Surface;
-// typedef SDL_Texture Texture;
+// #include <unistd.h>
+// #include <pthread.h>
 
 #define INF 0x3F3F3F3F
 #define GENERIC_FUNC_POINTER void (*)()

@@ -12,8 +12,9 @@
 typedef SDL_Surface Surface;
 // typedef SDL_Texture Texture;
 
+int sdl2_init();
+int sdl2_init_opengl();
 vec2i mouse_get_pos();
 
-int sdl2_init_opengl();
 
 #endif

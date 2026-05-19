@@ -101,9 +101,12 @@ void select_source(ParticleGame* game){
 }
 
 
+int RunEntityGame(ParticleGame* game);
 
 int RunParticleGame(ParticleGame* game){
     
+    // RunEntityGame(game);
+    // return 0;
     Window* win = game->win;
     ChunkSpace* cs = &(game->cs);
     
@@ -142,21 +145,48 @@ int RunParticleGame(ParticleGame* game){
     background.buffer = NULL;
     load_png(&background, "resources/background.png");
     Image minimized_bg = minimize_resolution(background, 16, 16);
-    
-    Image barrel;
-    barrel.buffer = NULL;
-    load_png(&barrel, "resources/barrel.png");
-    RectCollider entity_collider2 = {.collider = (Rectf){500.0f, 10.0f, (float)barrel.width*2, (float)barrel.height*2}};
+
+    EntityPool pool;
+    POOL_INIT(pool);
+
+    Entity bomb;
+    Image bomb_image;
+    bomb_image.buffer = NULL;
+    load_png(&bomb_image, "resources/bomb.png");
+    bomb.sprite.sprite = &bomb_image;
+    bomb.collider = (RectCollider){.collider = (Rectf){500.0f, 10.0f, (float)bomb_image.width*2, (float)bomb_image.height*2}};
     bool deleted = FALSE;
 
-    Image wizard;
-    wizard.buffer = NULL;
-    load_png(&wizard, "resources/wizard.png");
-    RectCollider entity_collider = {.collider = (Rectf){10.0f, 10.0f, (float)wizard.width*2, (float)wizard.height*2}};
+    Entity wizard;
+    Image wizard_image;
+    wizard_image.buffer = NULL;
+    load_png(&wizard_image, "resources/wizard.png");
+    wizard.sprite.sprite = &wizard_image;
+    wizard.collider = (RectCollider){.collider = (Rectf){10.0f, 10.0f, (float)wizard_image.width*2, (float)wizard_image.height*2}};
     game->camera.pos.x = 100.0f;
     game->camera.pos.y = 100.0f;
 
-    Entity bombs[100];
+    entity_id_t bomb_id = entity_add(&pool, bomb);
+    entity_id_t bomb_id1 = entity_add(&pool, bomb);
+    entity_id_t bomb_id2 = entity_add(&pool, bomb);
+    entity_id_t bomb_id3 = entity_add(&pool, bomb);
+    entity_id_t wizard_id = entity_add(&pool, wizard);
+
+    entity_pool_print_stats(&pool);
+
+    InputSystem is = {0};
+    init_input_system(&is);
+    action_t act0 = 0, act1 = 1, act2 = 2, act3 = 3, act_exit = 4;
+    add_binding(&is, BUTTON_Q, act0);
+    add_binding(&is, BUTTON_1, act0);
+    // add_binding(&is, BUTTON_MOUSE_RIGHT, act0);
+    add_binding(&is, BUTTON_TAB, act0);
+    add_binding(&is, BUTTON_W, act1);
+    add_binding(&is, BUTTON_MOUSE_RIGHT, act1);
+    add_binding(&is, BUTTON_E, act2);
+    add_binding(&is, BUTTON_MOUSE_LEFT, act2);
+    add_binding(&is, BUTTON_R, act3);
+    add_binding(&is, BUTTON_ESCAPE, act_exit);
 
     char fpstext[64];
     char typetext[64];
@@ -177,21 +207,23 @@ int RunParticleGame(ParticleGame* game){
         iter_start = clock();
         start = clock();
         
-        ProcessInput(game);
+        update_input_system(&is);
+
+        // ProcessInput(game);
 
         // Simulations
         if(!game->s_params.paused){
-            WallBoxCS(cs);
+            // WallBoxCS(cs);
             
-            // Particle simulation
-            sim_start = GetTimeNano()/1000;
-            SimulateChunkSpace(cs);
-            RefreshChunkSpace(cs);
-            sim_end = GetTimeNano()/1000;
+            // // Particle simulation
+            // sim_start = GetTimeNano()/1000;
+            // SimulateChunkSpace(cs);
+            // RefreshChunkSpace(cs);
+            // sim_end = GetTimeNano()/1000;
             
-            // Heatmap simulation
-            simh_start = GetTimeNano()/1000;
-            simh_end = GetTimeNano()/1000;
+            // // Heatmap simulation
+            // simh_start = GetTimeNano()/1000;
+            // simh_end = GetTimeNano()/1000;
         }
         
         draw_start = GetTimeNano()/1000;
@@ -199,15 +231,15 @@ int RunParticleGame(ParticleGame* game){
         fill_f(win->context, game->s_params.bg_color);
         {
             draw_image_on_fimage_scaled(
-                win->context, wizard, 
-                (int)(entity_collider.collider.x), (int)(entity_collider.collider.y),
+                win->context, *ENTITY_GET(pool, wizard_id).sprite.sprite, 
+                (int)(ENTITY_GET(pool, wizard_id).collider.collider.x), (int)(ENTITY_GET(pool, wizard_id).collider.collider.y),
                 2, 2
             );
             // draw_rect_collider_f(win->context, entity_collider, (Color){.rgba=0xFF00FFFF});
             if(!deleted){
                 draw_image_on_fimage_scaled(
-                    win->context, barrel, 
-                    (int)(entity_collider2.collider.x), (int)(entity_collider2.collider.y),
+                    win->context, *ENTITY_GET(pool, bomb_id).sprite.sprite, 
+                    (int)(ENTITY_GET(pool, bomb_id).collider.collider.x), (int)(ENTITY_GET(pool, bomb_id).collider.collider.y),
                     2, 2
                 );
                 // draw_rect_collider_f(win->context, entity_collider2, (Color){.rgba=0xFF00FFFF});
@@ -221,35 +253,35 @@ int RunParticleGame(ParticleGame* game){
                 // } else {
                 if(
                     is_controlled ||
-                    (!collide_rect_to_particle(cs, entity_collider) && 
-                    !collide_rect_to_rect(entity_collider, entity_collider2))
+                    (!collide_rect_to_particle(cs, ENTITY_GET(pool, wizard_id).collider) && 
+                    !collide_rect_to_rect(ENTITY_GET(pool, wizard_id).collider, ENTITY_GET(pool, bomb_id).collider))
                 ){
-                    entity_collider.collider.y += 400.0f * get_global_delta();
+                    ENTITY_GET(pool, wizard_id).collider.collider.y += 400.0f * get_global_delta();
                     // game->camera.pos.x = entity_collider.collider.x;
                     // game->camera.pos.y = entity_collider.collider.y;
-                    entity_collider.collider.x += game->camera.pos.x;
-                    entity_collider.collider.y += game->camera.pos.y;
+                    ENTITY_GET(pool, wizard_id).collider.collider.x += game->camera.pos.x;
+                    ENTITY_GET(pool, wizard_id).collider.collider.y += game->camera.pos.y;
                 }
                 game->camera.pos = (vec2f){0.0, 0.0};
             if(!deleted){
                 if(
-                    !collide_rect_to_particle(cs, entity_collider2) && 
-                    !collide_rect_to_rect(entity_collider2, entity_collider)
+                    !collide_rect_to_particle(cs, ENTITY_GET(pool, bomb_id).collider) && 
+                    !collide_rect_to_rect(ENTITY_GET(pool, bomb_id).collider, ENTITY_GET(pool, wizard_id).collider)
                 ){
-                    entity_collider2.collider.y += 100.0f * get_global_delta();
+                    ENTITY_GET(pool, bomb_id).collider.collider.y += 100.0f * get_global_delta();
                 } else {
                     deleted = TRUE;
                     CreateParticlesCircleCS(
                         cs, 
-                        (int)entity_collider2.collider.x/DEFAULT_PARTICLE_SIZE, 
-                        (int)entity_collider2.collider.y/DEFAULT_PARTICLE_SIZE,
+                        (int)ENTITY_GET(pool, bomb_id).collider.collider.x/DEFAULT_PARTICLE_SIZE, 
+                        (int)ENTITY_GET(pool, bomb_id).collider.collider.y/DEFAULT_PARTICLE_SIZE,
                         10,
                         FIRE
                     );
                     Explosion(
                         cs, 
-                        (int)entity_collider2.collider.x/DEFAULT_PARTICLE_SIZE, 
-                        (int)entity_collider2.collider.y/DEFAULT_PARTICLE_SIZE,
+                        (int)ENTITY_GET(pool, bomb_id).collider.collider.x/DEFAULT_PARTICLE_SIZE, 
+                        (int)ENTITY_GET(pool, bomb_id).collider.collider.y/DEFAULT_PARTICLE_SIZE,
                         1000, 1000000, FIRE_SMOKE
                     );
                 }
@@ -260,23 +292,23 @@ int RunParticleGame(ParticleGame* game){
         // fill_f(win->context, game->s_params.bg_color);
         // Rendering
         {
-            // draw_image_on_fimage_scaled(win->context, background, 0, 0, 2, 2);
-            // draw_image_on_image_scaled(final_image, minimized_bg, 0, 0, 4, 4);
-            // fill_image(final_image, game->s_params.bg_color);
-            fill_image(final_image, (Color){.rgba=0x00000000});
-            // draw_image_on_image(final_image, background, 0, 0);
-            // fill_image(part_map, (Color){.rgba=0x00000000});
-            // fill_image(light_map, (Color){.rgba=0x00000000});
-            DrawChunkSpaceSW(part_map, cs, 0, 0);
-            // draw_cs_lightmap(light_map, cs, 0, 0);
-            // blur_lightmap_strong(&blurred, light_map, 9, 1);
-            // blur_lightmap2(&blurred, light_map, 3);
-            // save_image_png(&light_map, "lightmap.png");
-            // additive_blend(final_image, part_map);
-            alpha_blend(final_image, part_map);
-            // additive_blend(final_image, blurred);
-            // draw_image_on_fimage_scaled(win->context, final_image, (int)game->camera.pos.x, (int)game->camera.pos.y, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
-            draw_image_on_fimage_scaled(win->context, final_image, 0, 0, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
+            // // draw_image_on_fimage_scaled(win->context, background, 0, 0, 2, 2);
+            // // draw_image_on_image_scaled(final_image, minimized_bg, 0, 0, 4, 4);
+            // // fill_image(final_image, game->s_params.bg_color);
+            // fill_image(final_image, (Color){.rgba=0x00000000});
+            // // draw_image_on_image(final_image, background, 0, 0);
+            // // fill_image(part_map, (Color){.rgba=0x00000000});
+            // // fill_image(light_map, (Color){.rgba=0x00000000});
+            // DrawChunkSpaceSW(part_map, cs, 0, 0);
+            // // draw_cs_lightmap(light_map, cs, 0, 0);
+            // // blur_lightmap_strong(&blurred, light_map, 9, 1);
+            // // blur_lightmap2(&blurred, light_map, 3);
+            // // save_image_png(&light_map, "lightmap.png");
+            // // additive_blend(final_image, part_map);
+            // alpha_blend(final_image, part_map);
+            // // additive_blend(final_image, blurred);
+            // // draw_image_on_fimage_scaled(win->context, final_image, (int)game->camera.pos.x, (int)game->camera.pos.y, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
+            // draw_image_on_fimage_scaled(win->context, final_image, 0, 0, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
         }
         // Call ParticleGame callbacks
         call_all_callbacks(game);
@@ -300,6 +332,29 @@ int RunParticleGame(ParticleGame* game){
                 BasicTextRender(game->win, pointer_text, mx+5, my, 1, textColor2);
             }  
 
+
+            {
+                char input_text[256];
+                sprintf(input_text, "inputs: ");
+                
+                if(action_pressed(&is, act0)){
+                    strcat(input_text, "act0, ");
+                }
+                if(action_released(&is, act1)){
+                    strcat(input_text, "act1, ");
+                }
+                if(action_pressed(&is, act2)){
+                    strcat(input_text, "act2, ");
+                }
+                if(action_pressed(&is, act3)){
+                    strcat(input_text, "act3, ");
+                }
+                if(action_pressed(&is, act_exit)){
+                    return 0;
+                }
+                
+                BasicTextRender(game->win, input_text,     10, 100, 2, textColor);  
+            }
             // RenderText
             BasicTextRender(game->win, fpstext,     10, 10, 2, textColor);  
             BasicTextRender(game->win, typetext,    10, 30, 2, textColor);  
@@ -367,7 +422,10 @@ int RunParticleGame(ParticleGame* game){
 }
 
 
-
+int RunEntityGame(ParticleGame* game){
+    
+    return 0;
+}
 
 
 

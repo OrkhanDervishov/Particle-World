@@ -1,61 +1,148 @@
-#ifndef CONTROLS_H
-#define CONTROLS_H
+#ifndef INPUT_SYSTEM_H
+#define INPUT_SYSTEM_H
 
-#include "engine_lib.h"
-// #include "../partsim/simulator.h"
-#include "particle_game.h"
-#include "gui_handler.h"
+#include "sdl2_layer.h"
+#include "timing.h"
 
-#define MOUSE_LEFT_BUTTON (event.button.button == SDL_BUTTON_LEFT)
-#define MOUSE_RIGHT_BUTTON (event.button.button == SDL_BUTTON_RIGHT)
-#define C_BUTTON (event.key.keysym.sym == SDLK_c)
-#define X_BUTTON (event.key.keysym.sym == SDLK_x)
-#define V_BUTTON (event.key.keysym.sym == SDLK_v)
-#define R_BUTTON (event.key.keysym.sym == SDLK_r)
-#define Z_BUTTON (event.key.keysym.sym == SDLK_z)
-#define A_BUTTON (event.key.keysym.sym == SDLK_a)
-#define BUTTON_1 (event.key.keysym.sym == SDLK_1)
-#define BUTTON_2 (event.key.keysym.sym == SDLK_2)
-#define BUTTON_3 (event.key.keysym.sym == SDLK_3)
-#define BUTTON_4 (event.key.keysym.sym == SDLK_4)
-#define ESC_BUTTON (event.key.keysym.sym == SDLK_ESCAPE)
-#define F_BUTTON (event.key.keysym.sym == SDLK_f)
-#define P_BUTTON (event.key.keysym.sym == SDLK_p)
-#define TAB_BUTTON (event.key.keysym.sym == SDLK_TAB)
-#define SPACE_BUTTON (event.key.keysym.sym == SDLK_SPACE)
-#define UP_BUTTON (event.key.keysym.sym == SDLK_UP)
-#define DOWN_BUTTON (event.key.keysym.sym == SDLK_DOWN)
-#define LEFT_BUTTON (event.key.keysym.sym == SDLK_LEFT)
-#define RIGHT_BUTTON (event.key.keysym.sym == SDLK_RIGHT)
+typedef enum{
+    BUTTON_UNKNOWN = 0,
+    BUTTON_MOUSE_LEFT = 1,
+    BUTTON_MOUSE_RIGHT,
+    BUTTON_MOUSE_MIDDLE,
+    BUTTON_MOUSE_X1,
+    BUTTON_MOUSE_X2,
+    BUTTON_SPACE,
+    BUTTON_ENTER,
+    BUTTON_TAB,
+    BUTTON_LSHIFT,
+    BUTTON_RSHIFT,
+    BUTTON_LCTRL,
+    BUTTON_RCTRL,
+    BUTTON_LALT,
+    BUTTON_RALT,
+    BUTTON_BACKSPACE,
+    BUTTON_ESCAPE,
+    BUTTON_ARROW_UP,
+    BUTTON_ARROW_DOWN,
+    BUTTON_ARROW_LEFT,
+    BUTTON_ARROW_RIGHT,
+    BUTTON_F1,
+    BUTTON_F2,
+    BUTTON_F3,
+    BUTTON_F4,
+    BUTTON_F5,
+    BUTTON_F6,
+    BUTTON_F7,
+    BUTTON_F8,
+    BUTTON_F9,
+    BUTTON_F10,
+    BUTTON_F11,
+    BUTTON_F12,
+    BUTTON_0,
+    BUTTON_1,
+    BUTTON_2,
+    BUTTON_3,
+    BUTTON_4,
+    BUTTON_5,
+    BUTTON_6,
+    BUTTON_7,
+    BUTTON_8,
+    BUTTON_9,
+    BUTTON_A,
+    BUTTON_B,
+    BUTTON_C,
+    BUTTON_D,
+    BUTTON_E,
+    BUTTON_F,
+    BUTTON_G,
+    BUTTON_H,
+    BUTTON_I,
+    BUTTON_J,
+    BUTTON_K,
+    BUTTON_L,
+    BUTTON_M,
+    BUTTON_N,
+    BUTTON_O,
+    BUTTON_P,
+    BUTTON_Q,
+    BUTTON_R,
+    BUTTON_S,
+    BUTTON_T,
+    BUTTON_U,
+    BUTTON_V,
+    BUTTON_W,
+    BUTTON_X,
+    BUTTON_Y,
+    BUTTON_Z,
+} KeyCode;
 
 
-#define PARTICLE_GENERATION_BUTTON      LEFT_BUTTON
-#define DELETE_PARTICLE_BUTTON          RIGHT_BUTTON
-#define SCREEN_CLEAR_BUTTON             C_BUTTON
-#define COLOR_CHANGE_BUTTON             X_BUTTON
-#define PARTICLE_CHANGE_BUTTON          V_BUTTON
-#define EXPLOSION_BUTTON                R_BUTTON
-#define BRUSH_INCREASE_BUTTON           BUTTON_1
-#define BRUSH_DECREASE_BUTTON           BUTTON_2
-#define DELAY_INCREASE_BUTTON           BUTTON_3
-#define DELAY_DECREASE_BUTTON           BUTTON_4
-#define QUIT_BUTTON                     ESC_BUTTON
-#define HEATMAP_OF_BUTTON               F_BUTTON
-#define PAUSE_OF_BUTTON                 P_BUTTON
-#define SIM_CHANGE_OF_BUTTON            TAB_BUTTON
+typedef uint32_t action_t;
+
+typedef struct{
+    bool down;
+    bool pressed;
+    bool released;
+} ButtonState;
+
+typedef struct{
+    KeyCode key;
+    action_t action;
+} KeyBinding;
+
+#define MAX_KEYS_FOR_ACTION 4
+typedef struct{
+    KeyCode list[MAX_KEYS_FOR_ACTION];
+    uint8_t count;
+} KeyList;
+
+typedef struct{
+    float x, y;
+    float prev_x, prev_y;
+    float dx, dy;
+
+    float wheel_x, wheel_y;
 
 
-void ProcessInput(ParticleGame* game);
+    union{
+        struct{
+            ButtonState left;
+            ButtonState right;
+            ButtonState middle;
+            ButtonState x1;
+            ButtonState x2;
+        };
+        ButtonState buttons[5];
+    };
+} MouseInput;
 
+#define MAX_BUTTONS 256
+#define MAX_BINDINGS 256
+#define MAX_SDL_SCANCODE_TO_KEY_MAP 512
+typedef struct{
+    ButtonState     buttons[MAX_BUTTONS];   // KeyCodes are indices
+    KeyList         bindings[MAX_BINDINGS]; // Actions are indices
+    KeyCode         scancode_keycode_map[MAX_SDL_SCANCODE_TO_KEY_MAP];
+    
+    MouseInput      mouse;
+    // Will not be used probably
+    // KeyBinding   bindings[MAX_BINDINGS]; // Must be iterated to check
+} InputSystem;
 
-extern void (*MouseLeftEvent)(ParticleGame* game);
-extern void (*MouseRightEvent)(ParticleGame* game);
-extern void (*MouseScrollEvent)(ParticleGame* game);
-extern void (*SpaceButtonEvent)(ParticleGame* game);
-extern void (*cButtonEvent)(ParticleGame* game);
-extern void (*vButtonEvent)(ParticleGame* game);
-extern void (*xButtonEvent)(ParticleGame* game);
-extern void (*zButtonEvent)(ParticleGame* game);
+#define SCANCODE_TO_KEYCODE(in_sys_p, scancode) (in_sys_p)->scancode_keycode_map[(scancode)]
 
+void init_input_system(InputSystem* is);
+void update_input_system(InputSystem* is);
+void add_binding(InputSystem* is, KeyCode keycode, action_t action);
+void remove_binding(InputSystem* is, KeyCode keycode, action_t action);
+bool button_down(InputSystem* is, KeyCode keycode);
+bool button_pressed(InputSystem* is, KeyCode keycode);
+bool button_released(InputSystem* is, KeyCode keycode);
+bool action_down(InputSystem* is, action_t action);
+bool action_pressed(InputSystem* is, action_t action);
+bool action_released(InputSystem* is, action_t action);
+void update_mouse(InputSystem* is);
 
-#endif
+// #undef MAX_BUTTONS
+// #undef MAX_BINDINGS
+#endif //INPUT_SYSTEM_H

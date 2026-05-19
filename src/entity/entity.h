@@ -30,7 +30,7 @@ To start the system init initialize an entity pool: POOL_INIT(ep);
 
 #define ENTITY_GET(pool, index) (pool).entities.items[(index)]
 #define ENTITY_SET(pool, index, new) (pool).entities.items[(index)] = (new);
-#define POOL_INIT(pool) pool = {0}
+#define POOL_INIT(pool) pool = (EntityPool){0}
 
 /*
 TODO: Implement entity physics
