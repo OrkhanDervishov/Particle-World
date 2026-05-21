@@ -192,8 +192,9 @@ void update_input_system(InputSystem* is){
 
 
 void init_input_system(InputSystem* is){
-    memset(is->buttons, 0, MAX_BUTTONS*sizeof(ButtonState));
-    memset(is->bindings, 0, MAX_BINDINGS*sizeof(KeyCode));
+    *is = (InputSystem){0};
+    // memset(is->buttons, 0, MAX_BUTTONS*sizeof(ButtonState));
+    // memset(is->bindings, 0, MAX_BINDINGS*sizeof(KeyCode));
 
     for(int i = 0; i < MAX_SDL_SCANCODE_TO_KEY_MAP + 1; i++){
         SCANCODE_TO_KEYCODE(is, i) = BUTTON_UNKNOWN;

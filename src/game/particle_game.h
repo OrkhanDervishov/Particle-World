@@ -24,18 +24,21 @@
 #include "gui_handler.h"
 #include "mouse.h"
 #include "camera.h"
+#include "entity.h"
+#include "input_system.h"
 
 #define ICON_PATH "./src/images/sand.bmp"
 #define BG_PATH "./src/images/background.bmp"
 
 
 typedef struct{
+    bool is_running;
     bool paused;
     int delay;
     bool frameLockEnabled;
     int frameLock;
     
-    Color bg_color;
+    Color clear_color;
     bool hm_mode;
 } GameSystemParameters;
 
@@ -53,6 +56,8 @@ typedef struct ParticleGame{
     GameParameters g_params;
     Mouse mouse;
     Camera2D camera;
+    InputSystem is;
+    EntityPool ep;
     int cbCount;
     void (*callbacks[CB_COUNT_MAX])(struct ParticleGame* game);
 } ParticleGame;

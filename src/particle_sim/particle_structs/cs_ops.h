@@ -2,7 +2,7 @@
 #define CHUNK_SPACE_OPERATIONS_H
 
 #include "chunk_space.h"
-
+#include "geometry.h"
 
 void CreateParticleCS(ChunkSpace *cs, int x, int y, int type);
 void DeleteParticleCS(ChunkSpace *cs, int x, int y);

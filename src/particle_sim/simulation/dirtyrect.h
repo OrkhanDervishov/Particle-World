@@ -2,6 +2,7 @@
 #define DIRTYRECT_H
 
 #include "engine_lib.h"
+#include "geometry.h"
 
 void dr_list_init(Rect** dr_list);
 void dr_list_destroy(Rect** dr_list);

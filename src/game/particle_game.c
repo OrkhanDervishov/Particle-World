@@ -50,8 +50,17 @@ int CreateParticleGame(ParticleGame** game){
     (*game)->camera.pos = (vec2f){0.0f, 0.0f};
     //******************************************/
     
+    //******************************************/
+    // Initializing gui system
+    init_input_system(&(*game)->is);
+    //******************************************/
 
+    //******************************************/
+    // Initializing gui system
+    POOL_INIT((*game)->ep);
+    //******************************************/
 
+    
     //******************************************/
     // Initializing gui system
     GuiBox* gb;
@@ -72,12 +81,13 @@ int CreateParticleGame(ParticleGame** game){
     
     //******************************************/
     // Initializing game's system parameters
-    (*game)->s_params.bg_color.rgba = 0x00181818;
-    (*game)->s_params.hm_mode = FALSE;
+    (*game)->s_params.is_running = TRUE;
     (*game)->s_params.paused = FALSE;
+    (*game)->s_params.hm_mode = FALSE;
     (*game)->s_params.delay = 0;
     (*game)->s_params.frameLockEnabled = TRUE;
     (*game)->s_params.frameLock = 90;
+    (*game)->s_params.clear_color.rgba = 0x00181818;
     //******************************************/
     
     
@@ -178,180 +188,3 @@ int BuildLabEnv(ParticleGame* game){
 
     return 0;
 }
-
-
-
-
-// Initialization
-
-
-
-// Gameplay
-
-// void CreateManyParticles(World* world, int px, int py, int rad, int t){
-    // int begy = py - rad;
-    // int begx = px - rad;
-    // int endy = py + rad;
-    // int endx = px + rad;
-    // int srad = rad * rad;
-
-    // for(int i = begy; i < endy; i++){
-    //     int di = abs(py - i);
-    //     for(int j = begx; j < endx; j++){
-    //         int dj = abs(px - j);
-    //         if(di*di + dj*dj < srad)
-    //             if(j >= 0 && i >= 0 && j < sim->cols && i < sim->rows)
-    //                 if(sim->pMap[i][j].id < 0)
-    //                     CreateReplaceParticle(sim, j, i, t);
-    //     }
-    // }
-// }
-
-// void CreateManyParticlesWithRarity(World* world, int px, int py, int rad, int t, int rarity){
-    // int begy = py - rad;
-    // int begx = px - rad;
-    // int endy = py + rad;
-    // int endx = px + rad;
-    // int srad = rad * rad;
-
-    // for(int i = begy; i < endy; i++){
-    //     int di = abs(py - i);
-    //     for(int j = begx; j < endx; j++){
-    //         int dj = abs(px - j);
-    //         if(di*di + dj*dj < srad){
-    //             if(rand() % rarity != 1) continue;
-    //             if(j >= 0 && i >= 0 && j < sim->cols && i < sim->rows)
-    //                 if(sim->pMap[i][j].id < 0){
-    //                     CreateReplaceParticle(sim, j, i, t);
-    //                 }
-    //         }
-    //     }
-    // }
-// }
-
-// void DeleteManyParticles(World* world, int px, int py, int rad){
-    // int begy = py - rad;
-    // int begx = px - rad;
-    // int endy = py + rad;
-    // int endx = px + rad;
-
-    // for(int i = begy; i < endy; i++){
-    //     if(i <= 0 || i >= sim->rows - 1) continue;
-    //     int di = abs(py - i);
-    //     for(int j = begx; j < endx; j++){
-    //         if(j <= 0 || j >= sim->cols - 1) continue;
-    //         int dj = abs(px - j);
-    //         if(di*di + dj*dj < rad*rad)
-    //             DeleteParticle(sim, j, i);
-    //     }
-    // }
-// }
-
-
-// ParticleSimulator
-// void WallBox(World* world){
-    
-    // for(int j = 0; j < sim->cols; j++){
-    //     CreateParticle(sim, j, 0, WALL);
-    // }
-    // for(int j = 0; j < sim->cols; j++){
-    //     CreateParticle(sim, j, sim->rows - 1, WALL);
-    // }
-    // for(int i = 1; i < sim->rows - 1; i++){
-    //     CreateParticle(sim, 0, i, &c, WALL);
-    //     CreateParticle(sim, sim->cols - 1, i, WALL);
-    // }
-
-// }
-
-// ParticleSimulator
-// void Explosion(World* world, int px, int py, int rad, int power, int replaceWith){
-    // int x = rad - 1;
-    // int y = 0;
-    // int dx = 1;
-    // int dy = 1;
-    // int err = dx - (rad << 1);
-
-    // while(x >= y){
-    //     int cx = x;
-    //     int cy = y;
-    //     DestructionLine(sim, px, py, px + cx, py + cy, power, replaceWith);
-    //     DestructionLine(sim, px, py, px + cy, py + cx, power, replaceWith);
-    //     DestructionLine(sim, px, py, px - cy, py + cx, power, replaceWith);
-    //     DestructionLine(sim, px, py, px - cx, py + cy, power, replaceWith);
-    //     DestructionLine(sim, px, py, px - cx, py - cy, power, replaceWith);
-    //     DestructionLine(sim, px, py, px - cy, py - cx, power, replaceWith);
-    //     DestructionLine(sim, px, py, px + cy, py - cx, power, replaceWith);
-    //     DestructionLine(sim, px, py, px + cx, py - cy, power, replaceWith);
-
-    //     if(err <= 0){
-    //         y++;
-    //         err += dy;
-    //         dy += 2;  
-    //     }
-    //     if(err > 0){
-    //         x--;
-    //         dx += 2;
-    //         err += dx - (rad << 1);
-    //     }
-    // }
-// }
-
-// ParticleSimulator
-// void DestructionLine(World* world, int px0, int py0, int px1, int py1, int power, int replaceWith){
-    // int dx = abs(px1 - px0);
-    // int sx = px0 < px1 ? 1 : -1;
-    // int dy = -abs(py1 - py0);
-    // int sy = py0 < py1 ? 1 : -1;
-    // int error = dx + dy;
-
-    // while(1){
-    //     if(px0 >= 0 && py0 >= 0 && px0 < sim->cols && py0 < sim->rows){
-    //         if(sim->pMap[py0][px0].type == WALL) break;
-    //         CreateReplaceParticle(sim, px0, py0, replaceWith);
-    //         sim->pMap[py0][px0].heat = power * 10;
-    //         if (px0 == px1 && py0 == py1) break;
-    //         int e2 = 2 * error;
-    //         if(e2 >= dy){
-    //             if(px0 == px1) break;
-    //             error += dy;
-    //             px0 += sx;
-    //         }
-    //         if(e2 <= dx){
-    //             if(py0 == py1) break;
-    //             error += dx;
-    //             py0 += sy;
-    //         }
-    //     }
-    //     else{
-    //         break;
-    //     }
-    // }
-
-    // // int dx = abs(px1 - px0);
-    // // int sx = px0 < px1 ? 1 : -1;
-    // // int dy = -abs(py1 - py0);
-    // // int sy = py0 < py1 ? 1 : -1;
-    // // int error = dx + dy;
-
-    // // Color c;
-    // // ChangeColor(&c, FIRE_COLORS);
-
-    // // while (1) {
-    // //     CreateReplaceParticle(sim, px0, py0, &c, FIRE);
-
-    // //     if (px0 == px1 && py0 == py1) break;
-
-    // //     int e2 = 2 * error;
-
-    // //     if (e2 >= dy) {
-    // //         error += dy;
-    // //         px0 += sx;
-    // //     }
-
-    // //     if (e2 <= dx) {
-    // //         error += dx;
-    // //         py0 += sy;
-    // //     }
-    // // }
-// }

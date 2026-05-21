@@ -105,8 +105,8 @@ int RunEntityGame(ParticleGame* game);
 
 int RunParticleGame(ParticleGame* game){
     
-    // RunEntityGame(game);
-    // return 0;
+    RunEntityGame(game);
+    return 0;
     Window* win = game->win;
     ChunkSpace* cs = &(game->cs);
     
@@ -179,13 +179,15 @@ int RunParticleGame(ParticleGame* game){
     action_t act0 = 0, act1 = 1, act2 = 2, act3 = 3, act_exit = 4;
     add_binding(&is, BUTTON_Q, act0);
     add_binding(&is, BUTTON_1, act0);
-    // add_binding(&is, BUTTON_MOUSE_RIGHT, act0);
+    add_binding(&is, BUTTON_MOUSE_MIDDLE, act0);
     add_binding(&is, BUTTON_TAB, act0);
     add_binding(&is, BUTTON_W, act1);
     add_binding(&is, BUTTON_MOUSE_RIGHT, act1);
     add_binding(&is, BUTTON_E, act2);
     add_binding(&is, BUTTON_MOUSE_LEFT, act2);
     add_binding(&is, BUTTON_R, act3);
+    add_binding(&is, BUTTON_MOUSE_X1, act3);
+    add_binding(&is, BUTTON_MOUSE_X2, act3);
     add_binding(&is, BUTTON_ESCAPE, act_exit);
 
     char fpstext[64];
@@ -203,13 +205,12 @@ int RunParticleGame(ParticleGame* game){
     Color textColor2 = {.r=0, .g=255, .b=0, .a=255};
     // Loop
     while(win->isrunning){
+
         update_global_time();
         iter_start = clock();
         start = clock();
         
         update_input_system(&is);
-
-        // ProcessInput(game);
 
         // Simulations
         if(!game->s_params.paused){
@@ -228,7 +229,7 @@ int RunParticleGame(ParticleGame* game){
         
         draw_start = GetTimeNano()/1000;
         // Entities
-        fill_f(win->context, game->s_params.bg_color);
+        fill_f(win->context, game->s_params.clear_color);
         {
             draw_image_on_fimage_scaled(
                 win->context, *ENTITY_GET(pool, wizard_id).sprite.sprite, 
@@ -289,12 +290,12 @@ int RunParticleGame(ParticleGame* game){
         }
 
         
-        // fill_f(win->context, game->s_params.bg_color);
+        // fill_f(win->context, game->s_params.clear_color);
         // Rendering
         {
             // // draw_image_on_fimage_scaled(win->context, background, 0, 0, 2, 2);
             // // draw_image_on_image_scaled(final_image, minimized_bg, 0, 0, 4, 4);
-            // // fill_image(final_image, game->s_params.bg_color);
+            // // fill_image(final_image, game->s_params.clear_color);
             // fill_image(final_image, (Color){.rgba=0x00000000});
             // // draw_image_on_image(final_image, background, 0, 0);
             // // fill_image(part_map, (Color){.rgba=0x00000000});
@@ -311,10 +312,7 @@ int RunParticleGame(ParticleGame* game){
             // draw_image_on_fimage_scaled(win->context, final_image, 0, 0, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
         }
         // Call ParticleGame callbacks
-        call_all_callbacks(game);
-
-
-
+        // call_all_callbacks(game);
         
         {
             Color mouse_color = {.rgba = 0xFFFFFFFF};
@@ -337,10 +335,10 @@ int RunParticleGame(ParticleGame* game){
                 char input_text[256];
                 sprintf(input_text, "inputs: ");
                 
-                if(action_pressed(&is, act0)){
+                if(action_down(&is, act0)){
                     strcat(input_text, "act0, ");
                 }
-                if(action_released(&is, act1)){
+                if(action_pressed(&is, act1)){
                     strcat(input_text, "act1, ");
                 }
                 if(action_pressed(&is, act2)){
@@ -421,9 +419,89 @@ int RunParticleGame(ParticleGame* game){
     return 0;
 }
 
+void draw_entity(ParticleGame* game, entity_id_t id){
+    draw_image_on_fimage_scaled(
+        game->win->context, 
+        *ENTITY_GET(game->ep, id).sprite.sprite, 
+        (int)(ENTITY_GET(game->ep, id).pos.x), 
+        (int)(ENTITY_GET(game->ep, id).pos.y),
+        2, 2
+    );
+}
+
+void draw_entities(ParticleGame* game){
+    for(entity_id_t i = 0; i < game->ep.entities.count; i++){
+        if(!ENTITY_IS_DELETED(game->ep, i)) continue;
+        draw_entity(game, i);
+    }
+}
+
+void delete_all_entities(ParticleGame* game){
+    for(entity_id_t i = 0; i < game->ep.entities.count; i++){
+        if(!ENTITY_IS_DELETED(game->ep, i)) continue;
+        entity_delete(&game->ep, i);
+    }    
+}
+
+void clear_game_window(ParticleGame* game){
+    fill_f(game->win->context, game->s_params.clear_color);
+}
 
 int RunEntityGame(ParticleGame* game){
     
+    Entity bomb;
+    Image bomb_image;
+    bomb_image.buffer = NULL;
+    load_png(&bomb_image, "resources/bomb.png");
+    bomb.sprite.sprite = &bomb_image;
+    bomb.collider = (RectCollider){.collider = (Rectf){500.0f, 10.0f, (float)bomb_image.width*2, (float)bomb_image.height*2}};
+    bomb.pos.x = 100.0f;
+    bomb.pos.y = 100.0f;
+
+    // printf("works-1\n");
+    entity_id_t bomb0 = entity_add(&game->ep, bomb);
+
+    action_t act_exit = 0;
+    action_t act_create_bomb = 1;
+    action_t act_delete_entites = 2;
+    add_binding(&game->is, BUTTON_ESCAPE, act_exit);
+    add_binding(&game->is, BUTTON_MOUSE_LEFT, act_create_bomb);
+    add_binding(&game->is, BUTTON_SPACE, act_create_bomb);
+    add_binding(&game->is, BUTTON_TAB, act_create_bomb);
+    add_binding(&game->is, BUTTON_Q, act_create_bomb);
+    add_binding(&game->is, BUTTON_C, act_delete_entites);
+    add_binding(&game->is, BUTTON_X, act_delete_entites);
+    add_binding(&game->is, BUTTON_F1, act_delete_entites);
+    add_binding(&game->is, BUTTON_1, act_delete_entites);
+
+    // printf("works0\n");
+    while(game->s_params.is_running){
+        
+        update_global_time();
+        update_input_system(&game->is);
+        // printf("works1\n");
+        
+        if(action_pressed(&game->is, act_exit)){
+            game->s_params.is_running = FALSE;
+        }
+        if(action_down(&game->is, act_create_bomb)){
+            bomb.pos.x = game->is.mouse.x - bomb.collider.collider.w/2;
+            bomb.pos.y = game->is.mouse.y - bomb.collider.collider.h/2;
+            entity_add(&game->ep, bomb);
+            entity_pool_print_stats(&game->ep);
+        }
+        if(action_pressed(&game->is, act_delete_entites)){
+            delete_all_entities(game);
+        }
+        // printf("works2\n");
+        
+        clear_game_window(game);
+        // printf("works3\n");
+        draw_entities(game);
+        // printf("works4\n");
+        SDL_UpdateWindowSurface(game->win->window);
+    }
+
     return 0;
 }
 
