@@ -15,6 +15,10 @@ Put SDL2.dll to the main directory and run
 ```
 make windows
 ```
+or
+```
+build.bat
+```
 
 <h4>Linux</h4>
 
@@ -23,4 +27,8 @@ NOTE: at least in ubuntu it must work
 Install SDL2
 ```
 make linux
+```
+or
+```
+./build.sh
 ```
