@@ -1,7 +1,6 @@
 #ifndef MOUSE_H
 #define MOUSE_H
 
-#include "engine_lib.h"
 #include "painter.h"
 
 

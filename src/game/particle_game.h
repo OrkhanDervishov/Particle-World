@@ -1,17 +1,6 @@
 #ifndef PARTICLE_GAME_H
 #define PARTICLE_GAME_H
 
-// #include "engine/engine_api.h"
-// #include "partsim/particle_data.h"
-// #include "partsim/particle_load.h"
-// #include "partsim/particle.h"
-// #include "partsim/simulator.h"
-// // #include "game_gui.h"
-// // #include "world.h"
-// #include "chunk.h"
-// // #include "drawer.h"
-
-#include "engine_lib.h"
 #include "particle_load.h"
 #include "chunk.h"
 #include "region.h"
@@ -26,9 +15,7 @@
 #include "camera.h"
 #include "entity.h"
 #include "input_system.h"
-
-#define ICON_PATH "./src/images/sand.bmp"
-#define BG_PATH "./src/images/background.bmp"
+#include "constants.h"
 
 
 typedef struct{

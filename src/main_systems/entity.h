@@ -1,9 +1,10 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
-#include "engine_lib.h"
 #include "chunk_space.h"
+#include "constants.h"
 #include "da.h"
+#include "core.h"
 
 #define MAX_ENTITY_COUNT 4096
 
@@ -28,8 +29,8 @@ DOCUMENTATION:
 To start the system init initialize an entity pool: POOL_INIT(ep);
 */
 
-#define ENTITY_GET(pool, index) (pool).entities.items[(index)]
-#define ENTITY_SET(pool, index, new) (pool).entities.items[(index)] = (new);
+#define ENTITY_GET(pool, index) (pool).items.items[(index)]
+#define ENTITY_SET(pool, index, new) (pool).items.items[(index)] = (new);
 #define ENTITY_IS_DELETED(pool, index) (pool).slots.items[(index)]
 #define POOL_INIT(pool) (pool) = (EntityPool){0}
 
@@ -58,17 +59,11 @@ typedef struct{
     entity_id_t* items;
     size_t count;
     size_t capacity;
-} Indices;
+} EntityIndices;
 
 typedef struct{
-    bool* items;
-    size_t count;
-    size_t capacity;
-} Slots;
-
-typedef struct{
-    Entities entities;
-    Indices free_indices;
+    Entities items;
+    EntityIndices free_indices;
     Slots slots;
 } EntityPool;
 

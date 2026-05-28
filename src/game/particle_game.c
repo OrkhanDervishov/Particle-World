@@ -27,7 +27,6 @@ int CreateParticleGame(ParticleGame** game){
     ArrangeChunks(cs);
     //******************************************/
     
-    // TODO: Solve problem
     //******************************************/
     // Initializing particle system
     InitParticles();
@@ -162,22 +161,22 @@ void delete_callback_pg(ParticleGame* game, int cb_index){
 //     }
 // }
 
-SDL_Texture* GetTexture(SDL_Renderer* renderer, SDL_Texture* bgt, char* path){
-    SDL_Surface* bgs = SDL_LoadBMP(BG_PATH);
-    SDL_Rect bgrect;
-    bgrect.x = 0;
-    bgrect.y = 0;
+// SDL_Texture* GetTexture(SDL_Renderer* renderer, SDL_Texture* bgt, char* path){
+//     // SDL_Surface* bgs = SDL_LoadBMP(BG_PATH);
+//     SDL_Rect bgrect;
+//     bgrect.x = 0;
+//     bgrect.y = 0;
 
-    // TODO: Give screen width and height
-    bgrect.w = 700;
-    bgrect.h = 700;
-    if(bgs == NULL) printf("background fail\n");
-    else {
-        bgt = SDL_CreateTextureFromSurface(renderer, bgs);
-        return bgt;
-    }
-    SDL_FreeSurface(bgs);
-}
+//     // TODO: Give screen width and height
+//     bgrect.w = 700;
+//     bgrect.h = 700;
+//     if(bgs == NULL) printf("background fail\n");
+//     else {
+//         bgt = SDL_CreateTextureFromSurface(renderer, bgs);
+//         return bgt;
+//     }
+//     SDL_FreeSurface(bgs);
+// }
 
 
 int BuildLabEnv(ParticleGame* game){

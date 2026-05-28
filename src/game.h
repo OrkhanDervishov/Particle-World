@@ -12,6 +12,7 @@
 #include "chunk_lighting.h"
 #include "image_manipulation.h"
 #include "entity.h"
+#include "custom_parser.h"
 
 int RunParticleGame(ParticleGame* game);
 

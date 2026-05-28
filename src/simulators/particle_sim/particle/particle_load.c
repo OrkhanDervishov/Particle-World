@@ -1,80 +1,46 @@
 #include "particle_load.h"
+#include "custom_parser.h"
 
+PartData default_data(){
+    PartData default_data = (PartData){
+        .name = "default particle",
+        .buttonColor = 0xFFFFFFFF,
+        .colorCount = 1,
+        .color[0].rgba = 0xFFFFFFFF,
+        .flags = 0x80000000,
+        .pflags = 0x00,
+        .heatTransfer = 0,
+        .density = 100,
+        .durability = 1000,
+        .func = NULL
+    };
 
-char *jsonFormat =  " { \"name\" : \" %127[^\"]\" , "
-                    "\"button_color\" : \" %16[^\"]\" , "
-                    "\"color_count\" : \" %d , "
-                    "\"color\" : \" %16[^\"]\" , "
-                    "\"flags\" : \" %16[^\"]\" , "
-                    "\"p_flags\" : \" %16[^\"]\" , "
-                    "\"heat_transfer\" : \" %d , "
-                    "\"density\" : %d , "
-                    "\"durability\" : %d } ";
-
-char* jsonFormatPart1 = " { \"name\" : \" %127[^\"]\" , "
-                        "\"button_color\" : \" %16[^\"]\" , "
-                        "\"color_count\" : \" %d , ";
-
-char* jsonFormatPart2 = "\"flags\" : \" %16[^\"]\" , "
-                        "\"p_flags\" : \" %16[^\"]\" , "
-                        "\"heat_transfer\" : \" %d , "
-                        "\"density\" : %d , "
-                        "\"durability\" : %d } ";
-
-char *xmlFormat =   " <particle> "
-                    " <name> %127[^<] </name> "
-                    " <button_color> %16[^<] </button_color> "
-                    " <color> %16[^<] </color> "
-                    " <flags> %16[^<] </flags> "
-                    " <p_flags> %16[^<] </p_flags> "
-                    " <heat_transfer> %d </heat_transfer> "
-                    " <density> %d </density> "
-                    " <durability> %d </durability>"
-                    " </particle> ";
+    return default_data;
+}
 
 
 PartData ReadParticleData(int typeIndex, const char* filename){
-    int len = strlen(filename);
-    char *format;
-    if(!strcmp(&filename[len-4], "json")) format = jsonFormat;
-    else if(!strcmp(&filename[len-3], "xml")) format = xmlFormat;
-    
-
-    PartData pd;
-    FILE *file = fopen(filename, "r");
-    
-    char flagsStr[16];
-    char pflagsStr[16];
-    char buttonColorStr[16];
-    char colorStr[32][16];
-    char funcNameStr[256];
-
-    fscanf(file, jsonFormatPart1,
-        pd.name, buttonColorStr, pd.colorCount
-    );
-
-    if(pd.colorCount >= MAX_COLOR_COUNT) pd.colorCount = MAX_COLOR_COUNT-1;
-    if(pd.colorCount <= 0) pd.colorCount = 1;
-
-    fscanf(file, " \"color\" : [ ");
-    for(int i = 0; i < pd.colorCount; i++){
-        fscanf(file, " %s , ", colorStr[i]);
-        pd.color[i].rgba = strtol(colorStr[i], NULL, 16);
+    const char* json_data = myjson_load_json(filename);
+    if(json_data == NULL){
+        printf("%s load failed\n", filename);
+        return default_data();
     }
-    fscanf(file, " ] , ");
+    JsonValue* root = myjson_read_value(json_data);
+    
+    PartData part_data;
+    part_data.name = myjson_get_value(root, "name");
+    part_data.buttonColor.rgba = (uint32_t)STR_HEX_TO_NUMBER(myjson_get_value(root, "button_color"));
+    part_data.colorCount = (int)myjson_get_value(root, "color_count");
+    // part_data.color = myjson_get_value(root, "name");
+    part_data.flags = (uint32_t)STR_HEX_TO_NUMBER(myjson_get_value(root, "flags"));
+    part_data.pflags = (uint8_t)STR_HEX_TO_NUMBER(myjson_get_value(root, "p_flags"));
+    part_data.heatTransfer = (int32_t)myjson_get_value(root, "heat_transfer");
+    part_data.density = (int)myjson_get_value(root, "density");
+    part_data.durability = (uint32_t)myjson_get_value(root, "durability");
 
-    fscanf(file, jsonFormatPart2,
-        flagsStr, pflagsStr, pd.heatTransfer, pd.density, pd.durability, funcNameStr
-    );
-
-    pd.flags = strtol(flagsStr, NULL, 16);
-    pd.pflags = strtol(pflagsStr, NULL, 16);
-    pd.buttonColor.rgba = strtol(buttonColorStr, NULL, 16);
-
-    pd.func = GetFunc(funcNameStr);
-
-    fclose(file);
-    return pd;
+    myjson_free_value(root);
+    free(json_data);
+    return part_data;
 }
 
 

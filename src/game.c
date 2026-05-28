@@ -430,14 +430,14 @@ void draw_entity(ParticleGame* game, entity_id_t id){
 }
 
 void draw_entities(ParticleGame* game){
-    for(entity_id_t i = 0; i < game->ep.entities.count; i++){
+    for(entity_id_t i = 0; i < game->ep.items.count; i++){
         if(!ENTITY_IS_DELETED(game->ep, i)) continue;
         draw_entity(game, i);
     }
 }
 
 void delete_all_entities(ParticleGame* game){
-    for(entity_id_t i = 0; i < game->ep.entities.count; i++){
+    for(entity_id_t i = 0; i < game->ep.items.count; i++){
         if(!ENTITY_IS_DELETED(game->ep, i)) continue;
         entity_delete(&game->ep, i);
     }    
@@ -449,6 +449,15 @@ void clear_game_window(ParticleGame* game){
 
 int RunEntityGame(ParticleGame* game){
     
+    char* config_text = myconfig_load_config("./src/confs/game_startup_config.config");
+    ConfigPairs pairs = myconfig_read_all_pairs(&config_text);
+    printf("%s = %s\n", "window_title", myconfig_get_value(pairs, "window_title")->string_value);
+    myconfig_free_pairs(pairs);
+
+    return 0;
+
+
+
     Entity bomb;
     Image bomb_image;
     bomb_image.buffer = NULL;

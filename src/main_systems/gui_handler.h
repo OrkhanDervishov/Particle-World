@@ -2,6 +2,7 @@
 #define GUI_HANDLER_H
 
 #include "gui.h"
+#include "timing.h"
 
 void init_gui_handler();
 

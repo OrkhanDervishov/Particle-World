@@ -9,11 +9,14 @@
 #include <time.h>
 #include <math.h>
 #include <assert.h>
-// #include <unistd.h>
-// #include <pthread.h>
 
 #define INF 0x3F3F3F3F
 #define GENERIC_FUNC_POINTER void (*)()
+
+#define byte char
+#define bool uint8_t
+#define TRUE 1
+#define FALSE 0
 
 typedef enum{
     UP = 0,
@@ -82,6 +85,12 @@ typedef struct{
     int radius;
 } Circle;
 
+typedef struct{
+    bool* items;
+    size_t count;
+    size_t capacity;
+} Slots;
+
 typedef enum{
     WHITE,
     BLACK,
@@ -115,11 +124,6 @@ typedef enum{
 #define MBLUE 0, 0, 255, 255
 #define MYELLOW 255, 255, 0, 255
 #define MGOOD_GRAY 58, 58, 58, 255
-
-#define byte char
-#define bool uint8_t
-#define TRUE 1
-#define FALSE 0
 
 #define CONSOLE(m) printf("%s", (m))
 #define CONSOLE_RECT(r) printf("x:%d y:%d w:%d h:%d\n", (r).x, (r).y, (r).w, (r).h)

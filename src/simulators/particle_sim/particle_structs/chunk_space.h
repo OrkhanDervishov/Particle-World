@@ -3,6 +3,7 @@
 
 #include "chunk.h"
 #include "region.h"
+#include "constants.h"
 
 #define DEFAULT_CS_WIDTH 2
 #define DEFAULT_CS_HEIGHT 1

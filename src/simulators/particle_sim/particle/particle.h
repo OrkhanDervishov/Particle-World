@@ -13,7 +13,6 @@
 
 // App
 #include "particle_data.h"
-#include "engine_lib.h"
 #include "cs_ops.h"
 
 // GUI macros

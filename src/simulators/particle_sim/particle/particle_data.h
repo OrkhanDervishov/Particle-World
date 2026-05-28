@@ -1,8 +1,8 @@
 #ifndef PARTICLE_DATA_H
 #define PARTICLE_DATA_H
 
-#include "engine_lib.h"
-
+#include "core.h"
+#include "painter.h"
 
 #define STATE_DT        byte
 #define TYPE_DT         int32_t

@@ -1,10 +1,10 @@
 #ifndef CHUNK_RENDERER_H
 #define CHUNK_RENDERER_H
 
-#include "engine_lib.h"
 #include "chunk.h"
 #include "region.h"
 #include "chunk_space.h"
+#include "window.h"
 
 //System
 int StartRenderer(int chunk_w, int chunk_h, int partSize);

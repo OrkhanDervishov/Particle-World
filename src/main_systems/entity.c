@@ -9,24 +9,24 @@
 entity_id_t entity_add(EntityPool* pool, Entity item){
     if(pool->free_indices.count > 0){
         entity_id_t index = da_back(pool->free_indices);
-        pool->entities.items[index] = item;
+        pool->items.items[index] = item;
         pool->slots.items[index] = TRUE;
         pool->free_indices.count--;
         return index;
     }
-    da_append(pool->entities, item);
+    da_append(pool->items, item);
     da_append(pool->slots, TRUE);
-    return pool->entities.count-1;
+    return pool->items.count-1;
 }
 
 void entity_delete(EntityPool* pool, entity_id_t index){
-    if(index >= pool->entities.count || pool->slots.items[index] == FALSE) return;
+    if(index >= pool->items.count || pool->slots.items[index] == FALSE) return;
     pool->slots.items[index] = FALSE;
     da_append(pool->free_indices, index);
 }
 
 void entity_pool_print_stats(EntityPool* pool){
-    printf("Entity count: %zu\n", pool->entities.count - pool->free_indices.count);
+    printf("Entity count: %zu\n", pool->items.count - pool->free_indices.count);
 }   
 
 /************************************************************/

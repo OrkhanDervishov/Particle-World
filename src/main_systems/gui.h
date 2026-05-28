@@ -1,8 +1,9 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include "engine_lib.h"
-// #include "particle_game.h"
+
+#include "core.h"
+#include "painter.h"
 
 
 

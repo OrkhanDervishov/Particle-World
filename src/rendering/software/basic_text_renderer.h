@@ -5,8 +5,9 @@
     Basic font renderer renders only basic fonts
 */
 
-#include "engine_lib.h"
 #include "basic_fonts.h"
+#include "window.h"
+
 
 #define INFO_TEXT_COLOR 0xFFBA9800
 #define WARNING_TEXT_COLOR 0xFF00BEFE

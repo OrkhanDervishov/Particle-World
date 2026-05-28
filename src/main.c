@@ -1,38 +1,28 @@
 #include <stdio.h>
-#include "tests.h"
-// #include "engine_lib.h"
-// #include "particle_data.h"
-// #include "partsim/simulator.h"
-// #include "partsim/particle.h"
-// #include "game_gui.h"
-// #include "particle_game.h"
-// #include "rbsim/rigid.h"
-// #include "chessgame/chess.h"
+
+#include "timing.h"
+#include "particle_load.h"
+#include "chunk.h"
+#include "region.h"
+#include "chunk_space.h"
+// #include "world.h"
+#include "game/particle_game.h"
+#include "game.h"
+#include "chunk_renderer_sw.h"
+#include "dirtyrect.h"
+#include "particle_data.h"
+#include "simulator.h"
 
 #define TESTS
-// #define PART_TEST
-// #define RIGID_TEST
-// #define CHESS_TEST
 
-
-int RigidTest(); 
-int Chess();
 
 int main(int argc, char* argv[]){
 
-#ifdef RIGID_TEST
-    RigidTest();
-#endif
-#ifdef CHESS_TEST
-    if(Chess()) printf("chess failed\n");
-#endif
-#ifdef PART_TEST
-    RunParticleGame();
-#endif
-#ifdef TESTS
-    RunTests();
-#endif
-
+    ParticleGame* game;
+    if(CreateParticleGame(&game)) printf("failed\n");
+    BuildLabEnv(game);
+    RunParticleGame(game);
+    DeleteParticleGame(&game);
     return 0;
 }
 
