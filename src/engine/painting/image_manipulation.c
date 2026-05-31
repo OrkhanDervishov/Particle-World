@@ -27,7 +27,5 @@ Image minimize_resolution(Image image, int scale_x, int scale_y){
             .a = a_sum/divider
         };
     }
-    
-    printf("works\n");
     return result;
 }

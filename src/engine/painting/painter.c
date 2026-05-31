@@ -373,6 +373,13 @@ void draw_image_on_fimage_scaled(FormatImage dest, Image src, int x, int y, int 
 // Main fucntions
 //##################################################################
 
+void change_color(Image img, Color dest, Color src){
+    int size = img.width * img.height;
+    for(int i = 0; i < size; i++){
+        if(img.buffer[i].rgba == dest.rgba) img.buffer[i] = src;
+    }
+}
+
 void fill_image(Image img, Color color){
     for(int i = 0; i < img.height; i++)
     for(int j = 0; j < img.width; j++){

@@ -55,10 +55,15 @@ int CreateParticleGame(ParticleGame** game){
     //******************************************/
 
     //******************************************/
-    // Initializing gui system
+    // Initializing entity system
     POOL_INIT((*game)->ep);
     //******************************************/
-
+    
+    //******************************************/
+    // Initializing text rendering system
+    InitBasicTextRenderer();
+    //******************************************/
+    
     
     //******************************************/
     // Initializing gui system

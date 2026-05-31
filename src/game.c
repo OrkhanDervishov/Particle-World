@@ -102,10 +102,11 @@ void select_source(ParticleGame* game){
 
 
 int RunEntityGame(ParticleGame* game);
+int RunSpellGame(ParticleGame* game);
 
 int RunParticleGame(ParticleGame* game){
     
-    RunEntityGame(game);
+    RunSpellGame(game);
     return 0;
     Window* win = game->win;
     ChunkSpace* cs = &(game->cs);
@@ -449,7 +450,7 @@ void clear_game_window(ParticleGame* game){
 
 int RunEntityGame(ParticleGame* game){
     
-    char* config_text = myconfig_load_config("./src/confs/game_startup_config.config");
+    const char* config_text = myconfig_load_config("./src/confs/game_startup_config.config");
     ConfigPairs pairs = myconfig_read_all_pairs(&config_text);
     printf("%s = %s\n", "window_title", myconfig_get_value(pairs, "window_title")->string_value);
     myconfig_free_pairs(pairs);
@@ -513,8 +514,6 @@ int RunEntityGame(ParticleGame* game){
 
     return 0;
 }
-
-
 
 const char* guideChangeType =       "Change particle type - V";
 const char* guideCreate =           "Create particles - Mouse left";

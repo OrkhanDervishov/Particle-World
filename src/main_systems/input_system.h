@@ -116,8 +116,8 @@ typedef struct{
     };
 } MouseInput;
 
-#define MAX_BUTTONS 256
-#define MAX_BINDINGS 256
+#define MAX_BUTTONS 1024
+#define MAX_BINDINGS 4096
 #define MAX_SDL_SCANCODE_TO_KEY_MAP 512
 typedef struct{
     ButtonState     buttons[MAX_BUTTONS];   // KeyCodes are indices
