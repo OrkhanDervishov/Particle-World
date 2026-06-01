@@ -1,15 +1,13 @@
 #include "particle_game.h"
-#include "particle_generation.h"
 #include "basic_text_renderer.h"
 #include "gui_renderer_sw.h"
 #include "gui_handler.h"
 #include "input_system.h"
-#include "mouse.h"
 #include "renderer_sw.h"
-#include "chunk_lighting.h"
 #include "image_manipulation.h"
 #include "entity.h"
 #include "custom_parser.h"
+#include "game.h"
 
 
 typedef enum{
@@ -56,6 +54,7 @@ typedef struct{
     float convergence;
     float force_mag;
     float density;
+    float spread;
     bool is_active;
 } Spell;
 
@@ -67,6 +66,7 @@ typedef struct{
 } MagicParticles;
 
 typedef struct{
+    MagicType type;
     vec3f pos;
     MagicParticles parts;
     float power;
@@ -82,6 +82,85 @@ Image column_sign_image;
 Image levitation_sign_image;
 Image convergence_sign_image;
 
+
+#define add_type(elem_type, arr)\
+do{\
+    SpellElement elem = {\
+        (vec3f){\
+            .x = game->is.mouse.x -40,\
+            .y = game->is.mouse.y -40\
+        },\
+        .type = (elem_type)\
+    };\
+    da_append(arr, elem);\
+}while(0)
+
+
+// Utils
+float randf(float min, float max){
+    return min + (max-min) * ((float)rand() / (float)RAND_MAX);
+}
+
+vec3f vector_inv(vec3f v){
+    return (vec3f){
+        -v.x,
+        -v.y,
+        -v.z
+    };
+}
+
+vec3f vector_sum(vec3f a, vec3f b){
+    return (vec3f){
+        a.x + b.x,
+        a.y + b.y,
+        a.z + b.z
+    };
+}
+
+vec3f vector_sub(vec3f a, vec3f b){
+    return (vec3f){
+        a.x - b.x,
+        a.y - b.y,
+        a.z - b.z
+    };
+}
+
+vec3f vector_scale(vec3f v, float scale){
+    return (vec3f){
+        v.x * scale,
+        v.y * scale,
+        v.z * scale
+    };
+}
+
+float vector_dot(vec3f a, vec3f b){
+    return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
+float distance3f(vec3f v){
+    return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+}
+
+float get_angle(vec3f a, vec3f b){
+    float a_dist = distance3f(a);
+    float b_dist = distance3f(b);
+    float dot = vector_dot(a, b);
+    float angle = cosf(dot/(a_dist*b_dist));
+    return angle;
+}
+
+
+vec3f vector_normalize(vec3f v){
+    float len = distance3f(v);
+    return (vec3f){
+        v.x / len,
+        v.y / len,
+        v.z / len
+    };
+}
+
+
+// Drawing
 void draw_element(ParticleGame* game, SpellElement elem){
     switch(elem.type){
         case FIRE_SIGIL:
@@ -114,147 +193,6 @@ void draw_element(ParticleGame* game, SpellElement elem){
 void draw_all_elements(ParticleGame* game, SpellElements elems){
     for(size_t i = 0; i < elems.count; i++){
         draw_element(game, elems.items[i]);
-    }
-}
-
-vec3f vector_sum(vec3f a, vec3f b){
-    return (vec3f){
-        a.x + b.x,
-        a.y + b.y,
-        a.z + b.z
-    };
-}
-
-vec3f vector_sub(vec3f a, vec3f b){
-    return (vec3f){
-        a.x - b.x,
-        a.y - b.y,
-        a.z - b.z
-    };
-}
-
-vec3f vector_scale(vec3f v, float scale){
-    return (vec3f){
-        v.x * scale,
-        v.y * scale,
-        v.z * scale
-    };
-}
-
-float distance3f(vec3f v){
-    return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-}
-
-
-vec3f vector_normalize(vec3f v){
-    float len = distance3f(v);
-    return (vec3f){
-        v.x / len,
-        v.y / len,
-        v.z / len
-    };
-}
-
-
-Spell get_result_spell(SpellElements elems, MagicRing ring){
-    Spell res = {0};
-    res.is_active = FALSE;
-    res.ring = ring;
-    res.position = ring.center;
-    res.magic = UNKNOWN_MAGIC;
-
-    for(size_t i = 0; i < elems.count; i++){
-        SpellElement elem = elems.items[i];
-        if(distance3f(vector_sub(ring.center, elem.pos)) >= ring.radius) continue;
-        
-        if(elem.type == FIRE_SIGIL)         res.magic = FIRE_MAGIC;
-        else if(elem.type == WATER_SIGIL)   res.magic = WATER_MAGIC;
-        else if(elem.type == WIND_SIGIL)    res.magic = WIND_MAGIC;
-        else if(elem.type == EARTH_SIGIL)   res.magic = EARTH_MAGIC;
-        else if(elem.type == LIGHT_SIGIL)   res.magic = LIGHT_MAGIC;
-
-        else if(elem.type == COLUMN_SIGN){
-            vec3f force_vector = vector_sum(vector_scale(res.direction, res.force_mag), vector_scale(vector_normalize(vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})), 50.0f));
-            res.force_mag = 100.0f + distance3f(force_vector);
-            res.direction = vector_normalize(force_vector);
-        }
-        else if(elem.type == LEVITATION_SIGN){
-            vec3f levitation_vector = vector_scale(vector_normalize(vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})), 50.0f);
-            res.position = vector_sum(res.position, levitation_vector);
-        }
-        else if(elem.type == CONVERGENCE_SIGN){
-            res.density += 5.0f;
-            res.convergence += 1.0f;
-        }
-    }
-
-    return res;
-}
-
-void render_spell_params(ParticleGame* game, Spell spell, Color color, int x, int y){
-    char text[256];
-    sprintf(text, "Spell:\ntype:%s\ndirection:[ x:%.2f y:%.2f z:%.2f ]\nposition:[ x:%.2f y:%.2f z:%.2f ]\nforce_mag:%.2f\ndensity:%.2f\nconvergence:%.2f", 
-        spell.magic == 5 ? "LIGHT" : spell.magic == 4 ? "EARTH" : spell.magic == 3 ? "WIND" : spell.magic == 2 ? "WATER" : spell.magic == 1 ? "FIRE" : "UNKNOWN", 
-        spell.direction.x, spell.direction.y, spell.direction.z, 
-        spell.position.x, spell.position.y, spell.position.z,
-        spell.force_mag, spell.density, spell.convergence);
-    BasicTextRender(game->win, text, x, y, 2, color);
-}
-
-void render_mouse_pos(ParticleGame* game, Color color, int x, int y){
-    char text[64];
-    sprintf(text, "mouse: x:%.2f y:%.2f", game->is.mouse.x, game->is.mouse.y);
-    BasicTextRender(game->win, text, x, y, 2, color);
-}
-
-float randf(float min, float max){
-    return min + (max-min) * ((float)rand() / (float)RAND_MAX);
-}
-
-#define MAGIC_GEN_OFFSET 40.0f
-#define MAGIC_GEN_COUNT 200
-Magic spell_active(Spell spell){
-
-    Magic magic = {0};
-    magic.pos = spell.position;
-    // magic.parts = (MagicParticles){0};
-    for(int i = 0; i < MAGIC_GEN_COUNT; i++){
-        vec3f part = (vec3f){
-            (randf(spell.position.x - MAGIC_GEN_OFFSET, spell.position.x + MAGIC_GEN_OFFSET)),
-            (randf(spell.position.y - MAGIC_GEN_OFFSET, spell.position.y + MAGIC_GEN_OFFSET)),
-            0.0f
-        };
-        da_append(magic.parts, part);
-    }
-
-    return magic;
-}
-
-vec3f random_move(vec3f pos, float scale){
-    return (vec3f){
-        pos.x += randf(-1.0f*scale, 1.0f*scale),
-        pos.y += randf(-1.0f*scale, 1.0f*scale),
-        pos.z += randf(-1.0f*scale, 1.0f*scale)
-    };
-}
-
-vec3f converge_to_center(vec3f v, vec3f c, float convergence, float scale){
-    vec3f diff = vector_sub(c, v);
-    float dist = distance3f(diff);
-    float final_scale = scale * dist * convergence / 1000.0f;
-    vec3f move = vector_scale(diff, final_scale);
-    return vector_sum(v, move);
-}
-
-void magic_simulate(Spell spell, Magic magic){
-    if(!spell.is_active) return;
-
-    spell.density = spell.density == 0 ? 1.0f : spell.density;
-    vec3f* part;
-    da_foreach(part, magic.parts){
-        *part = vector_sum(*part, vector_scale(vector_scale(spell.direction, spell.force_mag), get_global_delta()));
-        *part = random_move(*part, 20.0f/spell.density);
-        *part = converge_to_center(*part, magic.pos, spell.convergence, 0.01f);
     }
 }
 
@@ -291,17 +229,256 @@ void magic_draw(ParticleGame* game, Spell spell, Magic magic){
     }
 }
 
-#define add_type(elem_type, arr)\
-do{\
-    SpellElement elem = {\
-        (vec3f){\
-            .x = game->is.mouse.x -40,\
-            .y = game->is.mouse.y -40\
-        },\
-        .type = (elem_type)\
-    };\
-    da_append(arr, elem);\
-}while(0)
+// Text rendering
+void render_spell_params(ParticleGame* game, Spell spell, Color color, int x, int y){
+    char text[256];
+    sprintf(text, "Spell:\ntype:%s\ndirection:[ x:%.2f y:%.2f z:%.2f ]\nposition:[ x:%.2f y:%.2f z:%.2f ]\nforce_mag:%.2f\ndensity:%.2f\nconvergence:%.2f", 
+        spell.magic == 5 ? "LIGHT" : spell.magic == 4 ? "EARTH" : spell.magic == 3 ? "WIND" : spell.magic == 2 ? "WATER" : spell.magic == 1 ? "FIRE" : "UNKNOWN", 
+        spell.direction.x, spell.direction.y, spell.direction.z, 
+        spell.position.x, spell.position.y, spell.position.z,
+        spell.force_mag, spell.density, spell.convergence);
+    BasicTextRender(game->win, text, x, y, 2, color);
+}
+
+void render_magic_params(ParticleGame* game, Magic magic, Color color, int x, int y){
+    char text[256];
+    sprintf(text, "Magic:\ntype:%s\nposition:[ x:%.2f y:%.2f z:%.2f ]\npower:%.2f\nduration:%.2f", 
+        magic.type == 5 ? "LIGHT" : magic.type == 4 ? "EARTH" : magic.type == 3 ? "WIND" : magic.type == 2 ? "WATER" : magic.type == 1 ? "FIRE" : "UNKNOWN", 
+        magic.pos.x, magic.pos.y, magic.pos.z,
+        magic.power, magic.duration);
+    BasicTextRender(game->win, text, x, y, 2, color);
+}
+
+void render_mouse_pos(ParticleGame* game, Color color, int x, int y){
+    char text[64];
+    sprintf(text, "mouse: x:%.2f y:%.2f", game->is.mouse.x, game->is.mouse.y);
+    BasicTextRender(game->win, text, x, y, 2, color);
+}
+
+void render_parameter(ParticleGame* game, const char* param_name, float value, Color color, int x, int y){
+    char text[64];
+    sprintf(text, "%s: %.4f", param_name, value);
+    BasicTextRender(game->win, text, x, y, 2, color);
+}
+
+void render_vector3(ParticleGame* game, const char* param_name, vec3f value, Color color, int x, int y){
+    char text[64];
+    sprintf(text, "%s: [ x:%.2f y:%.2f z:%.2f ]", param_name, value);
+    BasicTextRender(game->win, text, x, y, 2, color);
+}
+
+
+// Mechanics
+Spell get_result_spell(SpellElements elems, MagicRing ring){
+    Spell res = {0};
+    res.is_active = FALSE;
+    res.ring = ring;
+    res.position = ring.center;
+    res.magic = UNKNOWN_MAGIC;
+    res.spread = 1.0f;
+
+    for(size_t i = 0; i < elems.count; i++){
+        SpellElement elem = elems.items[i];
+        if(distance3f(vector_sub(ring.center, elem.pos)) >= ring.radius) continue;
+        
+        switch(elem.type){
+            case FIRE_SIGIL:
+                {
+                    res.magic = FIRE_MAGIC;
+                } break;
+            case WATER_SIGIL:
+                {
+                    res.magic = WATER_MAGIC;
+                } break;
+            case WIND_SIGIL:
+                {
+                    res.magic = WIND_MAGIC;
+                } break;
+            case EARTH_SIGIL:
+                {
+                    res.magic = EARTH_MAGIC;
+                } break;
+            case LIGHT_SIGIL:
+                {
+                    res.magic = LIGHT_MAGIC;
+                } break;
+
+            case COLUMN_SIGN:
+                {
+                    vec3f current_force_vector = vector_scale(res.direction, res.force_mag);
+                    // column scalar is defined by the length of column sign
+                    vec3f new_force_vector = vector_scale(vector_normalize(vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})), 50.0f);
+                    vec3f force_vector = vector_sum(current_force_vector, new_force_vector);
+                    res.force_mag = distance3f(force_vector);
+                    res.direction = vector_normalize(force_vector);
+                } break;
+            case LEVITATION_SIGN:
+                {
+                    // levitation scalar is defined by the length of levitation sign
+                    vec3f levitation_vector = vector_scale(vector_normalize(vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})), 50.0f);
+                    res.position = vector_sum(res.position, levitation_vector);
+                } break;
+            case CONVERGENCE_SIGN:
+                {
+                    res.density += 20.0f;
+                    res.convergence += 10.0f;
+                } break;
+        }
+    }
+
+    float angle_sum = 0;
+    int column_count = 0;
+    for(size_t i = 0; i < elems.count; i++){
+        SpellElement elem = elems.items[i];
+        if(elem.type == COLUMN_SIGN){
+            angle_sum += get_angle(res.direction, vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f}));
+            // printf("angle: %f\n", get_angle(res.direction, vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})));
+            column_count++;
+        }
+    }
+    if(column_count != 0) res.spread = angle_sum/(float)column_count;
+
+    return res;
+}
+
+
+#define MAGIC_GEN_OFFSET 80.0f
+#define MAGIC_GEN_COUNT 500
+Magic create_magic(Spell spell){
+
+    Magic magic = {0};
+    magic.type = spell.magic;
+    magic.pos = spell.position;
+    magic.duration = 200.0f;
+    magic.power = 100.0f;
+    // magic.parts = (MagicParticles){0};
+    for(int i = 0; i < MAGIC_GEN_COUNT; i++){
+        vec3f part = (vec3f){
+            (randf(spell.position.x - MAGIC_GEN_OFFSET, spell.position.x + MAGIC_GEN_OFFSET)),
+            (randf(spell.position.y - MAGIC_GEN_OFFSET, spell.position.y + MAGIC_GEN_OFFSET)),
+            0.0f
+        };
+        da_append(magic.parts, part);
+    }
+
+    return magic;
+}
+
+vec3f random_move(vec3f pos, float scale){
+    return (vec3f){
+        pos.x += randf(-1.0f*scale, 1.0f*scale),
+        pos.y += randf(-1.0f*scale, 1.0f*scale),
+        pos.z += randf(-1.0f*scale, 1.0f*scale)
+    };
+}
+
+vec3f converge_to_center(vec3f v, vec3f c, float convergence, float scale){
+    vec3f diff = vector_sub(c, v);
+    float dist = distance3f(diff);
+    float final_scale = scale * dist * convergence / 1000.0f;
+    vec3f move = vector_scale(diff, final_scale);
+    return vector_sum(v, move);
+}
+
+// float convergence_restriction_scale(vec3f v, vec3f c, float convergence, float scale){
+//     vec3f diff = vector_sub(c, v);
+//     float dist = distance3f(diff);
+//     return 1.0f/(dist*dist*convergence/100000.0f);
+// }
+
+
+// float convergence_scale(
+//     vec3f particle,
+//     vec3f center,
+//     float radius
+// ){
+//     float dist = distance3f(vector_sub(particle, center));
+
+//     float t = dist / radius;
+
+//     if(t > 1.0f)
+//         t = 1.0f;
+
+//     return t*t*(3.0f - 2.0f*t);
+// }
+
+// float convergence_scale(
+//     vec3f particle,
+//     vec3f center,
+//     float convergence
+// ){
+//     float dist = distance3f(vector_sub(particle, center));
+
+//     return 1.0f - expf(-dist/convergence);
+// }
+
+// float convergence_scale(
+//     vec3f particle,
+//     vec3f center,
+//     float radius
+// ){
+//     float dist = distance3f(vector_sub(particle, center));
+
+//     float t = dist / radius;
+
+//     if(t > 1.0f)
+//         t = 1.0f;
+
+//     return sqrtf(t);
+// }
+
+vec3f spread_vector(vec3f part, vec3f direction, vec3f pos, float spread)
+{
+    vec3f diff = vector_normalize(vector_sub(part, pos));
+    if(vector_dot(diff, direction) < 0.0f) diff = vector_inv(diff);
+
+    float t = spread;
+    if(t > 1.0f) t = 1.0f;
+    if(t < 0.0f) t = 0.0f;
+
+    vec3f result =
+        vector_sum(
+            vector_scale(direction, 1.0f - t),
+            vector_scale(diff, t)
+        );
+
+    return vector_normalize(result);
+}
+
+
+float convergence_scale(vec3f v, vec3f c, float convergence, float scale){
+    vec3f diff = vector_sub(c, v);
+    float dist = distance3f(diff);
+    return 10000.0f/(dist*dist*convergence);
+}
+
+void magic_simulate(ParticleGame* game, Spell spell, Magic magic){
+    if(!spell.is_active) return;
+
+    spell.density = spell.density == 0 ? 1.0f : spell.density;
+    // spell.convergence = spell.convergence == 0 ? 1.0f : spell.convergence;
+    float converge_scale = 1.0f;
+    float avg_speed = 0.0f;
+    float avg_cs = 0.0f;
+    vec3f* part;
+    da_foreach(part, magic.parts){
+        if(spell.convergence != 0.0f){
+            converge_scale = convergence_scale(*part, magic.pos, spell.convergence, 1.0f);
+        }
+        float speed = converge_scale*spell.force_mag;
+        avg_speed += speed;
+        avg_cs += converge_scale;
+
+        vec3f move_dir = spread_vector(*part, spell.direction, magic.pos, spell.spread);
+        // *part = vector_sum(*part, vector_scale(spell.direction, speed*get_global_delta()));
+        *part = vector_sum(*part, vector_scale(move_dir, speed*get_global_delta()));
+        // *part = converge_to_center(*part, magic.pos, spell.convergence, 0.0001f);
+        *part = random_move(*part, (converge_scale)*spell.spread*spell.density/20.0f);
+    }
+    render_parameter(game, "avg_speed", avg_speed/(float)magic.parts.count, (Color){.rgba=0xFFFFFFFF}, 10, 250);
+    render_parameter(game, "avg_convergence_scale", avg_cs/(float)magic.parts.count, (Color){.rgba=0xFFFFFFFF}, 10, 270);
+}
+
 
 void prepare_images();
 
@@ -320,7 +497,8 @@ int RunSpellGame(ParticleGame* game){
     sign_color = (Color){.rgba = 0xFFFFFFFF};
 
 
-    Color result_color = (Color){.rgba = 0xFFFF0000};
+    Color direct_line_color = (Color){.rgba = 0xFFFF0000};
+    Color Magic_pos_color = (Color){.rgba = 0xFFFF0000};
     Color text_color = (Color){.rgba = 0xFFFFFFFF};
 
     action_t act_exit = 0;
@@ -393,7 +571,7 @@ int RunSpellGame(ParticleGame* game){
             add_type(CONVERGENCE_SIGN, elems);
         }
         if(action_pressed(&game->is, act_spell_activate)){
-            magic = spell_active(spell);
+            magic = create_magic(spell);
             spell.is_active = TRUE;
         }
 
@@ -409,18 +587,29 @@ int RunSpellGame(ParticleGame* game){
             spell.is_active = TRUE;
         } else spell = get_result_spell(elems, ring);
         
+        // Magic direction line
         vec3f result_vector = vector_scale(spell.direction, spell.force_mag);
-        draw_line_f(game->win->context, result_color, 
+        draw_line_f(game->win->context, direct_line_color, 
             (int)ring.center.x, (int)ring.center.y, 
             (int)(ring.center.x + result_vector.x),
             (int)(ring.center.y + result_vector.y)
         );
+        // Magic source position
+        draw_filled_rect_f(game->win->context, 
+            (Rect){
+                (int)spell.position.x,
+                (int)spell.position.y,
+                4, 4
+            }, Magic_pos_color
+        );
+
         render_spell_params(game, spell, text_color, 10, 10);
+        render_magic_params(game, magic, text_color, 10, 150);
         render_mouse_pos(game, text_color, 10, game->win->h - 20);
     
         draw_all_elements(game, elems);
 
-        magic_simulate(spell, magic);
+        magic_simulate(game, spell, magic);
         magic_draw(game, spell, magic);
 
         SDL_UpdateWindowSurface(game->win->window);
