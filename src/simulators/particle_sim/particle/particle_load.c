@@ -20,26 +20,26 @@ PartData default_data(){
 
 
 PartData ReadParticleData(int typeIndex, const char* filename){
-    const char* json_data = myjson_load_json(filename);
-    if(json_data == NULL){
-        printf("%s load failed\n", filename);
-        return default_data();
-    }
-    JsonValue* root = myjson_read_value(json_data);
+    // const char* json_data = myjson_load_json(filename);
+    // if(json_data == NULL){
+    //     printf("%s load failed\n", filename);
+    //     return default_data();
+    // }
+    // JsonValue* root = myjson_read_value(json_data);
     
     PartData part_data;
-    part_data.name = myjson_get_value(root, "name");
-    part_data.buttonColor.rgba = (uint32_t)STR_HEX_TO_NUMBER(myjson_get_value(root, "button_color"));
-    part_data.colorCount = (int)myjson_get_value(root, "color_count");
-    // part_data.color = myjson_get_value(root, "name");
-    part_data.flags = (uint32_t)STR_HEX_TO_NUMBER(myjson_get_value(root, "flags"));
-    part_data.pflags = (uint8_t)STR_HEX_TO_NUMBER(myjson_get_value(root, "p_flags"));
-    part_data.heatTransfer = (int32_t)myjson_get_value(root, "heat_transfer");
-    part_data.density = (int)myjson_get_value(root, "density");
-    part_data.durability = (uint32_t)myjson_get_value(root, "durability");
+    // part_data.name = myjson_get_value(root, "name");
+    // part_data.buttonColor.rgba = (uint32_t)STR_HEX_TO_NUMBER(myjson_get_value(root, "button_color"));
+    // part_data.colorCount = (int)myjson_get_value(root, "color_count");
+    // // part_data.color = myjson_get_value(root, "name");
+    // part_data.flags = (uint32_t)STR_HEX_TO_NUMBER(myjson_get_value(root, "flags"));
+    // part_data.pflags = (uint8_t)STR_HEX_TO_NUMBER(myjson_get_value(root, "p_flags"));
+    // part_data.heatTransfer = (int32_t)myjson_get_value(root, "heat_transfer");
+    // part_data.density = (int)myjson_get_value(root, "density");
+    // part_data.durability = (uint32_t)myjson_get_value(root, "durability");
 
-    myjson_free_value(root);
-    free(json_data);
+    // myjson_free_value(root);
+    // free(json_data);
     return part_data;
 }
 

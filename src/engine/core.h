@@ -9,6 +9,7 @@
 #include <time.h>
 #include <math.h>
 #include <assert.h>
+#include "la.h"
 
 #define INF 0x3F3F3F3F
 #define GENERIC_FUNC_POINTER void (*)()
@@ -27,34 +28,8 @@ typedef enum{
     BACKWARD
 } Sides;
 
-typedef struct{
-    int x, y;
-} vec2;
-typedef vec2 vec2i;
 typedef vec2 Point;
 typedef vec2 Pos;
-
-typedef struct{
-    int x, y, z;
-} vec3;
-
-typedef struct{
-    int x, y, z, t;
-} vec4;
-
-typedef struct{
-    float x, y;
-} vec2f;
-typedef vec2 Posf;
-
-typedef struct{
-    float x, y, z;
-} vec3f;
-
-typedef struct{
-    float x, y, z, t;
-} vec4f;
-
 
 typedef struct
 {

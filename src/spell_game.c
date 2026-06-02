@@ -10,6 +10,7 @@
 #include "game.h"
 
 
+
 typedef enum{
     UNKNOWN_MAGIC = 0,
     FIRE_MAGIC,
@@ -27,7 +28,18 @@ typedef enum{
     LIGHT_SIGIL,
     COLUMN_SIGN,
     LEVITATION_SIGN,
-    CONVERGENCE_SIGN
+    CONVERGENCE_SIGN,
+    // Unimplemented
+    PULL_SIGN,
+    DISPERSION_SIGN,
+    REGION_SIGN,
+    COLLECTION_SIGN,
+    // Advanced
+    BILLOW_SIGN,
+    REPETITION_SIGN,
+    WEAVE_SIGN,
+    FLOAT_SIGN,
+    COOL_SIGN,
 } SpellElementType;
 
 typedef struct{
@@ -73,15 +85,73 @@ typedef struct{
     float duration;
 } Magic;
 
-Image fire_sigil_image;
-Image water_sigil_image;
-Image wind_sigil_image;
-Image earth_sigil_image;
-Image light_sigil_image;
-Image column_sign_image;
-Image levitation_sign_image;
-Image convergence_sign_image;
 
+// Loading element images
+/*****************************************************/
+typedef struct{
+    const char** items;
+    size_t count;
+    size_t capacity;
+} Paths;
+
+typedef struct{
+    Image* items;
+    size_t count;
+    size_t capacity;
+} ElemImages;
+
+Paths elem_image_paths;
+ElemImages elem_images;
+
+#define GET_ELEM_IMAGE(elem_index) elem_images.items[(elem_index)]
+
+void load_image_paths(){
+    elem_image_paths = (Paths){0};
+
+    // sigils
+    da_append(elem_image_paths, "resources/fire_sigil.png");
+    da_append(elem_image_paths, "resources/water_sigil.png");
+    da_append(elem_image_paths, "resources/wind_sigil.png");
+    da_append(elem_image_paths, "resources/earth_sigil.png");
+    da_append(elem_image_paths, "resources/light_sigil.png");
+
+    // signs
+    da_append(elem_image_paths, "resources/column_sign.png");
+    da_append(elem_image_paths, "resources/levitation_sign.png");
+    da_append(elem_image_paths, "resources/convergence_sign.png");
+    da_append(elem_image_paths, "resources/pull_sign.png");
+    da_append(elem_image_paths, "resources/dispersion_sign.png");
+    da_append(elem_image_paths, "resources/region_sign.png");
+    da_append(elem_image_paths, "resources/collection_sign.png");
+
+    da_append(elem_image_paths, "resources/billow_sign.png");
+    da_append(elem_image_paths, "resources/repetition_sign.png");
+    da_append(elem_image_paths, "resources/weave_sign.png");
+    da_append(elem_image_paths, "resources/float_sign.png");
+    da_append(elem_image_paths, "resources/cool_sign.png");
+
+    for(size_t i = 0; i < elem_image_paths.count; i++){
+        printf("%s\n", elem_image_paths.items[i]);
+    }
+}
+
+void prepare_images(){
+    Color white_color = (Color){.rgba = 0xFFFFFFFF};
+    Color alpha_color = (Color){.rgba = 0x00FFFFFF};
+    
+    elem_images = (ElemImages){0};
+    for(size_t i = 0; i < elem_image_paths.count; i++){
+        Image image = {0};
+        Image min_image;
+        load_png(&image, elem_image_paths.items[i]);
+        min_image = minimize_resolution(image, 10, 10);
+        change_color(min_image, white_color, alpha_color);
+        da_append(elem_images, min_image);
+        delete_image(&image);
+    }
+}
+
+/*****************************************************/
 
 #define add_type(elem_type, arr)\
 do{\
@@ -96,98 +166,35 @@ do{\
 }while(0)
 
 
-// Utils
-float randf(float min, float max){
-    return min + (max-min) * ((float)rand() / (float)RAND_MAX);
-}
-
-vec3f vector_inv(vec3f v){
-    return (vec3f){
-        -v.x,
-        -v.y,
-        -v.z
-    };
-}
-
-vec3f vector_sum(vec3f a, vec3f b){
-    return (vec3f){
-        a.x + b.x,
-        a.y + b.y,
-        a.z + b.z
-    };
-}
-
-vec3f vector_sub(vec3f a, vec3f b){
-    return (vec3f){
-        a.x - b.x,
-        a.y - b.y,
-        a.z - b.z
-    };
-}
-
-vec3f vector_scale(vec3f v, float scale){
-    return (vec3f){
-        v.x * scale,
-        v.y * scale,
-        v.z * scale
-    };
-}
-
-float vector_dot(vec3f a, vec3f b){
-    return a.x*b.x + a.y*b.y + a.z*b.z;
-}
-
-float distance3f(vec3f v){
-    return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
-}
-
-float get_angle(vec3f a, vec3f b){
-    float a_dist = distance3f(a);
-    float b_dist = distance3f(b);
-    float dot = vector_dot(a, b);
-    float angle = cosf(dot/(a_dist*b_dist));
-    return angle;
-}
-
-
-vec3f vector_normalize(vec3f v){
-    float len = distance3f(v);
-    return (vec3f){
-        v.x / len,
-        v.y / len,
-        v.z / len
-    };
-}
-
-
 // Drawing
 void draw_element(ParticleGame* game, SpellElement elem){
-    switch(elem.type){
-        case FIRE_SIGIL:
-            draw_image_on_fimage_scaled(game->win->context, fire_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-            break;
-        case WATER_SIGIL:
-            draw_image_on_fimage_scaled(game->win->context, water_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-            break;
-        case WIND_SIGIL:
-            draw_image_on_fimage_scaled(game->win->context, wind_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-            break;
-        case EARTH_SIGIL:
-            draw_image_on_fimage_scaled(game->win->context, earth_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-            break;
-        case LIGHT_SIGIL:
-            draw_image_on_fimage_scaled(game->win->context, light_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-            break;
-        case COLUMN_SIGN:
-            draw_image_on_fimage_scaled(game->win->context, column_sign_image, (int)elem.pos.x, (int)elem.pos.y, 2, 2);
-            break;
-        case LEVITATION_SIGN:
-            draw_image_on_fimage_scaled(game->win->context, levitation_sign_image, (int)elem.pos.x, (int)elem.pos.y, 2, 2);
-            break;
-        case CONVERGENCE_SIGN:
-            draw_image_on_fimage_scaled(game->win->context, convergence_sign_image, (int)elem.pos.x, (int)elem.pos.y, 2, 2);
-            break;
-    }
+    draw_image_on_fimage_scaled(game->win->context, GET_ELEM_IMAGE(elem.type), (int)elem.pos.x, (int)elem.pos.y, 4, 4);
+    // switch(elem.type){
+    //     case FIRE_SIGIL:
+    //         draw_image_on_fimage_scaled(game->win->context, GET_ELEM_IMAGE(FIRE_SIGIL), (int)elem.pos.x, (int)elem.pos.y, 4, 4);
+    //         break;
+    //     case WATER_SIGIL:
+    //         draw_image_on_fimage_scaled(game->win->context, water_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
+    //         break;
+    //     case WIND_SIGIL:
+    //         draw_image_on_fimage_scaled(game->win->context, wind_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
+    //         break;
+    //     case EARTH_SIGIL:
+    //         draw_image_on_fimage_scaled(game->win->context, earth_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
+    //         break;
+    //     case LIGHT_SIGIL:
+    //         draw_image_on_fimage_scaled(game->win->context, light_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
+    //         break;
+    //     case COLUMN_SIGN:
+    //         draw_image_on_fimage_scaled(game->win->context, column_sign_image, (int)elem.pos.x, (int)elem.pos.y, 2, 2);
+    //         break;
+    //     case LEVITATION_SIGN:
+    //         draw_image_on_fimage_scaled(game->win->context, levitation_sign_image, (int)elem.pos.x, (int)elem.pos.y, 2, 2);
+    //         break;
+    //     case CONVERGENCE_SIGN:
+    //         draw_image_on_fimage_scaled(game->win->context, convergence_sign_image, (int)elem.pos.x, (int)elem.pos.y, 2, 2);
+    //         break;
+    // }
 }
 
 void draw_all_elements(ParticleGame* game, SpellElements elems){
@@ -206,7 +213,7 @@ Color light_color;
 Color sign_color;
 void magic_draw(ParticleGame* game, Spell spell, Magic magic){
     Color magic_color = (Color){.rgba = 0xFF000000};
-    switch(spell.magic){
+    switch(magic.type){
         case FIRE_MAGIC:
             magic_color = fire_color;
             break;
@@ -232,11 +239,11 @@ void magic_draw(ParticleGame* game, Spell spell, Magic magic){
 // Text rendering
 void render_spell_params(ParticleGame* game, Spell spell, Color color, int x, int y){
     char text[256];
-    sprintf(text, "Spell:\ntype:%s\ndirection:[ x:%.2f y:%.2f z:%.2f ]\nposition:[ x:%.2f y:%.2f z:%.2f ]\nforce_mag:%.2f\ndensity:%.2f\nconvergence:%.2f", 
+    sprintf(text, "Spell:\ntype:%s\ndirection:[ x:%.2f y:%.2f z:%.2f ]\nposition:[ x:%.2f y:%.2f z:%.2f ]\nforce_mag:%.2f\ndensity:%.2f\nconvergence:%.2f\nspread:%.2f", 
         spell.magic == 5 ? "LIGHT" : spell.magic == 4 ? "EARTH" : spell.magic == 3 ? "WIND" : spell.magic == 2 ? "WATER" : spell.magic == 1 ? "FIRE" : "UNKNOWN", 
         spell.direction.x, spell.direction.y, spell.direction.z, 
         spell.position.x, spell.position.y, spell.position.z,
-        spell.force_mag, spell.density, spell.convergence);
+        spell.force_mag, spell.density, spell.convergence, spell.spread);
     BasicTextRender(game->win, text, x, y, 2, color);
 }
 
@@ -331,9 +338,11 @@ Spell get_result_spell(SpellElements elems, MagicRing ring){
     for(size_t i = 0; i < elems.count; i++){
         SpellElement elem = elems.items[i];
         if(elem.type == COLUMN_SIGN){
-            angle_sum += get_angle(res.direction, vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f}));
-            // printf("angle: %f\n", get_angle(res.direction, vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})));
+            float angle = get_angle(res.direction, vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f}));
+            // if(angle < 0.0f) angle = -angle;
+            angle_sum += angle;
             column_count++;
+            // printf("angle: %f\n", get_angle(res.direction, vector_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})));
         }
     }
     if(column_count != 0) res.spread = angle_sum/(float)column_count;
@@ -380,57 +389,10 @@ vec3f converge_to_center(vec3f v, vec3f c, float convergence, float scale){
     return vector_sum(v, move);
 }
 
-// float convergence_restriction_scale(vec3f v, vec3f c, float convergence, float scale){
-//     vec3f diff = vector_sub(c, v);
-//     float dist = distance3f(diff);
-//     return 1.0f/(dist*dist*convergence/100000.0f);
-// }
-
-
-// float convergence_scale(
-//     vec3f particle,
-//     vec3f center,
-//     float radius
-// ){
-//     float dist = distance3f(vector_sub(particle, center));
-
-//     float t = dist / radius;
-
-//     if(t > 1.0f)
-//         t = 1.0f;
-
-//     return t*t*(3.0f - 2.0f*t);
-// }
-
-// float convergence_scale(
-//     vec3f particle,
-//     vec3f center,
-//     float convergence
-// ){
-//     float dist = distance3f(vector_sub(particle, center));
-
-//     return 1.0f - expf(-dist/convergence);
-// }
-
-// float convergence_scale(
-//     vec3f particle,
-//     vec3f center,
-//     float radius
-// ){
-//     float dist = distance3f(vector_sub(particle, center));
-
-//     float t = dist / radius;
-
-//     if(t > 1.0f)
-//         t = 1.0f;
-
-//     return sqrtf(t);
-// }
-
 vec3f spread_vector(vec3f part, vec3f direction, vec3f pos, float spread)
 {
     vec3f diff = vector_normalize(vector_sub(part, pos));
-    if(vector_dot(diff, direction) < 0.0f) diff = vector_inv(diff);
+    // if(vector_dot(diff, direction) < 0.0f) diff = vector_inv(diff);
 
     float t = spread;
     if(t > 1.0f) t = 1.0f;
@@ -456,7 +418,6 @@ void magic_simulate(ParticleGame* game, Spell spell, Magic magic){
     if(!spell.is_active) return;
 
     spell.density = spell.density == 0 ? 1.0f : spell.density;
-    // spell.convergence = spell.convergence == 0 ? 1.0f : spell.convergence;
     float converge_scale = 1.0f;
     float avg_speed = 0.0f;
     float avg_cs = 0.0f;
@@ -472,19 +433,18 @@ void magic_simulate(ParticleGame* game, Spell spell, Magic magic){
         vec3f move_dir = spread_vector(*part, spell.direction, magic.pos, spell.spread);
         // *part = vector_sum(*part, vector_scale(spell.direction, speed*get_global_delta()));
         *part = vector_sum(*part, vector_scale(move_dir, speed*get_global_delta()));
-        // *part = converge_to_center(*part, magic.pos, spell.convergence, 0.0001f);
         *part = random_move(*part, (converge_scale)*spell.spread*spell.density/20.0f);
+        // *part = converge_to_center(*part, magic.pos, spell.convergence, 0.0001f);
     }
     render_parameter(game, "avg_speed", avg_speed/(float)magic.parts.count, (Color){.rgba=0xFFFFFFFF}, 10, 250);
     render_parameter(game, "avg_convergence_scale", avg_cs/(float)magic.parts.count, (Color){.rgba=0xFFFFFFFF}, 10, 270);
 }
 
 
-void prepare_images();
-
 int RunSpellGame(ParticleGame* game){
     
     SpellElements elems = {0};
+    load_image_paths();
     prepare_images();
 
     
@@ -607,8 +567,10 @@ int RunSpellGame(ParticleGame* game){
         render_magic_params(game, magic, text_color, 10, 150);
         render_mouse_pos(game, text_color, 10, game->win->h - 20);
     
+        // printf("works\n");
         draw_all_elements(game, elems);
-
+        // printf("works1\n");
+        
         magic_simulate(game, spell, magic);
         magic_draw(game, spell, magic);
 
@@ -616,35 +578,4 @@ int RunSpellGame(ParticleGame* game){
     }
 
     return 0;
-}
-
-
-void prepare_images(){
-    Color white_color = (Color){.rgba = 0xFFFFFFFF};
-    Color alpha_color = (Color){.rgba = 0x00FFFFFF};
-
-    load_png(&fire_sigil_image, "resources/fire_sigil.png");
-    load_png(&water_sigil_image, "resources/water_sigil.png");
-    load_png(&wind_sigil_image, "resources/wind_sigil.png");
-    load_png(&earth_sigil_image, "resources/earth_sigil.png");
-    load_png(&light_sigil_image, "resources/light_sigil.png");
-    load_png(&column_sign_image, "resources/column_sign.png");
-    load_png(&levitation_sign_image, "resources/levitation_sign.png");
-    load_png(&convergence_sign_image, "resources/convergence_sign.png");
-    fire_sigil_image = minimize_resolution(fire_sigil_image, 10, 10);    
-    water_sigil_image = minimize_resolution(water_sigil_image, 10, 10);    
-    wind_sigil_image = minimize_resolution(wind_sigil_image, 10, 10);    
-    earth_sigil_image = minimize_resolution(earth_sigil_image, 10, 10);    
-    light_sigil_image = minimize_resolution(light_sigil_image, 10, 10);    
-    column_sign_image = minimize_resolution(column_sign_image, 10, 10);    
-    levitation_sign_image = minimize_resolution(levitation_sign_image, 10, 10);    
-    convergence_sign_image = minimize_resolution(convergence_sign_image, 10, 10);    
-    change_color(fire_sigil_image, white_color, alpha_color);
-    change_color(water_sigil_image, white_color, alpha_color);
-    change_color(wind_sigil_image, white_color, alpha_color);
-    change_color(earth_sigil_image, white_color, alpha_color);
-    change_color(light_sigil_image, white_color, alpha_color);
-    change_color(column_sign_image, white_color, alpha_color);
-    change_color(levitation_sign_image, white_color, alpha_color);
-    change_color(convergence_sign_image, white_color, alpha_color);
 }

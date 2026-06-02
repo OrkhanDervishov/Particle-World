@@ -943,13 +943,14 @@ If you pass already created image it will be deleted.
 NOTE: This will be changed in the future
 */
 int load_png(Image* img, const char* path){
+    if(img->buffer != NULL){
+        // free(img->buffer);
+        delete_image(img);
+    }
 
     int w, h, comp;
     unsigned char* imagedata = stbi_load(path, &w, &h, &comp, STBI_rgb_alpha);
 
-    if(img->buffer != NULL){
-        free(img->buffer);
-    }
     img->width = w;
     img->height = h;
     img->buffer = (Color*)imagedata;
