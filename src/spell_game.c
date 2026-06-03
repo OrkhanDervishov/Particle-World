@@ -8,7 +8,7 @@
 #include "entity.h"
 #include "custom_parser.h"
 #include "game.h"
-
+#include "renderer_3d.h"
 
 
 typedef enum{
@@ -169,32 +169,6 @@ do{\
 // Drawing
 void draw_element(ParticleGame* game, SpellElement elem){
     draw_image_on_fimage_scaled(game->win->context, GET_ELEM_IMAGE(elem.type), (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-    // switch(elem.type){
-    //     case FIRE_SIGIL:
-    //         draw_image_on_fimage_scaled(game->win->context, GET_ELEM_IMAGE(FIRE_SIGIL), (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-    //         break;
-    //     case WATER_SIGIL:
-    //         draw_image_on_fimage_scaled(game->win->context, water_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-    //         break;
-    //     case WIND_SIGIL:
-    //         draw_image_on_fimage_scaled(game->win->context, wind_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-    //         break;
-    //     case EARTH_SIGIL:
-    //         draw_image_on_fimage_scaled(game->win->context, earth_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-    //         break;
-    //     case LIGHT_SIGIL:
-    //         draw_image_on_fimage_scaled(game->win->context, light_sigil_image, (int)elem.pos.x, (int)elem.pos.y, 4, 4);
-    //         break;
-    //     case COLUMN_SIGN:
-    //         draw_image_on_fimage_scaled(game->win->context, column_sign_image, (int)elem.pos.x, (int)elem.pos.y, 2, 2);
-    //         break;
-    //     case LEVITATION_SIGN:
-    //         draw_image_on_fimage_scaled(game->win->context, levitation_sign_image, (int)elem.pos.x, (int)elem.pos.y, 2, 2);
-    //         break;
-    //     case CONVERGENCE_SIGN:
-    //         draw_image_on_fimage_scaled(game->win->context, convergence_sign_image, (int)elem.pos.x, (int)elem.pos.y, 2, 2);
-    //         break;
-    // }
 }
 
 void draw_all_elements(ParticleGame* game, SpellElements elems){
@@ -484,10 +458,11 @@ int RunSpellGame(ParticleGame* game){
     add_binding(&game->is, BUTTON_F, act_create_convergence_sign);
     add_binding(&game->is, BUTTON_SPACE, act_spell_activate);
     
+    init_opengl(game->win);
+    get_gl_info();
 
     Spell spell;
     Magic magic = {0};
-    // MagicParticles magic_parts = {0};
     MagicRing ring = {0};
     bool ring_exists = FALSE;
     while(game->s_params.is_running){
@@ -571,10 +546,16 @@ int RunSpellGame(ParticleGame* game){
         draw_all_elements(game, elems);
         // printf("works1\n");
         
-        magic_simulate(game, spell, magic);
-        magic_draw(game, spell, magic);
+        
+        glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        SDL_UpdateWindowSurface(game->win->window);
+        
+        magic_simulate(game, spell, magic);
+        // magic_draw(game, spell, magic);
+        
+        SDL_GL_SwapWindow(game->win->window);
+        // SDL_UpdateWindowSurface(game->win->window);
     }
 
     return 0;

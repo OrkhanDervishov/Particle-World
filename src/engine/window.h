@@ -21,6 +21,7 @@ typedef struct{
     bool isrunning;
     FormatImage context;
     SDL_Window* window;
+    SDL_GLContext* gl_context;
     // SDL_Renderer* renderer;
 } Window;
 
