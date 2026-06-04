@@ -41,7 +41,6 @@ int CreateParticleGame(ParticleGame** game){
     //******************************************/
     // Initializing mouse
     int loaded = load_cursor_image(&(*game)->mouse, "./resources/standard_cursor.png");
-    printf("cursor loaded: %d\n", loaded ? FALSE : TRUE);
     //******************************************/
     
     //******************************************/

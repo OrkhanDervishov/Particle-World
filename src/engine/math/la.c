@@ -169,7 +169,7 @@ inline mat4f matrix_rotation_z(float radians)
     return r;
 }
 
-inline mat4f matrix_perspective(float fov_radians, float aspect, float z_near, float z_far)
+inline mat4f matrix_perspective(float fov_radians, float aspect, float near, float far)
 {
     float f = 1.0f / tanf(fov_radians * 0.5f);
 
@@ -177,24 +177,51 @@ inline mat4f matrix_perspective(float fov_radians, float aspect, float z_near, f
 
     r.m[0]  = f / aspect;
     r.m[5]  = f;
-    r.m[10] = (z_far + z_near) / (z_near - z_far);
+    r.m[10] = (far + near) / (near - far);
     r.m[11] = -1.0f;
-    r.m[14] = (2.0f * z_far * z_near) / (z_near - z_far);
+    r.m[14] = (2.0f * far * near) / (near - far);
 
     return r;
 }
 
-inline mat4f matrix_ortho(float left, float right, float bottom, float top, float z_near, float z_far)
+inline mat4f matrix_ortho(float left, float right, float bottom, float top, float near, float far)
 {
     mat4f r = matrix_identity();
 
     r.m[0]  = 2.0f / (right - left);
     r.m[5]  = 2.0f / (top - bottom);
-    r.m[10] = -2.0f / (z_far - z_near);
+    r.m[10] = -2.0f / (far - near);
 
     r.m[12] = -(right + left) / (right - left);
     r.m[13] = -(top + bottom) / (top - bottom);
-    r.m[14] = -(z_far + z_near) / (z_far - z_near);
+    r.m[14] = -(far + near) / (far - near);
 
     return r;
+}
+
+inline mat4f matrix_look_at(vec3f eye, vec3f center, vec3f up)
+{
+    vec3f f = vector_normalize(vector_sub(center, eye));
+    vec3f s = vector_normalize(vector_cross(f, up));
+    vec3f u = vector_cross(s, f);
+
+    mat4f result = matrix_identity();
+
+    result.m[0] = s.x;
+    result.m[1] = u.x;
+    result.m[2] = -f.x;
+
+    result.m[4] = s.y;
+    result.m[5] = u.y;
+    result.m[6] = -f.y;
+
+    result.m[8]  = s.z;
+    result.m[9]  = u.z;
+    result.m[10] = -f.z;
+
+    result.m[12] = -vector_dot(s, eye);
+    result.m[13] = -vector_dot(u, eye);
+    result.m[14] =  vector_dot(f, eye);
+
+    return result;
 }

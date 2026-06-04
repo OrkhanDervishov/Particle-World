@@ -1,0 +1,10 @@
+#version 410 core
+in vec3 pos;
+
+uniform mat4 view;
+uniform mat4 perspective;
+uniform mat4 model;
+
+void main(){
+	gl_Position = perspective * view * model * vec4(pos, 1.0f);
+}

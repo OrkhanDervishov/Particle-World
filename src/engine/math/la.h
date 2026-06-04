@@ -55,9 +55,9 @@ extern mat4f matrix_scale(float x, float y, float z);
 extern mat4f matrix_rotation_x(float radians);
 extern mat4f matrix_rotation_y(float radians);
 extern mat4f matrix_rotation_z(float radians);
-extern mat4f matrix_perspective(float fov_radians, float aspect, float z_near, float z_far);
-extern mat4f matrix_ortho(float left, float right, float bottom, float top, float z_near, float z_far);
-
+extern mat4f matrix_perspective(float fov_radians, float aspect, float near, float far);
+extern mat4f matrix_ortho(float left, float right, float bottom, float top, float near, float far);
+extern mat4f matrix_look_at(vec3f eye, vec3f center, vec3f up);
 
 
 #endif //LINEAR_H_

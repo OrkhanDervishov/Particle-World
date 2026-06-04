@@ -421,7 +421,29 @@ int RunSpellGame(ParticleGame* game){
     load_image_paths();
     prepare_images();
 
+    // Initializing 3d simulator
+    /***************************************/
+    init_opengl(game->win);
+    get_gl_info();
+    GL_Shader vertex_shader = load_gl_shader(GL_VERTEX_SHADER, "shaders/vertex_shader.vert");
+    GL_Shader fragment_shader = load_gl_shader(GL_FRAGMENT_SHADER, "shaders/fragment_shader.frag");
+    GL_Program program = create_gl_program(vertex_shader, fragment_shader);
+    glUseProgram(program.program);
+    Model model = create_model();
+    Camera3d camera = create_camera((vec3f){0.0f, 0.0f, 1.0f});
+    Object3d obj1 = create_object3d((vec3f){0.0f, 0.0f, -10.0f}, model);
+
+    // Add uniforms
+    program_add_uniform(&program, "view");
+    program_add_uniform(&program, "perspective");
+    program_add_uniform(&program, "model");
+
+
+    /***************************************/
     
+    
+    // Initializing 2d simulator
+    /***************************************/
     ring_color = (Color){.rgba = 0xFFFFFFFF};
     fire_color = (Color){.rgba = 0xFF0000FF};
     water_color = (Color){.rgba = 0xFFFF0000};
@@ -429,12 +451,11 @@ int RunSpellGame(ParticleGame* game){
     earth_color = (Color){.rgba = 0xFF008888};
     light_color = (Color){.rgba = 0xFF00FFFF};
     sign_color = (Color){.rgba = 0xFFFFFFFF};
-
-
+    
     Color direct_line_color = (Color){.rgba = 0xFFFF0000};
     Color Magic_pos_color = (Color){.rgba = 0xFFFF0000};
     Color text_color = (Color){.rgba = 0xFFFFFFFF};
-
+    
     action_t act_exit = 0;
     action_t act_create_ring = 1;
     action_t act_create_fire_sigil = 2;
@@ -446,6 +467,9 @@ int RunSpellGame(ParticleGame* game){
     action_t act_create_levitation_sign = 8;
     action_t act_create_convergence_sign = 9;
     action_t act_spell_activate = 10;
+    action_t act_magic_draw_mode_toggle = 11;
+    action_t act_camera_forward = 12;
+    action_t act_camera_back = 13;
     add_binding(&game->is, BUTTON_ESCAPE, act_exit);
     add_binding(&game->is, BUTTON_MOUSE_LEFT, act_create_ring);
     add_binding(&game->is, BUTTON_Q, act_create_fire_sigil);
@@ -457,9 +481,12 @@ int RunSpellGame(ParticleGame* game){
     add_binding(&game->is, BUTTON_D, act_create_levitation_sign);
     add_binding(&game->is, BUTTON_F, act_create_convergence_sign);
     add_binding(&game->is, BUTTON_SPACE, act_spell_activate);
+    add_binding(&game->is, BUTTON_TAB, act_magic_draw_mode_toggle);
+    add_binding(&game->is, BUTTON_ARROW_UP, act_camera_forward);
+    add_binding(&game->is, BUTTON_ARROW_DOWN, act_camera_back);
+    /***************************************/
     
-    init_opengl(game->win);
-    get_gl_info();
+    bool magic_draw_mode = FALSE;
 
     Spell spell;
     Magic magic = {0};
@@ -509,53 +536,71 @@ int RunSpellGame(ParticleGame* game){
             magic = create_magic(spell);
             spell.is_active = TRUE;
         }
-
-        clear_game_window(game);
-        if(ring_exists){
-            draw_circle_f(game->win->context, ring.center.x, ring.center.y, ring.radius, ring_color, 2);
-            put_pixel_f(game->win->context, ring.center.x, ring.center.y, ring_color);
+        if(action_pressed(&game->is, act_magic_draw_mode_toggle)){
+            magic_draw_mode = magic_draw_mode ? FALSE : TRUE;
         }
-        
-        
+        // Camera movement
+        if(action_down(&game->is, act_camera_forward)){
+            camera.pos.z -= 0.01f;
+        }
+        if(action_down(&game->is, act_camera_back)){
+            camera.pos.z += 0.01f;
+        }
+
         if(spell.is_active){
             spell = get_result_spell(elems, ring);
             spell.is_active = TRUE;
         } else spell = get_result_spell(elems, ring);
-        
-        // Magic direction line
-        vec3f result_vector = vector_scale(spell.direction, spell.force_mag);
-        draw_line_f(game->win->context, direct_line_color, 
-            (int)ring.center.x, (int)ring.center.y, 
-            (int)(ring.center.x + result_vector.x),
-            (int)(ring.center.y + result_vector.y)
-        );
-        // Magic source position
-        draw_filled_rect_f(game->win->context, 
-            (Rect){
-                (int)spell.position.x,
-                (int)spell.position.y,
-                4, 4
-            }, Magic_pos_color
-        );
 
-        render_spell_params(game, spell, text_color, 10, 10);
-        render_magic_params(game, magic, text_color, 10, 150);
-        render_mouse_pos(game, text_color, 10, game->win->h - 20);
-    
-        // printf("works\n");
-        draw_all_elements(game, elems);
-        // printf("works1\n");
-        
-        
-        glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        
         magic_simulate(game, spell, magic);
-        // magic_draw(game, spell, magic);
-        
-        SDL_GL_SwapWindow(game->win->window);
-        // SDL_UpdateWindowSurface(game->win->window);
+
+        // Hardware rendering
+        if(!magic_draw_mode){
+            prepare_draw(game->win, color_to_colorf(game->s_params.clear_color));
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glUseProgram(program.program);
+            
+            program_set_uniform_mat4f(&program, "model", obj1.model_matrix); 
+            program_set_uniform_mat4f(&program, "view", camera_view(camera));
+            program_set_uniform_mat4f(&program, "perspective", camera.perspective);
+            draw_model(model);
+            SDL_GL_SwapWindow(game->win->window);
+            // return 0;
+        }
+        else{
+            clear_game_window(game);
+            if(ring_exists){
+                draw_circle_f(game->win->context, ring.center.x, ring.center.y, ring.radius, ring_color, 2);
+                put_pixel_f(game->win->context, ring.center.x, ring.center.y, ring_color);
+            }
+            
+            
+            // Magic direction line
+            vec3f result_vector = vector_scale(spell.direction, spell.force_mag);
+            draw_line_f(game->win->context, direct_line_color, 
+                (int)ring.center.x, (int)ring.center.y, 
+                (int)(ring.center.x + result_vector.x),
+                (int)(ring.center.y + result_vector.y)
+            );
+            //Magic source position
+            draw_filled_rect_f(game->win->context, 
+                (Rect){
+                    (int)spell.position.x,
+                    (int)spell.position.y,
+                    4, 4
+                }, Magic_pos_color
+            );
+
+            render_spell_params(game, spell, text_color, 10, 10);
+            render_magic_params(game, magic, text_color, 10, 150);
+            render_mouse_pos(game, text_color, 10, game->win->h - 20);
+            
+            
+            //Software rendering
+            draw_all_elements(game, elems);
+            magic_draw(game, spell, magic);
+            SDL_UpdateWindowSurface(game->win->window);
+        }
     }
 
     return 0;
