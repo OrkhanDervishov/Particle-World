@@ -100,6 +100,7 @@ typedef struct{
     float x, y;
     float prev_x, prev_y;
     float dx, dy;
+    float xrel, yrel;
 
     float wheel_x, wheel_y;
 
@@ -116,11 +117,11 @@ typedef struct{
     };
 } MouseInput;
 
-#define MAX_BUTTONS 1024
+#define MAX_INPUT_BUTTONS 1024
 #define MAX_BINDINGS 4096
 #define MAX_SDL_SCANCODE_TO_KEY_MAP 512
 typedef struct{
-    ButtonState     buttons[MAX_BUTTONS];   // KeyCodes are indices
+    ButtonState     buttons[MAX_INPUT_BUTTONS];   // KeyCodes are indices
     KeyList         bindings[MAX_BINDINGS]; // Actions are indices
     KeyCode         scancode_keycode_map[MAX_SDL_SCANCODE_TO_KEY_MAP];
     

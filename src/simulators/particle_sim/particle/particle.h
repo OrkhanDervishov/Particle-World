@@ -16,7 +16,7 @@
 #include "cs_ops.h"
 
 // GUI macros
-#define MAX_BUTTONS 100
+// #define MAX_BUTTONS 100
 #define ELEMENT_BUTTON_SIZE 16
 #define ELEMENT_BUTTONS_MARGIN 4
 #define ELEMENT_BUTTON_MARGIN_H 16

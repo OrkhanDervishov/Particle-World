@@ -82,8 +82,8 @@ bool action_released(InputSystem* is, action_t action){
 
 void update_mouse(InputSystem* is){
     
-    is->mouse.dx = (is->mouse.prev_x - is->mouse.x) / get_global_delta();
-    is->mouse.dy = (is->mouse.prev_y - is->mouse.y) / get_global_delta();
+    is->mouse.dx = (is->mouse.prev_x - is->mouse.x);
+    is->mouse.dy = (is->mouse.prev_y - is->mouse.y);
     
     is->mouse.prev_x = is->mouse.x;
     is->mouse.prev_y = is->mouse.y;
@@ -92,7 +92,8 @@ void update_mouse(InputSystem* is){
     uint32_t state = SDL_GetMouseState(&x, &y);
     is->mouse.x = (float)x;
     is->mouse.y = (float)y;
-    
+    is->mouse.xrel = 0.0f;
+    is->mouse.yrel = 0.0f;
     
     if(state & SDL_BUTTON_LMASK){
         if(is->mouse.left.down == TRUE) is->mouse.left.pressed = FALSE;
@@ -151,7 +152,7 @@ void update_mouse(InputSystem* is){
 
 
 void reset_button_states(InputSystem* is){
-    for(int i = 0; i < MAX_BUTTONS; i++){
+    for(int i = 0; i < MAX_INPUT_BUTTONS; i++){
         is->buttons[i].pressed = FALSE;
         is->buttons[i].released = FALSE;
     }
@@ -180,6 +181,10 @@ void update_input_system(InputSystem* is){
             is->buttons[kc].released = TRUE;
             is->buttons[kc].down = FALSE;
         }
+        if(e.type == SDL_MOUSEMOTION){
+            is->mouse.xrel = e.motion.xrel;
+            is->mouse.yrel = e.motion.yrel;
+        }
     }
 
     // const uint8_t* keyboard = SDL_GetKeyboardState(NULL);
@@ -193,7 +198,7 @@ void update_input_system(InputSystem* is){
 
 void init_input_system(InputSystem* is){
     *is = (InputSystem){0};
-    // memset(is->buttons, 0, MAX_BUTTONS*sizeof(ButtonState));
+    // memset(is->buttons, 0, MAX_INPUT_BUTTONS*sizeof(ButtonState));
     // memset(is->bindings, 0, MAX_BINDINGS*sizeof(KeyCode));
 
     for(int i = 0; i < MAX_SDL_SCANCODE_TO_KEY_MAP + 1; i++){

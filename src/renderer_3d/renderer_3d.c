@@ -2,6 +2,14 @@
 #define HT_IMPLEMENTATION
 #include "ht.h"
 
+inline float rad_to_deg(float radian){
+    return 180/PI_CONST * radian;
+}
+
+inline float deg_to_rad(float degree){
+    return PI_CONST/180 * degree;
+}
+
 void get_gl_info(){
     printf("Vendor: %s\n", glGetString(GL_VENDOR));
     printf("Renderer: %s\n", glGetString(GL_RENDERER));
@@ -163,20 +171,95 @@ void program_set_uniform_float(GL_Program *program, const char* name, float valu
 /****************************************************/
 
 Camera3d create_camera(vec3f init_pos){
-    Camera3d cam;
+    Camera3d camera;
 
-    cam.pos = init_pos;
-    cam.forward = (vec3f){0.0f, 0.0f, -1.0f};
-    cam.up = (vec3f){0.0f, 1.0f,  0.0f};
+    camera.pos = init_pos;
+    camera.forward =    (vec3f){0.0f, 0.0f, -1.0f};
+    camera.up =         (vec3f){0.0f, 1.0f,  0.0f};
+    camera.right =      (vec3f){1.0f, 0.0f,  0.0f};
 
-    cam.fov = 45.0f * (3.14159265f / 180.0f);
-    cam.aspect = 16.0f / 9.0f;
-    cam.near = 0.1f;
-    cam.far  = 100.0f;
+    camera.fov = 45.0f * (PI_CONST / 180.0f);
+    camera.aspect = 16.0f / 9.0f;
+    camera.near = 0.1f;
+    camera.far  = 100.0f;
 
-    cam.perspective = matrix_perspective(cam.fov, cam.aspect, cam.near, cam.far);
+    camera.yaw = 0.0f;
+    camera.pitch = 0.0f;
 
-    return cam;
+    camera.sensitivity = 0.0005f;
+
+    camera.perspective = matrix_perspective(camera.fov, camera.aspect, camera.near, camera.far);
+
+    return camera;
+}
+
+
+mat4f camera_view(Camera3d camera){
+    return matrix_look_at(
+        camera.pos,
+        vec3_sum(camera.pos, camera.forward),
+        camera.up
+    );
+}
+
+mat4f camera_update_view(Camera3d* camera){
+    vec3f world_up = {0.0f, 1.0f, 0.0f};
+    camera->forward = calc_direction(camera->pitch, camera->yaw);
+    camera->right = vec3_normalize(vec3_cross(camera->forward, world_up));
+    camera->up = vec3_normalize(vec3_cross(camera->right, camera->forward));
+    return camera_view(*camera);
+}
+
+vec3f calc_direction(float pitch, float yaw){
+    vec3f direct = {0.0f,0.0f,0.0f};
+    direct.x = cosf(yaw) * cosf(pitch);
+    direct.y = sinf(pitch);
+    direct.z = sinf(yaw) * cosf(pitch);
+    return vec3_normalize(direct);
+}
+
+void camera_update_vectors(Camera3d *camera)
+{
+    vec3f world_up = {0.0f, 1.0f, 0.0f};
+    camera->forward = calc_direction(camera->pitch, camera->yaw);
+    camera->right = vec3_normalize(vec3_cross(camera->forward, world_up));
+    camera->up = vec3_normalize(vec3_cross(camera->right, camera->forward));
+}
+
+void camera_yaw(Camera3d* camera, float radians){
+    camera->yaw += radians;
+
+    if(camera->yaw > CAMERA_PITCH_LIMIT)
+        camera->yaw = -CAMERA_PITCH_LIMIT;
+    if(camera->yaw < -CAMERA_PITCH_LIMIT)
+        camera->yaw = CAMERA_PITCH_LIMIT;
+
+    // camera_update_vectors(camera);
+}
+
+void camera_pitch(Camera3d* camera, float radians){
+    camera->pitch += radians;
+
+    if(camera->pitch > CAMERA_PITCH_LIMIT)
+        camera->pitch = CAMERA_PITCH_LIMIT;
+
+    if(camera->pitch < -CAMERA_PITCH_LIMIT)
+        camera->pitch = -CAMERA_PITCH_LIMIT;
+
+    // camera_update_vectors(camera);
+}
+
+void camera_look(Camera3d* camera, float xrel, float yrel){
+    camera->yaw   += camera->sensitivity * xrel;
+    camera->pitch -= camera->sensitivity * yrel;
+
+    if(camera->pitch > CAMERA_PITCH_LIMIT)
+        camera->pitch = CAMERA_PITCH_LIMIT;
+
+    if(camera->pitch < -CAMERA_PITCH_LIMIT)
+        camera->pitch = -CAMERA_PITCH_LIMIT;
+
+    camera_update_vectors(camera);
 }
 
 
@@ -189,9 +272,9 @@ Model create_model(){
     // };
     float triangle_model[] = {
 
-        -0.5f,  0.5f,  0.0f, 
+         0.5f, -0.5f,  0.0f, 
         -0.5f, -0.5f,  0.0f, 
-         0.5f, -0.5f,  0.0f,
+        -0.5f,  0.5f,  0.0f,
 
         -0.5f,  0.5f,  0.0f, 
          0.5f,  0.5f,  0.0f, 
@@ -221,6 +304,49 @@ Model create_model(){
     return m;
 }
 
+Particles3d create_particles(vec3f *particles, size_t size){
+    
+    GLuint vao;
+    GLuint vbo;
+
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    size_t parts_count = 0;
+    if(!(particles == NULL || size <= 0)){
+        parts_count = size;
+        glBufferData(GL_ARRAY_BUFFER, 3 * size * sizeof(float), particles, GL_DYNAMIC_DRAW);
+    }
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+    glBindVertexArray(0);
+    glDisableVertexAttribArray(0);
+
+    Particles3d p = {
+        .vao = vao,
+        .vbo = vbo,
+        .size = parts_count
+    };
+    return p;
+}
+
+void update_particles(Particles3d parts, vec3f *particles, size_t size){
+
+    glBindBuffer(GL_ARRAY_BUFFER, parts.vbo);
+    glBufferData(GL_ARRAY_BUFFER, 3 * size * sizeof(float), particles, GL_DYNAMIC_DRAW);
+}
+
+void render_particles(Particles3d parts, size_t size){
+    glBindVertexArray(parts.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, parts.vbo);
+    glDrawArrays(GL_POINTS, 0, size);
+}
+
 void draw_model(Model model){
     glBindVertexArray(model.vao);
     glBindBuffer(GL_ARRAY_BUFFER, model.vbo);
@@ -228,7 +354,7 @@ void draw_model(Model model){
 }
 
 void prepare_draw(Window* window, Colorf colorf){
-    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
     glViewport(0, 0, window->w, window->h);
@@ -271,12 +397,4 @@ void scale_object(Object3d *obj, vec3f scale){
 
 void object_model_matrix(Object3d *obj){
     obj->model_matrix = matrix_mul(obj->translation, matrix_mul(obj->scale, obj->rotation));
-}
-
-mat4f camera_view(Camera3d camera){
-    return matrix_look_at(
-        camera.pos,
-        vector_sum(camera.pos, camera.forward),
-        camera.up
-    );
 }

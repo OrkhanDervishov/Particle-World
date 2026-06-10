@@ -40,10 +40,12 @@ void program_set_uniform_float(GL_Program *program, const char* name, float valu
 
 typedef struct{
     vec3f pos;
-    vec3f forward, up;
+    vec3f forward, up, right;
     float near, far;
+    float yaw, pitch;
     float fov, aspect;
     mat4f perspective;
+    float sensitivity;
 } Camera3d;
 
 // Dynamic array used for storing model's vertex data
@@ -60,6 +62,13 @@ typedef struct{
 
 typedef struct{
     vec3f pos;
+    GLuint vao;
+    GLuint vbo;
+    size_t size;
+} Particles3d;
+
+typedef struct{
+    vec3f pos;
     Model model;
     mat4f translation;
     mat4f rotation;
@@ -67,9 +76,22 @@ typedef struct{
     mat4f model_matrix;
 } Object3d;
 
+#define CAMERA_PITCH_LIMIT (PI_CONST/2.0f-0.001f)
 
+#define RAD_TO_DEG(radian) 180.0f/PI_CONST * (radian)
+#define DEG_TO_RAD(degree) PI_CONST/180 * (degree)
+extern float rad_to_deg(float radian);
+extern float deg_to_rad(float degree);
+
+vec3f calc_direction(float pitch, float yaw);
 Camera3d create_camera(vec3f init_pos);
 mat4f camera_view(Camera3d camera);
+mat4f camera_update_view(Camera3d* camera);
+void camera_update_vectors(Camera3d *camera);
+void camera_pitch(Camera3d* camera, float radians);
+void camera_yaw(Camera3d* camera, float radians);
+void camera_look(Camera3d* camera, float xrel, float yrel);
+
 Model create_model();
 Object3d create_object3d(vec3f pos, Model model);
 void move_object(Object3d *obj, vec3f translation);
@@ -77,6 +99,9 @@ void rotate_object(Object3d *obj, vec3f rotation);
 void scale_object(Object3d *obj, vec3f scale);
 void object_model_matrix(Object3d *obj);
 
+Particles3d create_particles(vec3f *particles, size_t size);
+void update_particles(Particles3d parts, vec3f *particles, size_t size);
+void render_particles(Particles3d parts, size_t size);
 
 /****************************************************/
 

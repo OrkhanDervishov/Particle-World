@@ -1,11 +1,96 @@
 #include "la.h"
+#include <stdio.h>
 #include <math.h>
 
+
+// Untils
 inline float randf(float min, float max){
     return min + (max-min) * ((float)rand() / (float)RAND_MAX);
 }
 
-inline vec3f vector_inv(vec3f v){
+// Vector 2
+
+inline vec2f vec2_inv(vec2f v){
+    return (vec2f){
+        -v.x,
+        -v.y
+    };
+}
+
+inline vec2f vec2_sum(vec2f a, vec2f b){
+    return (vec2f){
+        a.x + b.x,
+        a.y + b.y
+    };
+}
+
+inline vec2f vec2_sub(vec2f a, vec2f b){
+    return (vec2f){
+        a.x - b.x,
+        a.y - b.y
+    };
+}
+
+inline vec2f vec2_scale(vec2f v, float scale){
+    return (vec2f){
+        v.x * scale,
+        v.y * scale
+    };
+}
+
+inline float vec2_dot(vec2f a, vec2f b){
+    return a.x*b.x + a.y*b.y;
+}
+
+inline float vec2_cross(vec2f a, vec2f b){
+    return a.x*b.y - a.y*b.x;
+}
+
+inline float vec2_length(vec2f v){
+    return sqrtf(v.x*v.x + v.y*v.y);
+}
+
+inline float vec2_get_angle(vec2f a, vec2f b){
+    float a_dist = vec2_length(a);
+    float b_dist = vec2_length(b);
+    float dot = vec2_dot(a, b);
+    float angle = acosf(dot/(a_dist*b_dist));
+    return angle;
+}
+
+inline float vec2_get_angle_360(vec2f a, vec2f b){
+    float dot = vec2_dot(a, b);
+    float cross = vec2_cross(a, b);
+
+    float angle = atan2f(cross, dot);
+    angle = angle < 0.0f ? angle + 2*PI_CONST : angle;
+
+    return angle;
+}
+
+inline vec2f vec2_normalize(vec2f v){
+    float len = vec2_length(v);
+
+    if(len < 0.000001f)
+        return (vec2f){0.0f, 0.0f};
+
+    return (vec2f){
+        v.x / len,
+        v.y / len,
+    };
+}
+
+extern vec2f vec2_rotate(vec2f v, float theta){
+    return (vec2f){
+        v.x*cosf(theta) - v.y*sinf(theta),
+        v.x*sinf(theta) + v.y*cosf(theta)
+    };
+}
+
+
+// Vector 3
+
+inline vec3f vec3_inv(vec3f v){
     return (vec3f){
         -v.x,
         -v.y,
@@ -13,7 +98,7 @@ inline vec3f vector_inv(vec3f v){
     };
 }
 
-inline vec3f vector_sum(vec3f a, vec3f b){
+inline vec3f vec3_sum(vec3f a, vec3f b){
     return (vec3f){
         a.x + b.x,
         a.y + b.y,
@@ -21,7 +106,7 @@ inline vec3f vector_sum(vec3f a, vec3f b){
     };
 }
 
-inline vec3f vector_sub(vec3f a, vec3f b){
+inline vec3f vec3_sub(vec3f a, vec3f b){
     return (vec3f){
         a.x - b.x,
         a.y - b.y,
@@ -29,7 +114,7 @@ inline vec3f vector_sub(vec3f a, vec3f b){
     };
 }
 
-inline vec3f vector_scale(vec3f v, float scale){
+inline vec3f vec3_scale(vec3f v, float scale){
     return (vec3f){
         v.x * scale,
         v.y * scale,
@@ -37,29 +122,33 @@ inline vec3f vector_scale(vec3f v, float scale){
     };
 }
 
-inline float vector_dot(vec3f a, vec3f b){
+inline float vec3_dot(vec3f a, vec3f b){
     return a.x*b.x + a.y*b.y + a.z*b.z;
 }
 
-inline vec3f vector_cross(vec3f a, vec3f b){
-    return (vec3f){abs(a.y*b.z - a.z*b.y), -abs(a.x*b.z - a.z*b.x), abs(a.x*b.y - b.x*a.y)};
+inline vec3f vec3_cross(vec3f a, vec3f b){
+    return (vec3f){(a.y*b.z - a.z*b.y), -(a.x*b.z - a.z*b.x), (a.x*b.y - b.x*a.y)};
 }
 
-inline float distance3f(vec3f v){
+inline float vec3_length(vec3f v){
     return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
 }
 
-inline float get_angle(vec3f a, vec3f b){
-    float a_dist = distance3f(a);
-    float b_dist = distance3f(b);
-    float dot = vector_dot(a, b);
+inline float vec3_get_angle(vec3f a, vec3f b){
+    float a_dist = vec3_length(a);
+    float b_dist = vec3_length(b);
+    float dot = vec3_dot(a, b);
     float angle = cosf(dot/(a_dist*b_dist));
     return angle;
 }
 
 
-inline vec3f vector_normalize(vec3f v){
-    float len = distance3f(v);
+inline vec3f vec3_normalize(vec3f v){
+    float len = vec3_length(v);
+
+    if(len < 0.000001f)
+        return (vec3f){0.0f, 0.0f, 0.0f};
+
     return (vec3f){
         v.x / len,
         v.y / len,
@@ -201,9 +290,9 @@ inline mat4f matrix_ortho(float left, float right, float bottom, float top, floa
 
 inline mat4f matrix_look_at(vec3f eye, vec3f center, vec3f up)
 {
-    vec3f f = vector_normalize(vector_sub(center, eye));
-    vec3f s = vector_normalize(vector_cross(f, up));
-    vec3f u = vector_cross(s, f);
+    vec3f f = vec3_normalize(vec3_sub(center, eye));
+    vec3f s = vec3_normalize(vec3_cross(f, up));
+    vec3f u = vec3_cross(s, f);
 
     mat4f result = matrix_identity();
 
@@ -219,9 +308,22 @@ inline mat4f matrix_look_at(vec3f eye, vec3f center, vec3f up)
     result.m[9]  = u.z;
     result.m[10] = -f.z;
 
-    result.m[12] = -vector_dot(s, eye);
-    result.m[13] = -vector_dot(u, eye);
-    result.m[14] =  vector_dot(f, eye);
+    result.m[12] = -vec3_dot(s, eye);
+    result.m[13] = -vec3_dot(u, eye);
+    result.m[14] =  vec3_dot(f, eye);
 
     return result;
+}
+
+void print_vec3(vec3f v){
+    printf("x:%f y:%f z:%f\n", v.x, v.y, v.z);
+}
+
+void print_matrix4(mat4f m){
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 4; j++){
+            printf("%f ", m.m[i*4 + j]);
+        }
+        printf("\n");
+    }
 }
