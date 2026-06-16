@@ -28,10 +28,10 @@ static bool inside_sector(MagicRing ring, Sector sector, vec3f pos){
 }
 
 static vec3f sum_pull_vectors(Spell spell, vec3f part){
-    for(size_t i = 0; i < spell.sectors.count; i++){
-        if(inside_sector(spell.ring, spell.sectors.items[i].sector, part)){
-            // sum = vec3_sum(sum, spell.sectors.items[i].pull_vector);
-            return spell.sectors.items[i].pull_vector;
+    for(size_t i = 0; i < spell.pull_sectors.count; i++){
+        if(inside_sector(spell.ring, spell.pull_sectors.items[i].sector, part)){
+            // sum = vec3_sum(sum, spell.pull_sectors.items[i].pull_vector);
+            return spell.pull_sectors.items[i].pull_vector;
         }
     }
     vec3f zero = {0.0f, 0.0f, 0.0f};
@@ -130,6 +130,7 @@ static void magic_simulate(ParticleGame* game, Spell spell, Magic magic){
         
         
         part->velocity = vec3_sum(part->velocity, sum_pull_vectors(spell, part->pos));
+        part->velocity = vec3_sum(part->velocity, spell.pull_direction);
         part->velocity = move_from_center(part->velocity, magic.pos, 40.0f);
         // Particle move
         part->pos = vec3_sum(part->pos, part->velocity);

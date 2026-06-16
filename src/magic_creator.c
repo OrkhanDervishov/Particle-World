@@ -169,7 +169,7 @@ typedef struct{
     vec3f direction;
     float force_mag;
 
-    MagicPullSectors sectors;
+    MagicPullSectors pull_sectors;
     vec3f pull_direction;
     float pull_mag;
 
@@ -286,6 +286,26 @@ static void handle_region_signs(Spell* spell, SpellElements elems){
 
 }
 
+
+/*
+Explanation of pull logic:
+1.  It computes angular position around the ring center of all pull signs, 
+    and stores them, so later the ring could be partitioned into sectors.
+    It also calculates pull direction(works the same was as column).
+
+2.  It computes the cosine between the pull direction and the vector
+    pointing toward the ring center. It gives us how slanted pull sign is.
+    If cosine is 1 or -1 then pull sign directs to the ring center, and global pull is max or -max and
+    pull sign's twist force is 0;
+    if cosine is 0 then pull sign is perpendicular, and global pull is 0 and
+    pull sign's twist force is max.
+
+spell->pull_direction is pull/push. spell->pull_sectors is twist vectors.
+
+After it creates sectors from pull signs.
+
+If particle inside the pull sector, that sector's twist vector is added to particle's velocity.
+*/
 static void handle_pull_signs(Spell* spell, SpellElements elems){
 
     Floats pull_point_angles = {0};
@@ -304,17 +324,17 @@ static void handle_pull_signs(Spell* spell, SpellElements elems){
             da_append(pull_point_angles, angle);
 
             // Pull sign position and angle
-            vec3f new_pull_vec3 = vec3_scale(vec3_normalize((vec3f){elem.direction.x, elem.direction.y, 0.0f}), elem.size);
+            vec3f new_pull_vec3 = vec3_scale(vec3_normalize((vec3f){elem.direction.x, elem.direction.y, 50.0f}), elem.size);
             vec3f to_center = vec3_sub(spell->ring.center, elem.pos);
             float slanted = vec3_get_cos(new_pull_vec3, to_center);
 
             // Calc sector and global pull vectors
             float abs_slanted = slanted < 0.0f ? -slanted : slanted;
-            vec3f sector_pull_vec3 = vec3_scale(new_pull_vec3, 1.0f-abs_slanted);
+            vec3f sector_pull_vec3 = vec3_scale(new_pull_vec3, 1.0f - abs_slanted);
             sector_pull_vec3.z = 0.0f; // pull sign itself does not affect to z coordinate
             da_append(pull_vecs, sector_pull_vec3);
 
-            spell->pull_direction = vec3_sum(spell->pull_direction, vec3_scale(new_pull_vec3, 1-abs_slanted));
+            spell->pull_direction = vec3_sum(spell->pull_direction, vec3_scale(new_pull_vec3, slanted));
         }
     }
 
@@ -325,7 +345,7 @@ static void handle_pull_signs(Spell* spell, SpellElements elems){
             .sector = sectors.items[i],
             .pull_vector = vec3_inv(pull_vecs.items[i])
         };  
-        da_append(spell->sectors, pull_sector);
+        da_append(spell->pull_sectors, pull_sector);
     }
     
     free(sectors.items);
@@ -340,7 +360,7 @@ static Spell get_result_spell(SpellElements elems, MagicRing ring){
     res.position = ring.center;
     res.magic = UNKNOWN_MAGIC;
     res.spread = 1.0f;
-    res.sectors = (MagicPullSectors){0};
+    res.pull_sectors = (MagicPullSectors){0};
 
     float *pull_point_angles;
     int pull_point_count = 0;

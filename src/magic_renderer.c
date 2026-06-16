@@ -111,8 +111,8 @@ static void draw_sector(ParticleGame* game, MagicRing ring, Sector sector, Color
 }
 
 static void draw_sectors(ParticleGame* game, Spell spell, Color color){
-    for(size_t i = 0; i < spell.sectors.count; i++){
-        draw_sector(game, spell.ring, spell.sectors.items[i].sector, color);
+    for(size_t i = 0; i < spell.pull_sectors.count; i++){
+        draw_sector(game, spell.ring, spell.pull_sectors.items[i].sector, color);
     }
 }
 
