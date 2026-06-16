@@ -2,6 +2,7 @@
 #define MAGIC_CREATOR_C_
 
 #include "game.h"
+#include "la.h"
 
 
 typedef enum{
@@ -35,9 +36,102 @@ typedef enum{
     COOL_SIGN,
 } SpellElementType;
 
+
 typedef struct{
-    vec3f pos;
+    float start_angle;    
+    float end_angle;
+} Sector;
+
+typedef struct{
+    Sector *items;
+    size_t count;
+    size_t capacity;
+} Sectors;
+
+typedef struct{
+    float *items;
+    size_t count;
+    size_t capacity;    
+} Floats;
+
+typedef struct{
+    vec2f *items;
+    size_t count;
+    size_t capacity;    
+} Vectors2f;
+
+typedef struct{
+    vec3f *items;
+    size_t count;
+    size_t capacity;    
+} Vectors3f;
+
+static int compare_float(const void *a, const void *b){
+    float fa = *(const float *)a;
+    float fb = *(const float *)b;
+    return (fa > fb) - (fa < fb);
+}
+
+static Sectors points_to_sectors(float* point_angles, size_t count){
+    Sectors sectors = {0};
+    if(count <= 0) return sectors;
+    if(point_angles == NULL) return sectors;
+
+    float *sorted_point_angles = (float*)malloc(sizeof(float) * count);
+    for(size_t i = 0; i < count; i++){
+        sorted_point_angles[i] = point_angles[i];
+    }
+    qsort(sorted_point_angles, count, sizeof(sorted_point_angles[0]), compare_float);
+
+    float *midpoint_angles = (float*)malloc(sizeof(float) * count);
+
+    if(!midpoint_angles){
+        free(midpoint_angles);
+        return sectors;
+    }
+
+    // Calc midpoint angles -> (n + (n+1))/2
+    for(size_t i = 0; i < count-1; i++){
+        midpoint_angles[i] = (sorted_point_angles[i] + sorted_point_angles[i+1])/2.0f;
+    }
+    midpoint_angles[count-1] = fmodf((sorted_point_angles[count-1] + 2*PI_CONST + sorted_point_angles[0])/2.0f, 2*PI_CONST);
+
+
+    // Calc sectors
+    Sector sector = (Sector){midpoint_angles[count-1], midpoint_angles[0]};
+    da_append(sectors, sector);
+    for(size_t i = 1; i < count; i++){
+        Sector sector = (Sector){midpoint_angles[i-1], midpoint_angles[i]};
+        da_append(sectors, sector);
+    }
+    
+
+    Sectors sectors_unsorted = {0};
+    da_reserve(sectors_unsorted, sectors.count);
+    sectors_unsorted.count = sectors.count;
+
+    for(size_t i = 0; i < count; i++){
+        for(size_t j = 0; j < count; j++){
+            if(point_angles[i] == sorted_point_angles[j]){
+                sectors_unsorted.items[i] = sectors.items[j];
+            }
+        }
+    }
+
+    free(midpoint_angles);
+    free(sorted_point_angles);
+    free(sectors.items);
+    return sectors_unsorted;
+}
+
+
+
+
+typedef struct{
     SpellElementType type;
+    vec3f pos;
+    vec2f direction;
+    float size;
 } SpellElement;
 
 typedef struct{
@@ -53,12 +147,7 @@ typedef struct{
 } MagicRing;
 
 typedef struct{
-    float start_angle;    
-    float end_angle;
-} MagicSector;
-
-typedef struct{
-    MagicSector sector;
+    Sector sector;
     vec3f pull_vector;
 } MagicPullSector;
 
@@ -72,20 +161,32 @@ typedef struct{
 typedef struct{
     MagicType magic;
     MagicRing ring;
-    vec3f direction;
     vec3f position;
+
     float collect_scale;
     float convergence;
+
+    vec3f direction;
     float force_mag;
+
+    MagicPullSectors sectors;
+    vec3f pull_direction;
+    float pull_mag;
+
     float density;
     float spread;
+
     bool is_active;
-    MagicPullSectors sectors;
 } Spell;
+
+typedef struct{
+    vec3f pos;
+    vec3f velocity;
+} MagicParticle;
 
 
 typedef struct{
-    vec3f* items;
+    MagicParticle* items;
     size_t count;
     size_t capacity;
 } MagicParticles;
@@ -100,20 +201,137 @@ typedef struct{
     float duration;
 } Magic;
 
-
-
-#define add_type(elem_type, arr)\
+#define add_type(Elem_type, Pos, Direct, Len, Arr)\
 do{\
     SpellElement elem = {\
-        (vec3f){\
-            .x = game->is.mouse.x -40,\
-            .y = game->is.mouse.y -40\
+        .type = (Elem_type),\
+        .pos = (vec3f){\
+            .x = (Pos).x,\
+            .y = (Pos).y\
         },\
-        .type = (elem_type)\
+        .direction = (Direct),\
+        .size = (Len)\
     };\
-    da_append(arr, elem);\
+    da_append((Arr), elem);\
 }while(0)
+ 
 
+
+
+
+
+
+static void handle_column_signs(Spell* spell, SpellElements elems){
+ 
+    for(size_t i = 0; i < elems.count; i++){
+        SpellElement elem = elems.items[i];
+        if(elem.type == COLUMN_SIGN){
+            vec3f current_force_vec3 = vec3_scale(spell->direction, spell->force_mag);
+            // column scalar is defined by the length of column sign
+            vec3f new_force_vec3 = vec3_scale(vec3_normalize((vec3f){elem.direction.x, elem.direction.y, 50.f}), 50.0f);
+            vec3f force_vec3 = vec3_sum(current_force_vec3, new_force_vec3);
+            spell->force_mag = vec3_length(force_vec3);
+            spell->direction = vec3_normalize(force_vec3);
+        }
+    }
+    
+    // Spread
+    float angle_sum = 0;
+    int column_count = 0;
+    for(size_t i = 0; i < elems.count; i++){
+        SpellElement elem = elems.items[i];
+        if(elem.type == COLUMN_SIGN){
+            float angle = vec3_get_angle(spell->direction, vec3_sub(spell->ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f}));
+            // if(angle < 0.0f) angle = -angle;
+            angle_sum += angle;
+            column_count++;
+            // printf("angle: %f\n", vec3_get_angle(spell->direction, vec3_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})));
+        }
+    }
+    if(column_count != 0) spell->spread = 0.3f*angle_sum/(float)column_count;
+}
+
+static void handle_levitation_signs(Spell* spell, SpellElements elems){
+    
+    for(size_t i = 0; i < elems.count; i++){
+        SpellElement elem = elems.items[i];
+        if(elem.type == LEVITATION_SIGN){
+            // levitation scalar is defined by the length of levitation sign
+            vec3f levitation_vec3 = vec3_scale(vec3_normalize((vec3f){elem.direction.x, elem.direction.y, 50.f}), 50.0f);
+            spell->position = vec3_sum(spell->position, levitation_vec3);
+        }
+    }
+}
+
+static void handle_convergence_signs(Spell* spell, SpellElements elems){
+
+    for(size_t i = 0; i < elems.count; i++){
+        SpellElement elem = elems.items[i];
+        if(elem.type == CONVERGENCE_SIGN){
+            spell->density += 20.0f;
+            spell->convergence += 10.0f;
+        }
+    }
+}
+
+static void handle_collection_signs(Spell* spell, SpellElements elems){
+
+}
+
+static void handle_dispersion_signs(Spell* spell, SpellElements elems){
+
+}
+
+static void handle_region_signs(Spell* spell, SpellElements elems){
+
+}
+
+static void handle_pull_signs(Spell* spell, SpellElements elems){
+
+    Floats pull_point_angles = {0};
+    Vectors3f pull_vecs = {0};
+
+    for(size_t i = 0; i < elems.count; i++){
+        SpellElement elem = elems.items[i];
+        if(elem.type == PULL_SIGN){
+            // pull force - (pull direction, pull magnitude)
+            // pull spread
+            vec2f origin_vec2 = vec2_normalize(MAGIC_RING_ORIGIN_VEC2(spell->ring));
+            vec2f elem_pos2 = {elem.pos.x, elem.pos.y};
+            vec2f center2 = {spell->ring.center.x, spell->ring.center.y};
+            vec2f elem_vec = vec2_normalize(vec2_sub(elem_pos2, center2));
+            float angle = vec2_get_angle_360(origin_vec2, elem_vec);
+            da_append(pull_point_angles, angle);
+
+            // Pull sign position and angle
+            vec3f new_pull_vec3 = vec3_scale(vec3_normalize((vec3f){elem.direction.x, elem.direction.y, 0.0f}), elem.size);
+            vec3f to_center = vec3_sub(spell->ring.center, elem.pos);
+            float slanted = vec3_get_cos(new_pull_vec3, to_center);
+
+            // Calc sector and global pull vectors
+            float abs_slanted = slanted < 0.0f ? -slanted : slanted;
+            vec3f sector_pull_vec3 = vec3_scale(new_pull_vec3, 1.0f-abs_slanted);
+            sector_pull_vec3.z = 0.0f; // pull sign itself does not affect to z coordinate
+            da_append(pull_vecs, sector_pull_vec3);
+
+            spell->pull_direction = vec3_sum(spell->pull_direction, vec3_scale(new_pull_vec3, 1-abs_slanted));
+        }
+    }
+
+    Sectors sectors = points_to_sectors(pull_point_angles.items, pull_point_angles.count);
+
+    for(size_t i = 0; i < sectors.count; i++){
+        MagicPullSector pull_sector = {
+            .sector = sectors.items[i],
+            .pull_vector = vec3_inv(pull_vecs.items[i])
+        };  
+        da_append(spell->sectors, pull_sector);
+    }
+    
+    free(sectors.items);
+    free(pull_vecs.items);
+    free(pull_point_angles.items);
+}
 
 static Spell get_result_spell(SpellElements elems, MagicRing ring){
     Spell res = {0};
@@ -124,10 +342,13 @@ static Spell get_result_spell(SpellElements elems, MagicRing ring){
     res.spread = 1.0f;
     res.sectors = (MagicPullSectors){0};
 
+    float *pull_point_angles;
+    int pull_point_count = 0;
+
     for(size_t i = 0; i < elems.count; i++){
         SpellElement elem = elems.items[i];
         if(vec3_length(vec3_sub(ring.center, elem.pos)) >= ring.radius) continue;
-        
+
         switch(elem.type){
             case FIRE_SIGIL:
                 {
@@ -149,79 +370,12 @@ static Spell get_result_spell(SpellElements elems, MagicRing ring){
                 {
                     res.magic = LIGHT_MAGIC;
                 } break;
-
-            case COLUMN_SIGN:
-                {
-                    vec3f current_force_vec3 = vec3_scale(res.direction, res.force_mag);
-                    // column scalar is defined by the length of column sign
-                    vec3f new_force_vec3 = vec3_scale(vec3_normalize(vec3_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})), 50.0f);
-                    vec3f force_vec3 = vec3_sum(current_force_vec3, new_force_vec3);
-                    res.force_mag = vec3_length(force_vec3);
-                    res.direction = vec3_normalize(force_vec3);
-                } break;
-            case LEVITATION_SIGN:
-                {
-                    // levitation scalar is defined by the length of levitation sign
-                    vec3f levitation_vec3 = vec3_scale(vec3_normalize(vec3_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})), 50.0f);
-                    res.position = vec3_sum(res.position, levitation_vec3);
-                } break;
-            case CONVERGENCE_SIGN:
-                {
-                    res.density += 20.0f;
-                    res.convergence += 10.0f;
-                } break;
-            case PULL_SIGN:
-                {
-                    // pull force - (pull direction, pull magnitude)
-                    // pull spread
-                    vec2f origin_vec2 = vec2_normalize(MAGIC_RING_ORIGIN_VEC2(ring));
-                    vec2f elem_pos2 = {elem.pos.x, elem.pos.y};
-                    vec2f center2 = {res.ring.center.x, res.ring.center.y};
-                    vec2f elem_vec = vec2_normalize(vec2_sub(elem_pos2, center2));
-                    float angle = vec2_get_angle_360(origin_vec2, elem_vec);
-
-                    float offset = PI_CONST/4.0f;
-                    float start_angle   = angle - offset;
-                    float end_angle     = angle + offset;
-                    MagicSector sector = {start_angle, end_angle};
-
-                    MagicPullSector pull_sector = {
-                        .sector = sector,
-                        .pull_vector = {0.5f, 0.0f, 0.0f}
-                    };
-                    da_append(res.sectors, pull_sector);
-                } break;
-            case DISPERSION_SIGN:
-                {
-
-                } break;
-            case REGION_SIGN:
-                {
-
-                } break;
-            case COLLECTION_SIGN:
-                {
-                    res.collect_scale += 1.0f;
-                } break;
-            
         }
     }
-    
-    // printf("\n\n");
-
-    float angle_sum = 0;
-    int column_count = 0;
-    for(size_t i = 0; i < elems.count; i++){
-        SpellElement elem = elems.items[i];
-        if(elem.type == COLUMN_SIGN){
-            float angle = vec3_get_angle(res.direction, vec3_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f}));
-            // if(angle < 0.0f) angle = -angle;
-            angle_sum += angle;
-            column_count++;
-            // printf("angle: %f\n", vec3_get_angle(res.direction, vec3_sub(ring.center, (vec3f){elem.pos.x, elem.pos.y, -20.0f})));
-        }
-    }
-    if(column_count != 0) res.spread = 0.3f*angle_sum/(float)column_count;
+    handle_column_signs(&res, elems);
+    handle_levitation_signs(&res, elems);
+    handle_convergence_signs(&res, elems);
+    handle_pull_signs(&res, elems);
 
     return res;
 }
@@ -238,14 +392,16 @@ static Magic create_magic(Spell spell){
     magic.power = 100.0f;
     float gen_radius = spell.ring.radius == 0.0f ? MAGIC_GEN_OFFSET : spell.ring.radius/2.0f;
     for(int i = 0; i < MAGIC_GEN_COUNT; i++){
-        vec3f part = (vec3f){
+        vec3f part_pos = (vec3f){
             (randf(spell.position.x - gen_radius, spell.position.x + gen_radius)),
             (randf(spell.position.y - gen_radius, spell.position.y + gen_radius)),
             (randf(spell.position.z  - gen_radius, spell.position.z + gen_radius))
         };
-        // vec3f part = (vec3f){
-        //     0.0f, 0.0f, 0.0f
-        // };
+
+        MagicParticle part = {
+            .pos = part_pos,
+            .velocity = {0.0f, 0.0f, 0.0f}
+        };
         da_append(magic.parts, part);
     }
 

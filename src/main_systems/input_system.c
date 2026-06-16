@@ -82,11 +82,11 @@ bool action_released(InputSystem* is, action_t action){
 
 void update_mouse(InputSystem* is){
     
-    is->mouse.dx = (is->mouse.prev_x - is->mouse.x);
-    is->mouse.dy = (is->mouse.prev_y - is->mouse.y);
+    is->mouse.dx = (is->mouse.xprev - is->mouse.x);
+    is->mouse.dy = (is->mouse.yprev - is->mouse.y);
     
-    is->mouse.prev_x = is->mouse.x;
-    is->mouse.prev_y = is->mouse.y;
+    is->mouse.xprev = is->mouse.x;
+    is->mouse.yprev = is->mouse.y;
     
     int x, y;
     uint32_t state = SDL_GetMouseState(&x, &y);
@@ -94,6 +94,10 @@ void update_mouse(InputSystem* is){
     is->mouse.y = (float)y;
     is->mouse.xrel = 0.0f;
     is->mouse.yrel = 0.0f;
+    is->mouse.xwheel = 0.0f;
+    is->mouse.ywheel = 0.0f;
+
+
     
     if(state & SDL_BUTTON_LMASK){
         if(is->mouse.left.down == TRUE) is->mouse.left.pressed = FALSE;
@@ -184,6 +188,11 @@ void update_input_system(InputSystem* is){
         if(e.type == SDL_MOUSEMOTION){
             is->mouse.xrel = e.motion.xrel;
             is->mouse.yrel = e.motion.yrel;
+        }
+        if(e.type == SDL_MOUSEWHEEL){
+            is->mouse.xwheel = (float)e.wheel.x;
+            is->mouse.ywheel = (float)e.wheel.y;
+            // printf("xwheel:%f ywheel:%f\n", is->mouse.xwheel, is->mouse.ywheel);
         }
     }
 

@@ -895,6 +895,151 @@ void draw_line_from_points(Image img, vec2* points, int count, Color color, int 
         }
 }
 
+//##################################################################
+// void bresenham_horizontal_f(FormatImage fimg, Color color, int x0, int y0, int x1, int y1){
+//     int dx = abs(x1 - x0);
+//     int dy = abs(y1 - y0);
+    
+//     if(x0 > x1){
+//         int temp;
+//         SWAP(x0, x1, temp);
+//         SWAP(y0, y1, temp);
+//     }
+    
+//     int D = dx;
+//     int move = -1;
+//     if(y0 < y1){
+//         move = 1;
+//     }
+//     int k = 2 * dy;
+//     int y = y0;
+
+//     int fcolor = get_formatted_color(color, fimg.format);
+//     for(int x = x0; x < x1; x++){
+//         D += k;
+//         if(D > 2 * dx){
+//             y += move;
+//             D -= 2 * dx;
+//         }
+//         IMG_GET(fimg, x, y) = fcolor;
+//     }
+// }
+
+
+
+// void bresenham_vertical_f(FormatImage fimg, Color color, int x0, int y0, int x1, int y1){
+//     if(y0 > y1){
+//         int temp;
+//         SWAP(x0, x1, temp);
+//         SWAP(y0, y1, temp);
+//     }
+    
+//     int dx = abs(x1 - x0);
+//     int dy = abs(y1 - y0);
+    
+    
+//     int D = dy;
+//     int move = -1;
+//     if(x0 < x1){
+//         move = 1;
+//     }
+//     int k = 2 * dx;
+//     int x = x0;
+    
+//     int fcolor = get_formatted_color(color, fimg.format);
+//     for(int y = y0; y < y1; y++){
+//         D += k;
+//         if(D > 2 * dy){
+//             x += move;
+//             D -= 2 * dy;
+//         }
+//         IMG_GET(fimg, x, y) = fcolor;
+//     }
+// }
+
+
+// void draw_line_f(FormatImage fimg, Color color, int x0, int y0, int x1, int y1){
+//     int dx = abs(x1 - x0);
+//     int dy = abs(y1 - y0);
+
+//     vec2 p0 = correct_line_end(x0, y0, dx, dy, fimg.width, fimg.height);
+//     vec2 p1 = correct_line_end(x1, y1, dx, dy, fimg.width, fimg.height);
+//     x0 = p0.x;
+//     y0 = p0.y;
+//     x1 = p1.x;
+//     y1 = p1.y;
+
+//     if(dx > dy){
+//         bresenham_horizontal_f(fimg, color, x0, y0, x1, y1);
+//     } else {
+//         bresenham_vertical_f(fimg, color, x0, y0, x1, y1);
+//     }
+// }
+
+//##################################################################
+
+
+//##################################################################
+
+void draw_rotated_image_on_fimage(FormatImage dest, Image src, vec2f pos, float rotation, vec2f scale){
+    float cx = (float)src.width/2;
+    float cy = (float)src.height/2;
+    float s = sin(rotation);
+    float c = cos(rotation);
+
+    vec2f v[4];
+    
+    // scaling
+    v[0] = (vec2f){-cx * scale.x,  cy * scale.y};
+    v[1] = (vec2f){ cx * scale.x,  cy * scale.y};
+    v[2] = (vec2f){ cx * scale.x, -cy * scale.y};
+    v[3] = (vec2f){-cx * scale.x, -cy * scale.y};
+    // rotation
+    float tempx;
+    tempx = v[0].x, v[0].x = c*v[0].x + s*v[0].y, v[0].y = -s*tempx + c*v[0].y;
+    tempx = v[1].x, v[1].x = c*v[1].x + s*v[1].y, v[1].y = -s*tempx + c*v[1].y;
+    tempx = v[2].x, v[2].x = c*v[2].x + s*v[2].y, v[2].y = -s*tempx + c*v[2].y;
+    tempx = v[3].x, v[3].x = c*v[3].x + s*v[3].y, v[3].y = -s*tempx + c*v[3].y;
+    // translation
+    v[0] = vec2_sum(v[0], pos);
+    v[1] = vec2_sum(v[1], pos);
+    v[2] = vec2_sum(v[2], pos);
+    v[3] = vec2_sum(v[3], pos);
+
+    int minx = (int)v[0].x;
+    int miny = (int)v[0].y;
+    int maxx = (int)v[0].x;
+    int maxy = (int)v[0].y;
+    for(int i = 0; i < 4; i++) if(minx > (int)v[i].x) minx = (int)v[i].x;
+    for(int i = 0; i < 4; i++) if(miny > (int)v[i].y) miny = (int)v[i].y;
+    for(int i = 0; i < 4; i++) if(maxx < (int)v[i].x) maxx = (int)v[i].x;
+    for(int i = 0; i < 4; i++) if(maxy < (int)v[i].y) maxy = (int)v[i].y;
+    
+    for(int v = miny; v < maxy; v++){
+        for(int u = minx; u < maxx; u++){
+
+            float rx = (float)u - pos.x;
+            float ry = (float)v - pos.y;
+
+            float sx = (c*rx + s*ry)/scale.x + cx;
+            float sy = (-s*rx + c*ry)/scale.y + cy;
+
+            if(sx < 0.0f || sy < 0.0f || sx >= src.width || sy >= src.height) continue;
+            if(u < 0.0f || v < 0.0f || u >= dest.width || v >= dest.height) continue;
+
+            Color src_color = IMG_GET(src, (int)sx, (int)sy);
+            if(src_color.a == 0) continue;
+
+            Color dest_color = GET_COLOR(IMG_GET(dest, u, v), dest.format);
+            int res_fcolor = GET_FCOLOR(colors_alpha_blend(dest_color, src_color), dest.format);
+            IMG_GET(dest, u, v) = res_fcolor;
+        }
+    }
+}
+
+
+//##################################################################
+
 
 // Image save, load
 //##################################################################

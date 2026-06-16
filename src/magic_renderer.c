@@ -57,17 +57,16 @@ static void load_image_paths(){
 
 static void prepare_images(){
     Color white_color = (Color){.rgba = 0xFFFFFFFF};
+    Color black_color = (Color){.rgba = 0xFF000000};
     Color alpha_color = (Color){.rgba = 0x00FFFFFF};
     
     elem_images = (ElemImages){0};
     for(size_t i = 0; i < elem_image_paths.count; i++){
         Image image = {0};
-        Image min_image;
         load_png(&image, elem_image_paths.items[i]);
-        min_image = minimize_resolution(image, 10, 10);
-        change_color(min_image, white_color, alpha_color);
-        da_append(elem_images, min_image);
-        delete_image(&image);
+        change_color(image, white_color, alpha_color);
+        change_color(image, black_color, white_color);
+        da_append(elem_images, image);
     }
 }
 
@@ -91,7 +90,7 @@ static void render_vec2(ParticleGame* game, const char* param_name, vec2f value,
     BasicTextRender(game->win, text, x, y, 2, color);
 }
 
-static void draw_sector(ParticleGame* game, MagicRing ring, MagicSector sector, Color color){
+static void draw_sector(ParticleGame* game, MagicRing ring, Sector sector, Color color){
 
     vec2f origin_vec = MAGIC_RING_ORIGIN_VEC2(ring);
     // origin_vec.x -= ring.center.x;
@@ -118,7 +117,16 @@ static void draw_sectors(ParticleGame* game, Spell spell, Color color){
 }
 
 static void draw_element(ParticleGame* game, SpellElement elem){
-    draw_image_on_fimage_scaled(game->win->context, GET_ELEM_IMAGE(elem.type), (int)elem.pos.x, (int)elem.pos.y, 4, 4);
+    vec2f y_axis = {0.0f, -1.0f};
+    float angle = vec2_get_angle_360(y_axis, elem.direction);
+    // float angle = vec2_get_angle_360(elem.direction, y_axis);
+    draw_rotated_image_on_fimage(
+        game->win->context, 
+        GET_ELEM_IMAGE(elem.type), 
+        (vec2f){(float)elem.pos.x, (float)elem.pos.y}, 
+        angle, 
+        (vec2f){0.5f, 0.5f}
+    );
 }
 
 static void draw_all_elements(ParticleGame* game, SpellElements elems){
@@ -156,7 +164,7 @@ static void magic_draw(ParticleGame* game, Spell spell, Magic magic){
     }
 
     for(size_t i = 0; i < magic.parts.count; i++){
-        draw_filled_circle_f(game->win->context, (int)magic.parts.items[i].x, (int)magic.parts.items[i].y, 3, magic_color);
+        draw_filled_circle_f(game->win->context, (int)magic.parts.items[i].pos.x, (int)magic.parts.items[i].pos.y, 3, magic_color);
     }
 }
 

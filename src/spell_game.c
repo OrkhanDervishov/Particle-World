@@ -22,7 +22,7 @@ void translate_magic(Magic* dest, Magic src, vec3f translate){
     }
 
     for(size_t i = 0; i < src.parts.count; i++){
-        dest->parts.items[i] = vec3_scale(vec3_sub(src.parts.items[i], translate), 0.01f);
+        dest->parts.items[i].pos = vec3_scale(vec3_sub(src.parts.items[i].pos, translate), 0.01f);
     }
 }
 
@@ -33,8 +33,6 @@ int RunSpellGame(ParticleGame* game){
     SpellElements elems = {0};
     load_image_paths();
     prepare_images();
-    // SDL_ShowCursor(SDL_DISABLE);
-    SDL_Cursor;
 
     // Initializing 3d simulator
     /***************************************/
@@ -72,19 +70,6 @@ int RunSpellGame(ParticleGame* game){
 
     prepare_draw(game->win, color_to_colorf(game->s_params.clear_color));
     /***************************************/
-    
-    vec2f v0 = {1.0f, 0.0f};
-    vec2f v1 = {0.8f, 0.6f};
-    vec2f v2 = {0.0f, 1.0f};
-    vec2f v3 = {1.0f, 1.0f};
-    vec2f v4 = {-0.5f, -0.5f};
-    vec2f v5 = {-0.5f, 0.5f};
-    printf("radian:%f degree:%f\n", vec2_get_angle_360(v0, v1), rad_to_deg(vec2_get_angle_360(v0, v1)));
-    printf("radian:%f degree:%f\n", vec2_get_angle_360(v0, v2), rad_to_deg(vec2_get_angle_360(v0, v2)));
-    printf("radian:%f degree:%f\n", vec2_get_angle_360(v0, v3), rad_to_deg(vec2_get_angle_360(v0, v3)));
-    printf("radian:%f degree:%f\n", vec2_get_angle_360(v0, v4), rad_to_deg(vec2_get_angle_360(v0, v4)));
-    printf("radian:%f degree:%f\n", vec2_get_angle_360(v0, v5), rad_to_deg(vec2_get_angle_360(v0, v5)));
-
 
     
     // Initializing 2d simulator
@@ -158,11 +143,15 @@ int RunSpellGame(ParticleGame* game){
         SDL_SetRelativeMouseMode(SDL_ENABLE);
     }
 
+    vec2f direct = {200.0f, 0.0f};
+
+
     Spell spell;
     Magic magic = {0};
     Magic magic_origin = {0};
     MagicRing ring = {0};
     bool ring_exists = FALSE;
+    spell = get_result_spell(elems, ring);
     while(game->s_params.is_running){
 
         update_global_time();
@@ -187,8 +176,13 @@ int RunSpellGame(ParticleGame* game){
             magic = create_magic(spell);
             spell.is_active = TRUE;
 
-            translate_magic(&magic_origin, magic, magic.pos);
-            update_particles(parts3d, magic_origin.parts.items, magic_origin.parts.count);
+            // Vectors3f part_positions = {0};
+            // for(size_t i = 0; i < magic_origin.parts.count; i++){
+            //     da_append(part_positions, magic_origin.parts.items[i].pos);
+            // }
+
+            // translate_magic(&magic_origin, magic, magic.pos);
+            // update_particles(parts3d, part_positions.items, part_positions.count);
         }
         if(action_pressed(&game->is, act_magic_erase)){
             free(elems.items);
@@ -204,54 +198,51 @@ int RunSpellGame(ParticleGame* game){
                     ring_exists = TRUE;
                 }
             }
+            vec2f mouse_pos = (vec2f){(float)game->is.mouse.x, (float)game->is.mouse.y};
             if(action_pressed(&game->is, act_create_fire_sigil)){
-                add_type(FIRE_SIGIL, elems);
+                add_type(FIRE_SIGIL, mouse_pos, direct, 1.0f, elems);
             }
             if(action_pressed(&game->is, act_create_water_sigil)){
-                add_type(WATER_SIGIL, elems);
+                add_type(WATER_SIGIL, mouse_pos, direct, 1.0f, elems);
             }
             if(action_pressed(&game->is, act_create_wind_sigil)){
-                add_type(WIND_SIGIL, elems);
+                add_type(WIND_SIGIL, mouse_pos, direct, 1.0f, elems);
             }
             if(action_pressed(&game->is, act_create_earth_sigil)){
-                add_type(EARTH_SIGIL, elems);
+                add_type(EARTH_SIGIL, mouse_pos, direct, 1.0f, elems);
             }
             if(action_pressed(&game->is, act_create_light_sigil)){
-                add_type(LIGHT_SIGIL, elems);
+                add_type(LIGHT_SIGIL, mouse_pos, direct, 1.0f, elems);
             }
             if(action_pressed(&game->is, act_create_column_sign)){
-                add_type(COLUMN_SIGN, elems);
+                add_type(COLUMN_SIGN, mouse_pos, direct, 1.0f, elems);
             }
             if(action_pressed(&game->is, act_create_levitation_sign)){
-                add_type(LEVITATION_SIGN, elems);
+                add_type(LEVITATION_SIGN, mouse_pos, direct, 1.0f, elems);
             }
             if(action_pressed(&game->is, act_create_convergence_sign)){
-                add_type(CONVERGENCE_SIGN, elems);
+                add_type(CONVERGENCE_SIGN, mouse_pos, direct, 1.0f, elems);
             }
             if(action_pressed(&game->is, act_create_collect_sign)){
-                add_type(COLLECTION_SIGN, elems);
+                add_type(COLLECTION_SIGN, mouse_pos, direct, 1.0f, elems);
             }
             if(action_pressed(&game->is, act_create_pull_sign)){
-                add_type(PULL_SIGN, elems);
+                add_type(PULL_SIGN, mouse_pos, direct, 1.0f, elems);
             }
         }   
         // Camera movement
         else{
             float speed_scale = 6.0f;
             if(action_down(&game->is, act_camera_forward)){
-                // camera.pos.z -= 0.01f;
                 camera.pos = vec3_sum(camera.pos, vec3_scale(camera.forward, speed_scale * get_global_delta()));
             }
             if(action_down(&game->is, act_camera_back)){
-                // camera.pos.z += 0.01f;
                 camera.pos = vec3_sub(camera.pos, vec3_scale(camera.forward, speed_scale * get_global_delta()));
             }
             if(action_down(&game->is, act_camera_left)){
-                // camera.pos.x -= 0.01f;
                 camera.pos = vec3_sub(camera.pos, vec3_scale(camera.right, speed_scale * get_global_delta()));
             }
             if(action_down(&game->is, act_camera_right)){
-                // camera.pos.x += 0.01f;
                 camera.pos = vec3_sum(camera.pos, vec3_scale(camera.right, speed_scale * get_global_delta()));
             }
             if(action_down(&game->is, act_camera_up)){
@@ -268,10 +259,12 @@ int RunSpellGame(ParticleGame* game){
 
         /***************************************/
 
-        if(spell.is_active){
-            spell = get_result_spell(elems, ring);
-            spell.is_active = TRUE;
-        } else spell = get_result_spell(elems, ring);
+        if(button_pressed(&game->is, BUTTON_1)){
+            if(spell.is_active){
+                spell = get_result_spell(elems, ring);
+                spell.is_active = TRUE;
+            } else spell = get_result_spell(elems, ring);
+        }
 
         magic_simulate(game, spell, magic);
 
@@ -289,10 +282,15 @@ int RunSpellGame(ParticleGame* game){
             program_set_uniform_vec3f(&magic_program, "part_color", (vec3f){1.0f, 1.0f, 0.0f});
 
             if(spell.is_active){
+
+                Vectors3f part_positions = {0};
+                for(size_t i = 0; i < magic_origin.parts.count; i++){
+                    da_append(part_positions, magic_origin.parts.items[i].pos);
+                }
                 // render3d_points(magic.parts);
                 translate_magic(&magic_origin, magic, magic.pos);
-                update_particles(parts3d, magic_origin.parts.items, magic_origin.parts.count);
-                render_particles(parts3d, magic_origin.parts.count);
+                update_particles(parts3d, part_positions.items, part_positions.count);
+                render_particles(parts3d, part_positions.count); 
             }
 
             // Render objects
@@ -305,7 +303,6 @@ int RunSpellGame(ParticleGame* game){
 
 
             SDL_GL_SwapWindow(game->win->window);
-            // return 0;
         }
         else{
             clear_game_window(game);
@@ -313,6 +310,7 @@ int RunSpellGame(ParticleGame* game){
                 draw_circle_f(game->win->context, ring.center.x, ring.center.y, ring.radius, ring_color, 2);
                 put_pixel_f(game->win->context, ring.center.x, ring.center.y, ring_color);
             }
+            
             
             
             // Magic direction line
@@ -323,7 +321,7 @@ int RunSpellGame(ParticleGame* game){
                 (int)(ring.center.y + result_vec3.y)
             );
             //Magic source position
-            draw_filled_rect_f(game->win->context, 
+            draw_filled_rect_f(game->win->context,
                 (Rect){
                     (int)spell.position.x,
                     (int)spell.position.y,
@@ -332,12 +330,15 @@ int RunSpellGame(ParticleGame* game){
             );
             draw_sectors(game, spell, sector_line_color);
 
+            direct = vec2_rotate(direct, -game->is.mouse.ywheel/10);
+            draw_line_f(game->win->context, sector_line_color,
+                (int)game->is.mouse.x, (int)game->is.mouse.y,
+                (int)(game->is.mouse.x + direct.x),
+                (int)(game->is.mouse.y + direct.y)
+            );  
+
             vec2f origin_vec = MAGIC_RING_ORIGIN_VEC2(spell.ring);
             vec2f rotated_vec = vec2_rotate(origin_vec, PI_CONST);
-            // print_vec3((vec3f){origin_vec.x, origin_vec.y, 0.0f});
-            // print_vec3((vec3f){rotated_vec.x, rotated_vec.y, 0.0f});
-            // draw_line_f(game->win->context, sector_line_color, spell.ring.center.x, spell.ring.center.y, origin_vec.x, origin_vec.y);
-            // draw_line_f(game->win->context, sector_line_color, spell.ring.center.x, spell.ring.center.y, rotated_vec.x, rotated_vec.y);
 
             render_spell_params(game, spell, text_color, 10, 10);
             render_magic_params(game, magic, text_color, 10, 150);

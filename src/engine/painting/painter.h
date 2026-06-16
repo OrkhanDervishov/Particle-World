@@ -151,7 +151,7 @@ void draw_line_aa(Image img, Color c, int x0, int y0, int x1, int y1);
 #define POINT_RADIUS 3
 void draw_line_from_points(Image img, vec2* points, int count, Color color, int drawPoints);
 
-
+void draw_rotated_image_on_fimage(FormatImage dest, Image src, vec2f pos, float rotation, vec2f scale);
 
 
 // Conversion functions

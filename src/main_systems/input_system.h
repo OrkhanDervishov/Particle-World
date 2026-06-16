@@ -98,11 +98,11 @@ typedef struct{
 
 typedef struct{
     float x, y;
-    float prev_x, prev_y;
+    float xprev, yprev;
     float dx, dy;
     float xrel, yrel;
 
-    float wheel_x, wheel_y;
+    float xwheel, ywheel;
 
 
     union{

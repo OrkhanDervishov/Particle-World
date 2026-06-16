@@ -60,6 +60,7 @@ extern float vec3_dot(vec3f a, vec3f b);
 extern vec3f vec3_cross(vec3f a, vec3f b);
 extern float vec3_length(vec3f v);
 extern float vec3_get_angle(vec3f a, vec3f b);
+extern float vec3_get_cos(vec3f a, vec3f b);
 extern vec3f vec3_normalize(vec3f v);
 
 extern mat4f matrix_identity();

@@ -142,6 +142,13 @@ inline float vec3_get_angle(vec3f a, vec3f b){
     return angle;
 }
 
+inline float vec3_get_cos(vec3f a, vec3f b){
+    float a_dist = vec3_length(a);
+    float b_dist = vec3_length(b);
+    float dot = vec3_dot(a, b);
+    return dot/(a_dist*b_dist);
+}
+
 
 inline vec3f vec3_normalize(vec3f v){
     float len = vec3_length(v);
