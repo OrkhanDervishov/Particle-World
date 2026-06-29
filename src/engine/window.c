@@ -1,6 +1,18 @@
 #include "window.h"
 
 
+FormatImage sdl_surface_to_fimage(SDL_Surface *surf){
+    // To manipulate SDL's window surface through custom image object
+    FormatImage fimage;
+    fimage.width = surf->w;
+    fimage.height = surf->h;
+    fimage.stride = surf->w;
+    fimage.format = pnt_create_format(0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+    fimage.buffer = surf->pixels;
+    return fimage;
+}
+
+
 int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
     if(SDL_Init(SDL_INIT_VIDEO)){
         fprintf(stderr, "Error: %s\n", SDL_GetError());
@@ -36,14 +48,11 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs){
     
     // To manipulate SDL's window surface through custom image object
     Surface *surf = SDL_GetWindowSurface((*win)->window);
-    (*win)->context.width = surf->w;
-    (*win)->context.height = surf->h;
-    (*win)->context.format = create_format(0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-    //(*win)->context.format = create_format(0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-    (*win)->context.buffer = surf->pixels;
     (*win)->w = surf->w;
     (*win)->h = surf->h;
-
+    (*win)->fcontext = sdl_surface_to_fimage(surf);
+    (*win)->context.buffer = NULL;
+    pnt_create_image(&(*win)->context, (*win)->fcontext.width, (*win)->fcontext.height);
 
 
     //SDL_ShowCursor(SDL_DISABLE);
@@ -67,6 +76,13 @@ void DestroyWindow(Window** win){
     (*win) = NULL;
     SDL_Quit();
 }
+
+
+void pw_window_present(Window* win){
+    pnt_image_to_fimage(win->context, win->fcontext);
+    SDL_UpdateWindowSurface(win->window);
+}
+
 
 void Clear(Window* win){
     // SDL_SetRenderDrawColor(win->renderer, MGOOD_GRAY);

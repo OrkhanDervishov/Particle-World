@@ -1,7 +1,7 @@
 #include "blur.h"
 
-static inline Colorf scale_colorf(Colorf colorf, float scalar){
-    return (Colorf){
+static inline PNTColorf pnt_scale_colorf(PNTColorf colorf, float scalar){
+    return (PNTColorf){
         colorf.r * scalar,
         colorf.g * scalar,
         colorf.b * scalar,
@@ -10,7 +10,7 @@ static inline Colorf scale_colorf(Colorf colorf, float scalar){
 }
 
 
-void gaussian_blur_3x3(Image dest, Image src){
+void pnt_gaussian_blur_3x3(PNTImage dest, PNTImage src){
 
     /*   ___________
         |___|___|___|
@@ -27,18 +27,18 @@ void gaussian_blur_3x3(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int k = 0; k < 3; k++)
         for(int t = 0; t < 3; t++){
-            Color c = get_color(src, j+t-1, i+k-1);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[k][t]);
+            PNTColor c = pnt_get_color(src, j+t-1, i+k-1);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[k][t]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
-void gaussian_blur_5x5(Image dest, Image src){
+void pnt_gaussian_blur_5x5(PNTImage dest, PNTImage src){
 
     /*   ___________
         |___|___|___|
@@ -56,18 +56,18 @@ void gaussian_blur_5x5(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int k = 0; k < 5; k++)
         for(int t = 0; t < 5; t++){
-            Color c = get_color(src, j+t-2, i+k-2);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[k][t]);
+            PNTColor c = pnt_get_color(src, j+t-2, i+k-2);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[k][t]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
-void gaussian_blur_7x7(Image dest, Image src){
+void pnt_gaussian_blur_7x7(PNTImage dest, PNTImage src){
 
     /*   ___________
         |___|___|___|
@@ -87,18 +87,18 @@ void gaussian_blur_7x7(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int k = 0; k < 7; k++)
         for(int t = 0; t < 7; t++){
-            Color c = get_color(src, j+t-3, i+k-3);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[k][t]);
+            PNTColor c = pnt_get_color(src, j+t-3, i+k-3);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[k][t]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
-void gaussian_blur_9x9(Image dest, Image src){
+void pnt_gaussian_blur_9x9(PNTImage dest, PNTImage src){
 
     /*   ___________
         |___|___|___|
@@ -119,20 +119,20 @@ void gaussian_blur_9x9(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int k = 0; k < 9; k++)
         for(int t = 0; t < 9; t++){
-            Color c = get_color(src, j+t-4, i+k-4);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[k][t]);
+            PNTColor c = pnt_get_color(src, j+t-4, i+k-4);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[k][t]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
 
 
-void gaussian_blur_horizontal_3x3(Image dest, Image src){
+void pnt_gaussian_blur_horizontal_3x3(PNTImage dest, PNTImage src){
 
     /*   ___________
         |___|_*_|___|
@@ -147,17 +147,17 @@ void gaussian_blur_horizontal_3x3(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int t = 0; t < 3; t++){
-            Color c = get_color(src, j+t-1, i);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[t]);
+            PNTColor c = pnt_get_color(src, j+t-1, i);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[t]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
-void gaussian_blur_vertical_3x3(Image dest, Image src){
+void pnt_gaussian_blur_vertical_3x3(PNTImage dest, PNTImage src){
 
     /*   ___
         |___|
@@ -174,18 +174,18 @@ void gaussian_blur_vertical_3x3(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int k = 0; k < 3; k++){
-            Color c = get_color(src, j, i+k-1);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[k]);
+            PNTColor c = pnt_get_color(src, j, i+k-1);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[k]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
 
-void gaussian_blur_horizontal_5x5(Image dest, Image src){
+void pnt_gaussian_blur_horizontal_5x5(PNTImage dest, PNTImage src){
     float divisor = 19.0f;
     float kernel[5] = {
         1.0f/divisor, 
@@ -197,17 +197,17 @@ void gaussian_blur_horizontal_5x5(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int t = 0; t < 5; t++){
-            Color c = get_color(src, j+t-4, i);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[t]);
+            PNTColor c = pnt_get_color(src, j+t-4, i);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[t]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
-void gaussian_blur_vertical_5x5(Image dest, Image src){
+void pnt_gaussian_blur_vertical_5x5(PNTImage dest, PNTImage src){
     float divisor = 19.0f;
     float kernel[5] = {
         1.0f/divisor, 
@@ -219,18 +219,18 @@ void gaussian_blur_vertical_5x5(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int k = 0; k < 5; k++){
-            Color c = get_color(src, j, i+k-4);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[k]);
+            PNTColor c = pnt_get_color(src, j, i+k-4);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[k]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
 
-void gaussian_blur_horizontal_7x7(Image dest, Image src){
+void pnt_gaussian_blur_horizontal_7x7(PNTImage dest, PNTImage src){
     float divisor = 64.0f;
     float kernel[7] = {
         1.0f/divisor,
@@ -244,17 +244,17 @@ void gaussian_blur_horizontal_7x7(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int t = 0; t < 7; t++){
-            Color c = get_color(src, j+t-4, i);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[t]);
+            PNTColor c = pnt_get_color(src, j+t-4, i);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[t]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
-void gaussian_blur_vertical_7x7(Image dest, Image src){
+void pnt_gaussian_blur_vertical_7x7(PNTImage dest, PNTImage src){
     float divisor = 64.0f;
     float kernel[7] = {
         1.0f/divisor,
@@ -268,18 +268,18 @@ void gaussian_blur_vertical_7x7(Image dest, Image src){
     
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int k = 0; k < 7; k++){
-            Color c = get_color(src, j, i+k-4);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[k]);
+            PNTColor c = pnt_get_color(src, j, i+k-4);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[k]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
 
-void gaussian_blur_horizontal_9x9(Image dest, Image src){
+void pnt_gaussian_blur_horizontal_9x9(PNTImage dest, PNTImage src){
     float divisor = 256.0f;
     float kernel[9] = {
         1/divisor,
@@ -295,17 +295,17 @@ void gaussian_blur_horizontal_9x9(Image dest, Image src){
 
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int t = 0; t < 9; t++){
-            Color c = get_color(src, j+t-4, i);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[t]);
+            PNTColor c = pnt_get_color(src, j+t-4, i);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[t]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
-void gaussian_blur_vertical_9x9(Image dest, Image src){
+void pnt_gaussian_blur_vertical_9x9(PNTImage dest, PNTImage src){
     float divisor = 256.0f;
     float kernel[9] = {
         1/divisor,
@@ -321,14 +321,14 @@ void gaussian_blur_vertical_9x9(Image dest, Image src){
 
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 1.0f};
         for(int k = 0; k < 9; k++){
-            Color c = get_color(src, j, i+k-4);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[k]);
+            PNTColor c = pnt_get_color(src, j, i+k-4);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[k]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
 
@@ -378,7 +378,7 @@ float kernel_9[9] = {
 };
 
 
-void gaussian_blur_horizontal(Image dest, Image src, int kernel_size){
+void pnt_gaussian_blur_horizontal(PNTImage dest, PNTImage src, int kernel_size){
     
     float* kernel;
     switch (kernel_size)
@@ -402,17 +402,17 @@ void gaussian_blur_horizontal(Image dest, Image src, int kernel_size){
 
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 0.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 0.0f};
         for(int t = 0; t < kernel_size; t++){
-            Color c = get_color(src, j+t-kernel_size/2, i);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[t]);
+            PNTColor c = pnt_get_color(src, j+t-kernel_size/2, i);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[t]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }
-void gaussian_blur_vertical(Image dest, Image src, int kernel_size){
+void pnt_gaussian_blur_vertical(PNTImage dest, PNTImage src, int kernel_size){
 
     float* kernel;
     switch (kernel_size)
@@ -436,13 +436,13 @@ void gaussian_blur_vertical(Image dest, Image src, int kernel_size){
 
     for(int i = 0; i < src.height; i++)
     for(int j = 0; j < src.width; j++){
-        Colorf sum_color = {0.0f, 0.0f, 0.0f, 0.0f};
+        PNTColorf sum_color = {0.0f, 0.0f, 0.0f, 0.0f};
         for(int k = 0; k < kernel_size; k++){
-            Color c = get_color(src, j, i+k-kernel_size/2);
-            Colorf cf = color_to_colorf(c);
-            sum_color = add_colorf(sum_color, cf, kernel[k]);
+            PNTColor c = pnt_get_color(src, j, i+k-kernel_size/2);
+            PNTColorf cf = pnt_color_to_colorf(c);
+            sum_color = pnt_add_colorf(sum_color, cf, kernel[k]);
         }
-        Color color = colorf_to_color(sum_color);
-        IMG_GET(dest, j, i) = color;
+        PNTColor color = pnt_colorf_to_color(sum_color);
+        PNT_IMG_GET(dest, j, i) = color;
     }
 }

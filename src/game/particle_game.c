@@ -57,6 +57,8 @@ int CreateParticleGame(ParticleGame** game){
     // Initializing entity system
     POOL_INIT((*game)->ep);
     //******************************************/
+
+    pw_asset_manager_init(&(*game)->am);
     
     //******************************************/
     // Initializing text rendering system

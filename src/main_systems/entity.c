@@ -7,27 +7,18 @@
 // Storing entities as objects
 
 entity_id_t entity_add(EntityPool* pool, Entity item){
-    if(pool->free_indices.count > 0){
-        entity_id_t index = da_back(pool->free_indices);
-        pool->items.items[index] = item;
-        pool->slots.items[index] = TRUE;
-        pool->free_indices.count--;
-        return index;
-    }
-    da_append(pool->items, item);
-    da_append(pool->slots, TRUE);
-    return pool->items.count-1;
+    entity_id_t entity_id;
+    pool_append(*pool, item, entity_id);
+    return entity_id;
 }
 
 void entity_delete(EntityPool* pool, entity_id_t index){
-    if(index >= pool->items.count || pool->slots.items[index] == FALSE) return;
-    pool->slots.items[index] = FALSE;
-    da_append(pool->free_indices, index);
+    pool_delete(*pool, index);
 }
 
 void entity_pool_print_stats(EntityPool* pool){
-    printf("Entity count: %zu\n", pool->items.count - pool->free_indices.count);
-}   
+    printf("Entity count: %zu\n", pool_get_count(*pool));
+}
 
 /************************************************************/
 
@@ -52,18 +43,18 @@ void draw_rect_collider(Image image, RectCollider rc, Color color){
         (int)rc.collider.w,
         (int)rc.collider.h
     };
-    draw_rect(image, rect, color, 1);
+    pnt_draw_rect(image, rect, color, 1);
 }
 
-void draw_rect_collider_f(FormatImage image, RectCollider rc, Color color){
-    Rect rect = {
-        (int)rc.collider.x,
-        (int)rc.collider.y,
-        (int)rc.collider.w,
-        (int)rc.collider.h
-    };
-    draw_rect_f(image, rect, color, 1);
-}
+// void draw_rect_collider_f(FormatImage image, RectCollider rc, Color color){
+//     Rect rect = {
+//         (int)rc.collider.x,
+//         (int)rc.collider.y,
+//         (int)rc.collider.w,
+//         (int)rc.collider.h
+//     };
+//     draw_rect_f(image, rect, color, 1);
+// }
 
 bool collide_rect_to_particle(ChunkSpace* cs, RectCollider rc){
     Rectf rect = rc.collider;

@@ -5,7 +5,7 @@
 
 // static inline Color add_color(Color a, Color b);
 
-void additive_blend(Image dest, Image src);
-void alpha_blend(Image dest, Image src);
+void pnt_additive_blend(PNTImage dest, PNTImage src);
+void pnt_alpha_blend(PNTImage dest, PNTImage src);
 
 #endif

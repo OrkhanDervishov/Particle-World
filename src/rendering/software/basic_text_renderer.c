@@ -12,11 +12,11 @@ int InitBasicTextRenderer(){
 
     fontWidth = DEFAULT_FONT_WIDTH;
     fontHeight = DEFAULT_FONT_HEIGHT;
-    create_image(&font_image, fontWidth, fontHeight);
+    pnt_create_image(&font_image, fontWidth, fontHeight);
 }
 
 void EndBasicTextRenderer(){
-    delete_image(&font_image);
+    pnt_delete_image(&font_image);
 }
 
 int SymbolToImage(char sym, Color color){
@@ -32,7 +32,7 @@ int SymbolToImage(char sym, Color color){
 void BasicSymbolRender(Window* window, char sym, int x, int y, int scale, Color color){
     // return;
     SymbolToImage(sym, color);
-    draw_image_on_fimage_scaled(window->context, font_image, x, y, scale, scale);
+    pnt_blit_scaled(window->context, font_image, x, y, scale, scale);
 }
 
 void BasicTextRender(Window* window, const char* text, int x, int y, int scale, Color color){

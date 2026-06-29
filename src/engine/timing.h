@@ -3,6 +3,14 @@
 
 #include "time.h"
 
+typedef float pw_time_t;
+
+typedef struct{
+    pw_time_t *items;
+    size_t count;
+    size_t capacity;
+} PWTimes;
+
 typedef struct{
     float delta_time;
     float last_time;
@@ -11,6 +19,7 @@ typedef struct{
     float total_time;
     clock_t time_i;
 } Time;
+
 extern Time global_time;
 
 #define CLOCKT_TO_FLOAT(time) ((float)(time)) / ((float)CLOCKS_PER_SEC)
@@ -50,6 +59,8 @@ static inline float get_last_time(){
     return global_time.last_time;
 }
 
+
+#define PW_DELTA_TIME get_global_delta()
 static inline float get_global_delta(){
     return global_time.delta_time;
 }

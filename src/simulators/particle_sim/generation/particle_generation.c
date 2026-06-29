@@ -11,7 +11,7 @@ ParticleImage GenerateMagicFromImage(Image img, size_t part_size, int zeroColor)
     
     for(int i = 0; i < pimg.height; i++)
     for(int j = 0; j < pimg.width; j++){
-        part_color_t color = IMG_GET(img, j*part_size, i*part_size);
+        part_color_t color = PNT_IMG_GET(img, j*part_size, i*part_size);
         bool add = (color.a != 0 ? TRUE : FALSE);
         pimg.types[i*pimg.width + j] = (add ? PHANTOM : EMPTY);
         if(add){

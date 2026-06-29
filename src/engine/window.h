@@ -19,7 +19,10 @@ typedef struct{
     int h;
     char title[MAX_TITLE_LEN];
     bool isrunning;
-    FormatImage context;
+
+    FormatImage fcontext;
+    Image       context;
+
     SDL_Window* window;
     SDL_GLContext* gl_context;
     // SDL_Renderer* renderer;
@@ -31,6 +34,7 @@ int CreateWindow(Window** win, int w, int h, const char* title, bool fs);
 void DestroyWindow(Window** win);
 
 // Render
+void pw_window_present(Window* win);
 void Clear(Window* win);
 
 int SetWindowIcon(Window* window, char* path);

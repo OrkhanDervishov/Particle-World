@@ -10,14 +10,15 @@
 #include <math.h>
 #include <assert.h>
 #include "la.h"
+#include <stdbool.h>
 
 #define INF 0x3F3F3F3F
 #define GENERIC_FUNC_POINTER void (*)()
 
 #define byte char
-#define bool uint8_t
-#define TRUE 1
-#define FALSE 0
+// #define bool uint8_t
+#define TRUE true
+#define FALSE false
 
 typedef enum{
     UP = 0,
@@ -59,12 +60,6 @@ typedef struct{
     int x, y;
     int radius;
 } Circle;
-
-typedef struct{
-    bool* items;
-    size_t count;
-    size_t capacity;
-} Slots;
 
 typedef enum{
     WHITE,

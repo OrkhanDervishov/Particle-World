@@ -5,15 +5,13 @@
 #include "constants.h"
 #include "da.h"
 #include "core.h"
+#include "asset.h"
 
 #define MAX_ENTITY_COUNT 4096
 
 typedef size_t entity_id_t;
 
 
-typedef struct{
-    Image* sprite;
-} Sprite;
 
 typedef struct{
     Rectf collider;
@@ -29,9 +27,9 @@ DOCUMENTATION:
 To start the system init initialize an entity pool: POOL_INIT(ep);
 */
 
-#define ENTITY_GET(pool, index) (pool).items.items[(index)]
-#define ENTITY_SET(pool, index, new) (pool).items.items[(index)] = (new);
-#define ENTITY_IS_DELETED(pool, index) (pool).slots.items[(index)]
+#define ENTITY_GET(pool, index) pool_get(pool, index)
+#define ENTITY_SET(pool, index, new) pool_get(pool, new, index)
+#define ENTITY_IS_DELETED(pool, index) pool_is_deleted(pool, index)
 #define POOL_INIT(pool) (pool) = (EntityPool){0}
 
 /*
@@ -44,8 +42,8 @@ typedef struct{
 */
 
 typedef struct{
+    pw_asset_t asset;
     Posf pos;
-    Sprite sprite;
     RectCollider collider;
 } Entity;
 
@@ -56,14 +54,8 @@ typedef struct{
 } Entities;
 
 typedef struct{
-    entity_id_t* items;
-    size_t count;
-    size_t capacity;
-} EntityIndices;
-
-typedef struct{
-    Entities items;
-    EntityIndices free_indices;
+    Entities elems;
+    Indices free_indices;
     Slots slots;
 } EntityPool;
 

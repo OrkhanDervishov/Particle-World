@@ -6,6 +6,10 @@
 #define PI_CONST 3.14159265f
 
 typedef struct{
+    size_t x, y;
+} vec2ui;
+
+typedef struct{
     int x, y;
 } vec2;
 typedef vec2 vec2i;

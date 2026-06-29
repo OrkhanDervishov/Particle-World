@@ -20,7 +20,7 @@ void DrawGuiBox(Window* window, GuiElement* elem, int x, int y){
     int rel_y = y + gb->pos.y;
     if(gb->bg_draw){
         Rect rect = {rel_x, rel_y, gb->sizes.x, gb->sizes.y};
-        draw_filled_rect_f(window->context, rect, gb->color);
+        pnt_draw_filled_rect(window->context, rect, gb->color);
     }
 
     for(int i = 0; i < gb->elem_count; i++){
@@ -36,11 +36,11 @@ void DrawButton(Window* window, GuiElement* elem, int x, int y){
     int rel_y = y + button->pos.y;
     if(button->bg_draw){
         Rect rect = {rel_x, rel_y, button->sizes.x, button->sizes.y};
-        draw_filled_rect_f(window->context, rect, button->color);
+        pnt_draw_filled_rect(window->context, rect, button->color);
     }
     Color textColor = {.rgba=0xFFFFFFFF};
     BasicTextRender(
         window, button->text, rel_x+(button->sizes.x/3)-(strlen(button->text)), 
-        rel_y+(button->sizes.y/3), 1, get_negative(button->color)
+        rel_y+(button->sizes.y/3), 1, pnt_get_negative(button->color)
     );
 }

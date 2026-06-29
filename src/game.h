@@ -13,6 +13,8 @@
 #include "image_manipulation.h"
 #include "entity.h"
 #include "custom_parser.h"
+#include "asset.h"
+#include "asset_renderer.h"
 
 int RunParticleGame(ParticleGame* game);
 

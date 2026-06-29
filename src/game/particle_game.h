@@ -16,6 +16,8 @@
 #include "entity.h"
 #include "input_system.h"
 #include "constants.h"
+#include "asset.h"
+#include "asset_renderer.h"
 
 
 typedef struct{
@@ -45,6 +47,7 @@ typedef struct ParticleGame{
     Camera2D camera;
     InputSystem is;
     EntityPool ep;
+    PWAssetManager am;
     int cbCount;
     void (*callbacks[CB_COUNT_MAX])(struct ParticleGame* game);
 } ParticleGame;

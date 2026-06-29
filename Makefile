@@ -40,5 +40,8 @@ windows: windows_build
 all2: win_build
 	./win_build
 
+clean2:
+	del /S /Q "./bin/" *.o
+
 linux: linux_build
 	./linux_build

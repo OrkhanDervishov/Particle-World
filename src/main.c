@@ -20,7 +20,8 @@ int main(int argc, char* argv[]){
 
     ParticleGame* game;
     if(CreateParticleGame(&game)) printf("failed\n");
-    RunSpellGame(game);
+    // RunSpellGame(game);
+    RunEntityGame(game);
     DeleteParticleGame(&game);
     return 0;
 }

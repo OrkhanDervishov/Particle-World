@@ -13,13 +13,13 @@ void InitChunkImage(int chunk_w, int chunk_h, int partSize){
     reqChunkWidth = chunk_w;
     reqChunkHeight = chunk_h;
     reqParticleSize = partSize;
-    create_image(&chunk_image, chunk_w, chunk_h);
-    create_fimage(&chunk_fimage, chunk_w, chunk_h, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+    pnt_create_image(&chunk_image, chunk_w, chunk_h);
+    pnt_create_fimage(&chunk_fimage, chunk_w, chunk_h, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 }
 
 void FreeChunkImage(){
-    delete_fimage(&chunk_fimage);
-    delete_image(&chunk_image);
+    pnt_delete_fimage(&chunk_fimage);
+    pnt_delete_image(&chunk_image);
 }
 
 
@@ -84,7 +84,7 @@ int ChunkToImage(Chunk* chunk){
                 .h=1
             };
             chunk->c[i].a = 200;
-            draw_filled_rect(chunk_image, r, chunk->c[i]);
+            pnt_draw_filled_rect(chunk_image, r, chunk->c[i]);
             continue;
         }
         chunk_image.buffer[i] = chunk->c[i];
@@ -129,7 +129,7 @@ void ShowChunkDirtyRectsSW(Window* window, Chunk* chunk, int x, int y, Color col
         rect.y = rect.y*DEFAULT_PARTICLE_SIZE + y;
         rect.w *= DEFAULT_PARTICLE_SIZE;
         rect.h *= DEFAULT_PARTICLE_SIZE;
-        draw_rect_f(window->context, rect, color, 1);
+        pnt_draw_rect(window->context, rect, color, 1);
     }
 }
 
@@ -150,7 +150,7 @@ void ShowChunkSpaceDirtyRectsSW(Window* window, ChunkSpace* cs, int x, int y){
 
 void ShowChunkSW(Window* window, Chunk* chunk, int x, int y, Color color){
     Rect rect = {.x = x, .y = y, .w = chunk->w*DEFAULT_PARTICLE_SIZE, .h = chunk->h*DEFAULT_PARTICLE_SIZE};
-    draw_rect_f(window->context, rect, color, 1);
+    pnt_draw_rect(window->context, rect, color, 1);
     // draw_filled_rect_f(window->context, rect, color);
 }
 
@@ -190,7 +190,7 @@ void ShowChunkSpaceAllSW(Window* window, ChunkSpace* cs, int x, int y){
 void add_light(Window* window, Chunk* chunk, int x, int y){
     Image light;
     light.buffer = NULL;
-    load_png(&light, "resources/weak_light.png");
+    pnt_load_png(&light, "resources/weak_light.png");
 
     for(int i = 0; i < chunk->h; i++)
     for(int j = 0; j < chunk->w; j++){
@@ -201,7 +201,7 @@ void add_light(Window* window, Chunk* chunk, int x, int y){
         ){
             int chance = rand() % 100;
             if(chance > 50){
-                draw_image_on_fimage(
+                pnt_blit(
                     window->context, light, 
                     x + j*DEFAULT_PARTICLE_SIZE - light.width/2, 
                     y + i*DEFAULT_PARTICLE_SIZE - light.height/2
@@ -210,12 +210,12 @@ void add_light(Window* window, Chunk* chunk, int x, int y){
         }
     }
 
-    delete_image(&light);
+    pnt_delete_image(&light);
 }
 
 void DrawChunkSW(Image part_image, Chunk* chunk, int x, int y){
     ChunkToImage(chunk);
-    draw_image_on_image(part_image, chunk_image, x, y);
+    pnt_blit(part_image, chunk_image, x, y);
     // SDL_Rect srcRect = {0, 0, chunk->w, chunk->h};
     // SDL_Rect dstRect = {x, y, chunk->w*reqParticleSize, chunk->h*reqParticleSize};
     // draw_image_on_fimage_scaled(window->context, chunk_image, x, y, reqParticleSize, reqParticleSize);

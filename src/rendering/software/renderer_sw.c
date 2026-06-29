@@ -10,19 +10,19 @@ void clear_window(Window *window, Color color){
     //     )
     // );
     // printf("works2\n");
-    fill_f(window->context, color);
+    pnt_fill(window->context, color);
 }
 
 void gen_light_chunk(Chunk* chunk){
     
     Image img;
     img.buffer = NULL;
-    create_image(&img, chunk->w, chunk->h);
+    pnt_create_image(&img, chunk->w, chunk->h);
 
     for(int i = 0; i < chunk->h; i++)
     for(int j = 0; j < chunk->w; j++){
-        IMG_GET(img, j, i) = CHUNK_GET_TYPE(*chunk, j, i) == LAVA ? CHUNK_GET_COLOR(*chunk, j, i) : (Color){.rgba=0xFF000000};
+        PNT_IMG_GET(img, j, i) = CHUNK_GET_TYPE(*chunk, j, i) == LAVA ? CHUNK_GET_COLOR(*chunk, j, i) : (Color){.rgba=0xFF000000};
     }
 
-    save_image_png(&img, "light_chunk.png");
+    pnt_save_image_png(&img, "light_chunk.png");
 }
