@@ -16,6 +16,6 @@
 #include "asset.h"
 #include "asset_renderer.h"
 
-int RunParticleGame(ParticleGame* game);
+int RunParticleEngine(ParticleEngine* game);
 
 #endif

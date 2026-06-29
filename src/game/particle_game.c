@@ -9,10 +9,10 @@
 #define REGION_HEIGHT DEFAULT_REGION_HEIGHT
 
 
-int CreateParticleGame(ParticleGame** game){
+int CreateParticleEngine(ParticleEngine** game){
     //******************************************/
     // Initializing game window
-    (*game) = (ParticleGame*)malloc(sizeof(ParticleGame));
+    (*game) = (ParticleEngine*)malloc(sizeof(ParticleEngine));
     if(CreateWindow(&((*game)->win), SCR_WIDTH, SCR_HEIGHT, WIN_TITLE, TRUE)) return 1;
     //******************************************/
     
@@ -105,7 +105,7 @@ int CreateParticleGame(ParticleGame** game){
     return 0;
 }
 
-void DeleteParticleGame(ParticleGame** game){
+void DeleteParticleEngine(ParticleEngine** game){
     // save_image_png(&(*game)->mouse.cursor_img_normal, "hello.png");
     free_cursor_image(&(*game)->mouse);
     DeleteGuiBox((GuiBox**)(&(*game)->gui.element));
@@ -114,7 +114,7 @@ void DeleteParticleGame(ParticleGame** game){
     free(*game);
 }
 
-int add_callback_pg(ParticleGame* game, void (*callback)(ParticleGame* game)){
+int add_callback_pg(ParticleEngine* game, void (*callback)(ParticleEngine* game)){
     if(game->cbCount >= CB_COUNT_MAX){
         game->cbCount = CB_COUNT_MAX;
         printf("callback array is filled up\n");
@@ -140,7 +140,7 @@ int cmp_greater(const void* a, const void* b){
 
 
 #define INF 0x3F3F3F3F
-void delete_callback_pg(ParticleGame* game, int cb_index){
+void delete_callback_pg(ParticleEngine* game, int cb_index){
     if(game->cbCount <= 0){
         game->cbCount = 0;
         printf("callback array is empty\n");
@@ -161,7 +161,7 @@ void delete_callback_pg(ParticleGame* game, int cb_index){
     game->cbCount--;
 }
 
-// void call_all_callbacks(ParticleGame* game){
+// void call_all_callbacks(ParticleEngine* game){
 //     for(int i = 0; i < game->cbCount; i++){
 //         game->callbacks[i](game);
 //     }
@@ -185,7 +185,7 @@ void delete_callback_pg(ParticleGame* game, int cb_index){
 // }
 
 
-int BuildLabEnv(ParticleGame* game){
+int BuildLabEnv(ParticleEngine* game){
     ChunkSpace* cs = &(game->cs);
 
     WallBoxCS(cs);

@@ -15,14 +15,12 @@ typedef uint16_t pw_anim_frame_t;
 
 typedef enum{
     // PW_ASSET_IMAGE = 0,
-    PW_SPRITE = 0,
-    PW_ARRAY_IMAGE,
-    PW_SPRITE_ANIMATION,
-    PW_SPRITE_ANIMATOR,
+    PW_ASSET_SPRITE = 0,
+    PW_ASSET_SPRITE_ANIMATION,
+    PW_ASSET_VISUAL_EFFECT,
 
-    PW_AUDIO,
-    PW_SOUND_EFFECT,
-    PW_VISUAL_EFFECT
+    PW_ASSET_AUDIO,
+    PW_ASSET_SOUND_EFFECT,
 } PWAssetType;
 
 // typedef struct{
@@ -60,22 +58,10 @@ typedef struct{
 } PWSpriteAnimation;
 
 typedef struct{
-    pw_asset_t animation;
-    
-    pw_anim_frame_t current_frame;
-    pw_time_t timer;
-    bool playing;
-    bool looping;
-} PWSpriteAnimator;
-
-typedef struct{
     PWAssetType type;
     union{
-        // PWArrayImage asset_aimage;
-        // PWAssetImage asset_image;
         PWSprite sprite;
         PWSpriteAnimation sprite_animation;
-        PWSpriteAnimator sprite_animator;
     };
 } PWAsset;
 
@@ -114,9 +100,35 @@ typedef struct{
     // Pool for storing assets
     PWAssetPool asset_pool;
 
-    
-
 } PWAssetManager;
+
+
+
+// RENDERABLES
+
+typedef struct{
+    pw_asset_t animation;
+    
+    pw_anim_frame_t current_frame;
+    pw_time_t timer;
+    bool playing;
+    bool looping;
+} PWSpriteAnimator;
+
+typedef enum{
+    PW_RENDERABLE_SPRITE_STATIC,
+    PW_RENDERABLE_SPRITE_ANIMATOR
+} PWRenderableType;
+
+typedef struct{
+    PWRenderableType type;  
+    union{
+        pw_asset_t asset;
+        PWSpriteAnimator sprite_animator;
+    };
+} PWRenderable;
+
+
 
 #define LOAD_ASSET(asset_loader, asset, type)\
 
@@ -134,11 +146,12 @@ int pw_sprite_animation_set_frame_images(PWAssetManager* am, pw_asset_t anim_id,
 int pw_sprite_animation_set_frames(PWAssetManager* am, pw_asset_t anim_id, PWFrames frames);
 int pw_sprite_animation_set_delays(PWAssetManager* am, pw_asset_t anim_id, PWTimes delays);
 
-pw_asset_t pw_sprite_animator_create_load(PWAssetManager* am, pw_asset_t animation, bool playing, bool looping);
-int pw_sprite_animator_set_playing(PWAssetManager* am, pw_asset_t animator_id, bool playing);
-int pw_sprite_animator_set_looping(PWAssetManager* am, pw_asset_t animator_id, bool looping);
 
-void pw_sprite_animator_update(PWAssetManager* am, pw_asset_t animator_id, pw_time_t delta_time);
+
+PWRenderable pw_sprite_animator_create_renderable(PWAssetManager* am, pw_asset_t animation, bool playing, bool looping);
+void pw_sprite_animator_set_playing(PWAssetManager* am, PWSpriteAnimator* animator, bool playing);
+void pw_sprite_animator_set_looping(PWAssetManager* am, PWSpriteAnimator* animator, bool looping);
+void pw_sprite_animator_update(PWAssetManager* am, PWSpriteAnimator* animator, pw_time_t delta_time);
 
 // int asset_to_array_image(ArrayImage* arr_image, AssetImage image, int offset_x, int offset_y);
 // void array_image_to_anim(Animation* anim, ArrayImage arr_image);

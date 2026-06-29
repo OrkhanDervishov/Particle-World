@@ -22,7 +22,7 @@ inline Image pw_image_get_frame(Image img, PWSprite sprite, pw_anim_frame_t fram
 
 void pw_make_asset_image_multiple(PWAssetManager* am, pw_asset_t asset_id, vec2 start, vec2 offset, vec2 rows_cols){
     PWAsset asset = pool_get(am->asset_pool, asset_id);
-    if(asset.type != PW_SPRITE){
+    if(asset.type != PW_ASSET_SPRITE){
         return;
     }
 
@@ -41,7 +41,7 @@ void pw_make_asset_image_multiple(PWAssetManager* am, pw_asset_t asset_id, vec2 
 
 void pw_make_asset_image_multiple_auto(PWAssetManager* am, pw_asset_t asset_id, vec2 rows_cols){
     PWAsset *asset = &pool_get(am->asset_pool, asset_id);
-    if(asset->type != PW_SPRITE){
+    if(asset->type != PW_ASSET_SPRITE){
         return;
     }
 
@@ -59,7 +59,7 @@ void pw_make_asset_image_multiple_auto(PWAssetManager* am, pw_asset_t asset_id, 
 
 Image pw_sprite_multiple_get_image(PWAssetManager* am, pw_asset_t asset_id, int index){
     PWAsset asset = pool_get(am->asset_pool, asset_id);
-    if(asset.type != PW_SPRITE){
+    if(asset.type != PW_ASSET_SPRITE){
         return;
     }
     PWSprite sprite = asset.sprite;
@@ -105,7 +105,7 @@ PWAsset pw_load_sprite(PWAssetManager* am, const char* path){
     PWSprite image_asset;
     image_asset.image_id = pw_load_asset_image(am, path);
 
-    asset.type = PW_SPRITE;
+    asset.type = PW_ASSET_SPRITE;
     asset.sprite = image_asset;
 
     return asset;
@@ -155,16 +155,6 @@ PWSpriteAnimation pw_sprite_animation_set_delays_args(PWSpriteAnimation anim, in
     return anim;
 }
 
-// PWSpriteAnimation pw_sprite_animation_set_frames(PWSpriteAnimation anim, PWFrames frames){
-//     da_copy(anim.frame_order, frames);
-//     return anim;
-// }
-
-// PWSpriteAnimation pw_sprite_animation_set_delays(PWSpriteAnimation anim, PWTimes delays){
-//     da_copy(anim.delays, delays);
-//     return anim;
-// }
-
 
 // SPRITE ANIMATOR
 
@@ -206,7 +196,7 @@ pw_asset_t pw_load_asset(PWAssetManager* am, const char* path, PWAssetType type)
 
     PWAsset asset;
     switch(type){
-        case PW_SPRITE:
+        case PW_ASSET_SPRITE:
         {
             asset = pw_load_sprite(am, path);
             if(asset.sprite.image_id == ERROR_IMAGE_ID){
@@ -214,11 +204,9 @@ pw_asset_t pw_load_asset(PWAssetManager* am, const char* path, PWAssetType type)
                 return ERROR_ASSET_ID;
             }
         } break;
-        case PW_SPRITE_ANIMATION:
+        case PW_ASSET_SPRITE_ANIMATION:
         {
-        } break;
-        case PW_SPRITE_ANIMATOR:
-        {
+
         } break;
 
         default:
@@ -243,7 +231,7 @@ pw_asset_t pw_sprite_animation_create_load(PWAssetManager* am, pw_asset_t frame_
     PWSpriteAnimation anim = pw_sprite_animation_create(frame_images, frame_order, delays);
 
     PWAsset asset = {
-        .type = PW_SPRITE_ANIMATION,
+        .type = PW_ASSET_SPRITE_ANIMATION,
         .sprite_animation = anim
     };
 
@@ -270,37 +258,35 @@ int pw_sprite_animation_set_delays(PWAssetManager* am, pw_asset_t anim_id, PWTim
     return 0;
 }
 
-// SPRITE ANIMATOR
+/************************************************************/
 
-pw_asset_t pw_sprite_animator_create_load(PWAssetManager* am, pw_asset_t animation, bool playing, bool looping){
+
+
+
+
+// RENDERABLES
+/************************************************************/
+
+PWRenderable pw_sprite_animator_create_renderable(PWAssetManager* am, pw_asset_t animation, bool playing, bool looping){
     PWSpriteAnimator animator = pw_sprite_animator_create(am, animation, 0, 0.0f, playing, looping);
 
-    PWAsset asset = {
-        .type = PW_SPRITE_ANIMATOR,
+    PWRenderable renderable = {
+        .type = PW_RENDERABLE_SPRITE_ANIMATOR,
         .sprite_animator = animator
     };
 
-    pw_asset_t asset_id;
-    pool_append(am->asset_pool, asset, asset_id);
-    return asset_id;
+    return renderable;
 }
 
-int pw_sprite_animator_set_playing(PWAssetManager* am, pw_asset_t animator_id, bool playing){
-    PWAsset* animator = &pool_get(am->asset_pool, animator_id);
-    animator->sprite_animator.playing = playing;
-    return 0;
+void pw_sprite_animator_set_playing(PWAssetManager* am, PWSpriteAnimator* animator, bool playing){
+    animator->playing = playing;
 }
 
-int pw_sprite_animator_set_looping(PWAssetManager* am, pw_asset_t animator_id, bool looping){
-    PWAsset* animator = &pool_get(am->asset_pool, animator_id);
-    animator->sprite_animator.looping = looping;
-    return 0;
+void pw_sprite_animator_set_looping(PWAssetManager* am, PWSpriteAnimator* animator, bool looping){
+    animator->looping = looping;
 }
 
-void pw_sprite_animator_update(PWAssetManager* am, pw_asset_t animator_id, pw_time_t delta_time){
-    PWAsset* animator_asset = &pool_get(am->asset_pool, animator_id);
-    PWSpriteAnimator *animator = &animator_asset->sprite_animator;
-
+void pw_sprite_animator_update(PWAssetManager* am, PWSpriteAnimator* animator, pw_time_t delta_time){
     PWAsset* animation_asset = &pool_get(am->asset_pool, animator->animation);
     PWSpriteAnimation *animation = &animation_asset->sprite_animation;
 
@@ -322,60 +308,4 @@ void pw_sprite_animator_update(PWAssetManager* am, pw_asset_t animator_id, pw_ti
 }
 
 
-
-
 /************************************************************/
-
-
-
-// UNUSED
-/************************************************************/
-// int pw_asset_to_array_image(PWArrayImage* arr_image, PWAssetImage image, int offset_x, int offset_y){
-//     int res = copy_image(&arr_image->image, image.image);
-//     if(!res) return res;
-
-//     arr_image->offset_x = offset_x;
-//     arr_image->offset_y = offset_y;
-//     arr_image->cols = image.image.width/offset_x;
-//     arr_image->rows = image.image.height/offset_y;
-//     return 0;
-// }
-
-// Image array_image_get_frame(ArrayImage* arr_image, int frame_index){
-//     Image image = {
-//         .width = arr_image->offset_x, 
-//         .height = arr_image->offset_y,
-//         .buffer = NULL
-//     };
-//     if(frame_index >= arr_image->offset_x*arr_image->offset_y){
-//         image.width = 0;
-//         image.height = 0;
-//         return image;
-//     }
-
-//     int x = (frame_index % arr_image->cols) * arr_image->offset_x;
-//     int y = (frame_index / arr_image->rows) * arr_image->offset_y;
-//     int index = arr_image->image.width*y + x;
-
-//     image.buffer = arr_image->image.buffer + index;
-//     return image;
-// }
-
-// int create_animation(Animation* anim){
-    
-//     return 0;
-// }
-
-// void array_image_to_anim(Animation* anim, ArrayImage* arr_image){
-//     anim->frame_images = arr_image;
-// }
-
-// void anim_add_order(Animation* anim, int* order){
-    
-// }
-// void anim_add_delays(Animation* anim, float* delays){
-
-// }
-// Image anim_get_frame(Animation* anim, int frame_index){
-    
-// }

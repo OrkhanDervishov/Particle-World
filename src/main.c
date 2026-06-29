@@ -18,11 +18,11 @@
 
 int main(int argc, char* argv[]){
 
-    ParticleGame* game;
-    if(CreateParticleGame(&game)) printf("failed\n");
+    ParticleEngine* game;
+    if(CreateParticleEngine(&game)) printf("failed\n");
     // RunSpellGame(game);
     RunEntityGame(game);
-    DeleteParticleGame(&game);
+    DeleteParticleEngine(&game);
     return 0;
 }
 

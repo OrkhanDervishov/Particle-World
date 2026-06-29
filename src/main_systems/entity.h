@@ -42,7 +42,7 @@ typedef struct{
 */
 
 typedef struct{
-    pw_asset_t asset;
+    PWRenderable renderable;
     Posf pos;
     RectCollider collider;
 } Entity;

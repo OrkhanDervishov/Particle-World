@@ -37,7 +37,7 @@ typedef struct{
 } GameParameters;
 
 #define CB_COUNT_MAX 100
-typedef struct ParticleGame{
+typedef struct ParticleEngine{
     Window* win;
     ChunkSpace cs;
     GuiElement gui;
@@ -49,9 +49,9 @@ typedef struct ParticleGame{
     EntityPool ep;
     PWAssetManager am;
     int cbCount;
-    void (*callbacks[CB_COUNT_MAX])(struct ParticleGame* game);
-} ParticleGame;
-#define PARTICLE_GAME_FUNC void (*)(ParticleGame* game)
+    void (*callbacks[CB_COUNT_MAX])(struct ParticleEngine* game);
+} ParticleEngine;
+#define PARTICLE_GAME_FUNC void (*)(ParticleEngine* game)
 
 
 #define PAUSE_GAME(g) (*g)->s_params.pause = TRUE
@@ -60,13 +60,13 @@ typedef struct ParticleGame{
 #define DISABLE_HEATMAP_MOD(g) (*g)->s_params.hm_mode = FALSE
 
 
-int CreateParticleGame(ParticleGame** game);
-void DeleteParticleGame(ParticleGame** game);
+int CreateParticleEngine(ParticleEngine** game);
+void DeleteParticleEngine(ParticleEngine** game);
 
-int add_callback_pg(ParticleGame* game, void (*callback)(ParticleGame* game));
-void delete_callback_pg(ParticleGame* game, int cb_index);
-// void call_all_callbacks(ParticleGame* game);
+int add_callback_pg(ParticleEngine* game, void (*callback)(ParticleEngine* game));
+void delete_callback_pg(ParticleEngine* game, int cb_index);
+// void call_all_callbacks(ParticleEngine* game);
 
-int BuildLabEnv(ParticleGame* game);
+int BuildLabEnv(ParticleEngine* game);
 
 #endif //PARTICLE_GAME_H

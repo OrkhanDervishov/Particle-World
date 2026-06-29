@@ -11,25 +11,25 @@ float fps = 0;
 int drawlines = 0;
 
 
-void Guide(ParticleGame* game, Color textColor);
-void init_buttons(ParticleGame* game, Button** buttons);
+void Guide(ParticleEngine* game, Color textColor);
+void init_buttons(ParticleEngine* game, Button** buttons);
 
 bool cursor_enabled = FALSE;
-void toggle_cursor(ParticleGame* game){
+void toggle_cursor(ParticleEngine* game){
     cursor_enabled = cursor_enabled ? FALSE : TRUE;
 }
 
 bool guide_enabled = FALSE;
-void toggle_guide(ParticleGame* game){
+void toggle_guide(ParticleEngine* game){
     guide_enabled = guide_enabled ? FALSE : TRUE;
 }
 
 bool is_controlled = FALSE;
-void toggle_control(ParticleGame* game){
+void toggle_control(ParticleEngine* game){
     is_controlled = is_controlled ? FALSE : TRUE;
 }
 
-void call_all_callbacks(ParticleGame* game){
+void call_all_callbacks(ParticleEngine* game){
     for(int i = 0; i < CB_COUNT_MAX; i++){
         if(game->callbacks[i] != NULL)
             game->callbacks[i](game);
@@ -41,70 +41,70 @@ void func(){
     printf("Hello\n");
 }
 
-void clear_space(ParticleGame* game){
+void clear_space(ParticleEngine* game){
     ClearFullCS(&game->cs);
 }
 
-void select_sand(ParticleGame* game){
+void select_sand(ParticleEngine* game){
     game->g_params.selectedParticleType = SAND;
 }
-void select_water(ParticleGame* game){
+void select_water(ParticleEngine* game){
     game->g_params.selectedParticleType = WATER;
 }
-void select_steam(ParticleGame* game){
+void select_steam(ParticleEngine* game){
     game->g_params.selectedParticleType = STEAM;
 }
-void select_acid(ParticleGame* game){
+void select_acid(ParticleEngine* game){
     game->g_params.selectedParticleType = ACID;
 }
-void select_wood(ParticleGame* game){
+void select_wood(ParticleEngine* game){
     game->g_params.selectedParticleType = WOOD;
 }
-void select_wall(ParticleGame* game){
+void select_wall(ParticleEngine* game){
     game->g_params.selectedParticleType = WALL;
 }
-void select_fire(ParticleGame* game){
+void select_fire(ParticleEngine* game){
     game->g_params.selectedParticleType = FIRE;
 }
-void select_fire_smoke(ParticleGame* game){
+void select_fire_smoke(ParticleEngine* game){
     game->g_params.selectedParticleType = FIRE_SMOKE;
 }
-void select_fire_liquid(ParticleGame* game){
+void select_fire_liquid(ParticleEngine* game){
     game->g_params.selectedParticleType = FIRE_LIQUID;
 }
-void select_smoke(ParticleGame* game){
+void select_smoke(ParticleEngine* game){
     game->g_params.selectedParticleType = SMOKE;
 }
-void select_coal(ParticleGame* game){
+void select_coal(ParticleEngine* game){
     game->g_params.selectedParticleType = COAL;
 }
-void select_powder(ParticleGame* game){
+void select_powder(ParticleEngine* game){
     game->g_params.selectedParticleType = POWDER;
 }
-void select_oil(ParticleGame* game){
+void select_oil(ParticleEngine* game){
     game->g_params.selectedParticleType = OIL;
 }
-void select_lava(ParticleGame* game){
+void select_lava(ParticleEngine* game){
     game->g_params.selectedParticleType = LAVA;
 }
-void select_fungus(ParticleGame* game){
+void select_fungus(ParticleEngine* game){
     game->g_params.selectedParticleType = FUNGUS;
 }
-void select_obsidian(ParticleGame* game){
+void select_obsidian(ParticleEngine* game){
     game->g_params.selectedParticleType = OBSIDIAN;
 }
-void select_phantom(ParticleGame* game){
+void select_phantom(ParticleEngine* game){
     game->g_params.selectedParticleType = PHANTOM;
 }
-void select_source(ParticleGame* game){
+void select_source(ParticleEngine* game){
     game->g_params.selectedParticleType = SOURCE;
 }
 
 
-int RunEntityGame(ParticleGame* game);
-// int RunSpellGame(ParticleGame* game);
+int RunEntityGame(ParticleEngine* game);
+// int RunSpellGame(ParticleEngine* game);
 
-int RunParticleGame(ParticleGame* game){
+int RunParticleEngine(ParticleEngine* game){
     
     // RunSpellGame(game);
     // return 0;
@@ -312,7 +312,7 @@ int RunParticleGame(ParticleGame* game){
     //         // // draw_image_on_fimage_scaled(win->context, final_image, (int)game->camera.pos.x, (int)game->camera.pos.y, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
     //         // draw_image_on_fimage_scaled(win->context, final_image, 0, 0, DEFAULT_PARTICLE_SIZE, DEFAULT_PARTICLE_SIZE);
     //     }
-    //     // Call ParticleGame callbacks
+    //     // Call ParticleEngine callbacks
     //     // call_all_callbacks(game);
         
     //     {
@@ -420,11 +420,11 @@ int RunParticleGame(ParticleGame* game){
     return 0;
 }
 
-void draw_entity(ParticleGame* game, entity_id_t id){
-    pw_draw_asset(
+void draw_entity(ParticleEngine* game, entity_id_t id){
+    pw_draw_renderable(
         game->win->context, 
         &game->am, 
-        ENTITY_GET(game->ep, id).asset,
+        &ENTITY_GET(game->ep, id).renderable,
         (Transforms2d){
             .translation = (vec2f){(ENTITY_GET(game->ep, id).pos.x), (ENTITY_GET(game->ep, id).pos.y)},
             .rotation = 0.0f,
@@ -434,21 +434,21 @@ void draw_entity(ParticleGame* game, entity_id_t id){
     );
 }
 
-void draw_entities(ParticleGame* game){
+void draw_entities(ParticleEngine* game){
     for(entity_id_t i = 0; i < game->ep.elems.count; i++){
         if(!ENTITY_IS_DELETED(game->ep, i)) continue;
         draw_entity(game, i);
     }
 }
 
-void delete_all_entities(ParticleGame* game){
+void delete_all_entities(ParticleEngine* game){
     for(entity_id_t i = 0; i < game->ep.elems.count; i++){
         if(!ENTITY_IS_DELETED(game->ep, i)) continue;
         entity_delete(&game->ep, i);
     }    
 }
 
-void clear_game_window(ParticleGame* game){
+void clear_game_window(ParticleEngine* game){
     pnt_fill(game->win->context, game->s_params.clear_color);
 }
 
@@ -465,7 +465,7 @@ typedef struct{
     Slots slots;
 } NumberPool;
 
-int RunEntityGame(ParticleGame* game){
+int RunEntityGame(ParticleEngine* game){
     
     // const char* config_text = myconfig_load_config("./src/confs/game_startup_config.config");
     // ConfigPairs pairs = myconfig_read_all_pairs(&config_text);
@@ -474,9 +474,9 @@ int RunEntityGame(ParticleGame* game){
 
     // return 0;
     
-    pw_asset_t barrel_asset = pw_load_asset(&game->am, "resources/bomb.png", PW_SPRITE);
-    pw_asset_t active_bombs_asset = pw_load_asset(&game->am, "resources/active_bomb_sprites.png", PW_SPRITE);
-    pw_asset_t eye_asset = pw_load_asset(&game->am, "resources/eye_sprites.png", PW_SPRITE);
+    pw_asset_t barrel_asset = pw_load_asset(&game->am, "resources/bomb.png", PW_ASSET_SPRITE);
+    pw_asset_t active_bombs_asset = pw_load_asset(&game->am, "resources/active_bomb_sprites.png", PW_ASSET_SPRITE);
+    pw_asset_t eye_asset = pw_load_asset(&game->am, "resources/eye_sprites.png", PW_ASSET_SPRITE);
     pw_make_asset_image_multiple_auto(&game->am, eye_asset, (vec2){1,5});
 
     PWFrames frames = {0};
@@ -493,13 +493,14 @@ int RunEntityGame(ParticleGame* game){
     da_append(delays, 0.2f);
 
     pw_asset_t bomb_animation = pw_sprite_animation_create_load(&game->am, active_bombs_asset, frames, delays);
-    pw_asset_t bomb_animator = pw_sprite_animator_create_load(&game->am, bomb_animation, TRUE, TRUE);
     pw_asset_t eye_animation = pw_sprite_animation_create_load(&game->am, eye_asset, frames, delays);
-    pw_asset_t eye_animator = pw_sprite_animator_create_load(&game->am, eye_animation, TRUE, TRUE);
+
+    PWRenderable bomb_animator = pw_sprite_animator_create_renderable(&game->am, bomb_animation, TRUE, TRUE);
+    PWRenderable eye_animator = pw_sprite_animator_create_renderable(&game->am, eye_animation, TRUE, TRUE);
     // return 0;
 
     Entity bomb;
-    bomb.asset = eye_animator;
+    bomb.renderable = eye_animator;
     bomb.collider = (RectCollider){.collider = (Rectf){500.0f, 10.0f, 10.0f*2, 10.0f*2}};
     bomb.pos.x = 100.0f;
     bomb.pos.y = 100.0f;
@@ -557,10 +558,10 @@ int RunEntityGame(ParticleGame* game){
         // pnt_blit(game->win->context, frame1, 500, 400);
         // pnt_blit(game->win->context, frame2, 550, 400);
 
-        pw_draw_asset(
+        pw_draw_renderable(
             game->win->context, 
             &game->am,
-            eye_animator,
+            &eye_animator,
              (Transforms2d){
                 .translation = (vec2f){(float)game->win->w/2, (float)game->win->h/2},
                 .rotation = 0.0f,
@@ -588,7 +589,7 @@ const char* guideScreenshot =       "Take screenshot - TAB";
 const char* guideSpell =            "Cast spell - A";
 const char* guideChunks =           "Show chunks - SPACE";
 const char* guideExit =             "Exit - ESC";
-void Guide(ParticleGame* game, Color textColor){
+void Guide(ParticleEngine* game, Color textColor){
     // int startX = game->win->screen.width-350;
     int startX = 10;
     int startY = 100;
@@ -607,7 +608,7 @@ void Guide(ParticleGame* game, Color textColor){
 }
 
 
-void init_buttons(ParticleGame* game, Button** buttons){
+void init_buttons(ParticleEngine* game, Button** buttons){
     Color buttonColor = {.rgba = 0xFF0000FF};
     vec2 sizes = {70, 30};
 
