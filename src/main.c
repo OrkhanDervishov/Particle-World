@@ -13,16 +13,36 @@
 #include "particle_data.h"
 #include "simulator.h"
 
-#define TESTS
+
+
 
 
 int main(int argc, char* argv[]){
 
+    // const char* config_text = myconfig_load_config("./src/confs/game_startup_config.conf");
+    // ConfigPairs pairs = myconfig_read_all_pairs(&config_text);
+    // printf("%s = %s\n", "window_title", myconfig_get_value_string(pairs, "window_title", "window"));
+    // myconfig_free_pairs(pairs);
+
+    // return 0;
+
     ParticleEngine* game;
-    if(CreateParticleEngine(&game)) printf("failed\n");
-    // RunSpellGame(game);
-    RunEntityGame(game);
-    DeleteParticleEngine(&game);
+    
+    while(1){
+        if(CreateParticleEngine(&game)){
+            printf("failed\n");
+            break;
+        }
+        RunEntityGame(game);
+        DeleteParticleEngine(&game);
+        if(game->s_params.restart){
+            continue;
+        }
+        break;
+    }
+
+
+
     return 0;
 }
 

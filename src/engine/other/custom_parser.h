@@ -68,7 +68,8 @@ typedef enum{
     CONFIG_TYPE_NULL = 0,
     CONFIG_TYPE_BOOL,
     CONFIG_TYPE_NUMBER,
-    CONFIG_TYPE_STRING
+    CONFIG_TYPE_STRING,
+    CONFIG_TYPE_SECTION
 } ConfigType;
 
 typedef struct{
@@ -81,6 +82,7 @@ typedef struct{
 } ConfigValue;
 
 typedef struct{
+    char* section;
     char* key;
     ConfigValue* value;
 } ConfigPair;
@@ -91,11 +93,22 @@ typedef struct{
     size_t capacity;
 } ConfigPairs;
 
+
+
 char* myconfig_load_config(const char* path);
 ConfigValue* myconfig_read_value(const char** text);
 ConfigPair myconfig_read_pair(const char** text);
 ConfigPairs myconfig_read_all_pairs(const char** text);
-ConfigValue* myconfig_get_value(ConfigPairs pairs, const char* key);
+
+ConfigValue* myconfig_get_value_key_only(ConfigPairs pairs, const char* key);
+ConfigValue* myconfig_get_value(ConfigPairs pairs, const char* key, const char* section);
+
+void myconfig_load_value_string(ConfigPairs pairs, const char* key, const char* section);
+char* myconfig_get_value_string_new(ConfigPairs pairs, const char* key, const char* section);
+char* myconfig_get_value_string(ConfigPairs pairs, const char* key, const char* section);
+double myconfig_get_value_number(ConfigPairs pairs, const char* key, const char* section);
+bool myconfig_get_value_bool(ConfigPairs pairs, const char* key, const char* section);
+
 void myconfig_free_pairs(ConfigPairs pairs);
 
 /*****************************/

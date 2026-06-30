@@ -1,8 +1,11 @@
 #include "custom_parser.h"
 #include <ctype.h>
 
-/*****************************/
 // Common
+/*****************************/
+
+
+#define MAX_SECTION_SIZE 32
 
 void skip_spaces(const char** text){
     while(**text == ' ' || **text == '\n' || **text == '\t' || **text == '\r'){
@@ -61,13 +64,36 @@ char* read_string(const char** text){
     return value;
 }
 
+char* read_section(const char** text){
+    if(**text != '[') return NULL;
+    (*text)++;
+
+    size_t size = 0;
+    const char* start = (*text);
+    while(**text != ']' && **text != '\0'){
+        (*text)++;
+        size++;
+    }
+    if(size >= MAX_SECTION_SIZE){
+        (*text)++;
+        return NULL;
+    }
+
+    int len = (*text) - start;
+    char* value = (char*)malloc(len+10);
+    
+    strncpy(value, start, len);
+    value[len] = '\0';
+
+    if(**text == ']') (*text)++;
+    return value;
+}
+
 /*****************************/
 
 
-/*****************************/
 // JSON
-
-
+/*****************************/
 
 bool myjson_read_bool(const char** text){
     return read_bool(text);
@@ -228,8 +254,8 @@ void myjson_free_value(JsonValue* value){
 
 
 
-/*****************************/
 // CONFIG
+/*****************************/
 
 char* myconfig_load_config(const char* path){
     return load_file(path);
@@ -259,14 +285,36 @@ double myconfig_read_number(const char** text){
 }
 
 char* myconfig_read_string(const char** text){
-
     return read_string(text);
 }
 
+char* myconfig_read_section(const char** text){
+    return read_section(text);
+}
+
+void myconfig_read_comment(const char** text){
+    if(**text != '#') return;
+    (*text)++;
+
+    skip_spaces(text);
+    while(**text != '\n' && **text != '\0'){
+        (*text)++;
+    }
+    skip_spaces(text);
+}
 
 ConfigValue* myconfig_read_value(const char** text){
     skip_spaces(text);
     
+    if(**text == '#'){
+        myconfig_read_comment(text);
+    }
+    if(**text == '['){
+        ConfigValue* value = (ConfigValue*)malloc(sizeof(ConfigValue));
+        value->type = CONFIG_TYPE_SECTION;
+        value->string_value = myconfig_read_section(text);
+        return value;
+    }
     if(**text == '"'){
         ConfigValue* value = (ConfigValue*)malloc(sizeof(ConfigValue));
         value->type = CONFIG_TYPE_STRING;
@@ -296,9 +344,30 @@ ConfigValue* myconfig_read_value(const char** text){
 }
 
 ConfigPair myconfig_read_pair(const char** text){
-    ConfigPair pair = {NULL, NULL};
+    ConfigPair pair = {NULL, NULL, NULL};
     skip_spaces(text);
     if(**text == '\0') return pair;
+    if(**text == '#'){
+        myconfig_read_comment(text);
+        return pair;
+    }
+    if(**text == '['){
+        ConfigValue* value = (ConfigValue*)malloc(sizeof(ConfigValue));
+        value->type = CONFIG_TYPE_SECTION;
+        value->string_value = myconfig_read_section(text);
+        pair.value = value;
+        return pair;
+    }
+
+    // pair.section = NULL;
+    // char* section = myconfig_read_section(text);
+    // if(section != NULL){
+    //     printf("works\n");
+    //     pair.key = NULL;
+    //     pair.value->type = CONFIG_TYPE_SECTION;
+    //     pair.value->string_value = section;
+    // } else {
+    pair.section = (char*)malloc(MAX_SECTION_SIZE);
     skip_spaces(text);
     pair.key = myconfig_read_key(text);
     skip_spaces(text);
@@ -306,26 +375,36 @@ ConfigPair myconfig_read_pair(const char** text){
     skip_spaces(text);
     pair.value = myconfig_read_value(text);
     skip_spaces(text);
+    // }
 
     return pair;
 }
 
 ConfigPairs myconfig_read_all_pairs(const char** text){
     ConfigPairs pairs = {0};
+    char *current_section = (char*)malloc(MAX_SECTION_SIZE);
+    current_section[0] = '\0';
 
     skip_spaces(text);
     while(**text != '\0'){
         skip_spaces(text);
         ConfigPair pair = myconfig_read_pair(text);
-        // if(pair.value == NULL) break;
+        if(pair.key == NULL){
+            if(pair.value == NULL){
+                continue;
+            }
+            strcpy(current_section, pair.value->string_value);
+        } else{
+            strcpy(pair.section, current_section);
+            da_append(pairs, pair);
+        }
 
-        da_append(pairs, pair);
         skip_spaces(text);
     }
     return pairs;
 }
 
-ConfigValue* myconfig_get_value(ConfigPairs pairs, const char* key){
+ConfigValue* myconfig_get_valuekey_only(ConfigPairs pairs, const char* key){
     ConfigPair* pair;
     da_foreach(pair, pairs){
         if(strcmp((*pair).key, key) == 0){
@@ -335,9 +414,67 @@ ConfigValue* myconfig_get_value(ConfigPairs pairs, const char* key){
     return NULL;
 }
 
+ConfigValue* myconfig_get_value(ConfigPairs pairs, const char* key, const char* section){
+    ConfigPair* pair;
+    da_foreach(pair, pairs){
+        if(strcmp((*pair).key, key) == 0 && strcmp((*pair).section, section) == 0){
+            return (*pair).value;
+        }
+    }
+    return NULL;
+}
+
+char* myconfig_get_value_string(ConfigPairs pairs, const char* key, const char* section){
+    ConfigPair* pair;
+    da_foreach(pair, pairs){
+        if(strcmp((*pair).key, key) == 0 && strcmp((*pair).section, section) == 0){
+            return (*pair).value->string_value;
+        }
+    }
+    return "";
+}
+
+char* myconfig_get_value_string_new(ConfigPairs pairs, const char* key, const char* section){
+    char* cstr = NULL;
+    char* str = myconfig_get_value_string((pairs), (key), (section));
+    if(str[0] == '\0'){
+        cstr = (char*)malloc(1);
+        if(cstr)
+            cstr[0] = '\0';
+    } else {
+        cstr = (char*)malloc(strlen(str) + 1);
+        if(cstr)
+            strcpy(cstr, str);
+    }
+    return cstr;
+}
+
+double myconfig_get_value_number(ConfigPairs pairs, const char* key, const char* section){
+    ConfigPair* pair;
+    da_foreach(pair, pairs){
+        if(strcmp((*pair).key, key) == 0 && strcmp((*pair).section, section) == 0){
+            return (*pair).value->number_value;
+        }
+    }
+    return 0.0;
+}
+
+bool myconfig_get_value_bool(ConfigPairs pairs, const char* key, const char* section){
+    ConfigPair* pair;
+    da_foreach(pair, pairs){
+        if(strcmp((*pair).key, key) == 0 && strcmp((*pair).section, section) == 0){
+            return (*pair).value->bool_value;
+        }
+    }
+    return FALSE;
+}
+
+
+
 void myconfig_free_pairs(ConfigPairs pairs){
     for(size_t i = 0; i < pairs.count; i++){
         ConfigPair pair = pairs.items[i];
+        free(pair.section);
         free(pair.key);
         if(pair.value->type == CONFIG_TYPE_STRING){
             free(pair.value->string_value);

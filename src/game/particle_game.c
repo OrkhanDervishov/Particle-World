@@ -1,5 +1,5 @@
 #include "particle_game.h"
-
+#include "custom_parser.h"
 
 
 #define CS_WIDTH    DEFAULT_CS_WIDTH
@@ -9,11 +9,39 @@
 #define REGION_HEIGHT DEFAULT_REGION_HEIGHT
 
 
+void pw_engine_read_config(ParticleEngine* pe, const char *conf_path);
+
 int CreateParticleEngine(ParticleEngine** game){
+
+    (*game) = (ParticleEngine*)malloc(sizeof(ParticleEngine));
+
+    
+    //******************************************/
+    // Initializing game's system parameters
+    (*game)->s_params.is_running = TRUE;
+    (*game)->s_params.paused = FALSE;
+    (*game)->s_params.restart = FALSE;
+    // (*game)->s_params.hm_mode = FALSE;
+    // (*game)->s_params.delay = 0;
+    (*game)->s_params.frameLockEnabled = TRUE;
+    (*game)->s_params.frameLock = 90;
+    (*game)->s_params.clear_color.rgba = 0x00181818;
+    //******************************************/
+    
+    //******************************************/
+    // Initializing game's gameplay parameters
+    (*game)->g_params.brush_size = 3;
+    (*game)->g_params.selectedParticleType = 0;
+    //******************************************/
+
+    
+    pw_engine_read_config(*game, "./src/confs/game_startup_config.conf");
+
+
+
     //******************************************/
     // Initializing game window
-    (*game) = (ParticleEngine*)malloc(sizeof(ParticleEngine));
-    if(CreateWindow(&((*game)->win), SCR_WIDTH, SCR_HEIGHT, WIN_TITLE, TRUE)) return 1;
+    if(CreateWindow(&((*game)->win), (*game)->s_params.width, (*game)->s_params.height, (*game)->s_params.title, (*game)->s_params.fullscreen)) return 1;
     //******************************************/
     
     //******************************************/
@@ -82,24 +110,6 @@ int CreateParticleEngine(ParticleEngine** game){
         (*game)->callbacks[i] = NULL;
     }
     (*game)->cbCount = 0;
-    //******************************************/
-    
-    //******************************************/
-    // Initializing game's system parameters
-    (*game)->s_params.is_running = TRUE;
-    (*game)->s_params.paused = FALSE;
-    (*game)->s_params.hm_mode = FALSE;
-    (*game)->s_params.delay = 0;
-    (*game)->s_params.frameLockEnabled = TRUE;
-    (*game)->s_params.frameLock = 90;
-    (*game)->s_params.clear_color.rgba = 0x00181818;
-    //******************************************/
-    
-    
-    //******************************************/
-    // Initializing game's gameplay parameters
-    (*game)->g_params.brush_size = 3;
-    (*game)->g_params.selectedParticleType = 0;
     //******************************************/
 
     return 0;
@@ -192,4 +202,28 @@ int BuildLabEnv(ParticleEngine* game){
     SetSimEndpointsChunkSpace(cs, 0, cs->width_c, 0, cs->height_c);
 
     return 0;
+}
+
+
+void pw_engine_read_config(ParticleEngine* pe, const char *conf_path){
+
+    const char* config_text = myconfig_load_config(conf_path);
+    if(config_text == NULL){
+        perror("ERROR: Could not read engine's config file");
+        exit(1);
+    }
+    ConfigPairs pairs = myconfig_read_all_pairs(&config_text);
+
+    pe->s_params.title = myconfig_get_value_string_new(pairs, "window_title", "window");
+    pe->s_params.width = (size_t)myconfig_get_value_number(pairs, "window_width", "window");
+    pe->s_params.height = (size_t)myconfig_get_value_number(pairs, "window_height", "window");
+    pe->s_params.fullscreen = myconfig_get_value_bool(pairs, "window_fullscreen", "window");
+    pe->s_params.icon_path = myconfig_get_value_string_new(pairs, "icon_image_path", "window");
+    
+    pe->s_params.frameLockEnabled = myconfig_get_value_bool(pairs, "frame_lock_enabled", "window");
+    pe->s_params.frameLock = (int)myconfig_get_value_number(pairs, "frame_lock", "window");
+    
+    pe->s_params.clear_color.rgba = (pnt_color_t)STR_HEX_TO_NUMBER(myconfig_get_value_string(pairs, "clear_color", "window"));
+
+    myconfig_free_pairs(pairs);
 }

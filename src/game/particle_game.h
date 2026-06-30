@@ -21,14 +21,25 @@
 
 
 typedef struct{
+    // Core
     bool is_running;
     bool paused;
+    bool restart;
+
+    // Time
     int delay;
     bool frameLockEnabled;
     int frameLock;
     
+    // Window
+    char *title;
+    size_t width;
+    size_t height;
+    bool fullscreen;
+
+    // Visual
+    char* icon_path;
     Color clear_color;
-    bool hm_mode;
 } GameSystemParameters;
 
 typedef struct{

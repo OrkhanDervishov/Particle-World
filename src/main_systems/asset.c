@@ -60,7 +60,7 @@ void pw_make_asset_image_multiple_auto(PWAssetManager* am, pw_asset_t asset_id, 
 Image pw_sprite_multiple_get_image(PWAssetManager* am, pw_asset_t asset_id, int index){
     PWAsset asset = pool_get(am->asset_pool, asset_id);
     if(asset.type != PW_ASSET_SPRITE){
-        return;
+        return (Image){0};
     }
     PWSprite sprite = asset.sprite;
     Image sprite_image = pool_get(am->image_pool, sprite.image_id);

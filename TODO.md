@@ -4,7 +4,7 @@
 
 1. Support different image formats.
 
-2. Configuration for engine.
+2. ~~Configuration for engine.~~
 
 3. ~~Rename ParticleGame to ParticleEngine.~~
 

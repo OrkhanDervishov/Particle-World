@@ -466,13 +466,7 @@ typedef struct{
 } NumberPool;
 
 int RunEntityGame(ParticleEngine* game){
-    
-    // const char* config_text = myconfig_load_config("./src/confs/game_startup_config.config");
-    // ConfigPairs pairs = myconfig_read_all_pairs(&config_text);
-    // printf("%s = %s\n", "window_title", myconfig_get_value(pairs, "window_title")->string_value);
-    // myconfig_free_pairs(pairs);
 
-    // return 0;
     
     pw_asset_t barrel_asset = pw_load_asset(&game->am, "resources/bomb.png", PW_ASSET_SPRITE);
     pw_asset_t active_bombs_asset = pw_load_asset(&game->am, "resources/active_bomb_sprites.png", PW_ASSET_SPRITE);
@@ -510,6 +504,8 @@ int RunEntityGame(ParticleEngine* game){
     action_t act_exit = 0;
     action_t act_create_bomb = 1;
     action_t act_delete_entites = 2;
+    action_t act_reload = 3;
+
     add_binding(&game->is, BUTTON_ESCAPE, act_exit);
     add_binding(&game->is, BUTTON_MOUSE_LEFT, act_create_bomb);
     add_binding(&game->is, BUTTON_SPACE, act_create_bomb);
@@ -517,8 +513,8 @@ int RunEntityGame(ParticleEngine* game){
     add_binding(&game->is, BUTTON_Q, act_create_bomb);
     add_binding(&game->is, BUTTON_C, act_delete_entites);
     add_binding(&game->is, BUTTON_X, act_delete_entites);
-    add_binding(&game->is, BUTTON_F1, act_delete_entites);
     add_binding(&game->is, BUTTON_1, act_delete_entites);
+    add_binding(&game->is, BUTTON_F1, act_reload);
 
     while(game->s_params.is_running){
         
@@ -536,6 +532,13 @@ int RunEntityGame(ParticleEngine* game){
         }
         if(action_pressed(&game->is, act_delete_entites)){
             delete_all_entities(game);
+        }
+        if(action_pressed(&game->is, act_delete_entites)){
+            delete_all_entities(game);
+        }
+        if(action_pressed(&game->is, act_reload)){
+            game->s_params.is_running = FALSE;
+            game->s_params.restart = TRUE;
         }
         clear_game_window(game);
 
