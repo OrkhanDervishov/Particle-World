@@ -134,7 +134,7 @@ typedef struct{
 
 
 int pw_asset_manager_init(PWAssetManager* am);
-PWAssetType get_asset_type(PWAssetManager* am, pw_asset_t asset_id);
+void pw_asset_manager_free(PWAssetManager* am);
 
 pw_asset_t pw_load_asset(PWAssetManager* am, const char* path, PWAssetType type);
 
@@ -153,6 +153,11 @@ void pw_sprite_animator_set_playing(PWAssetManager* am, PWSpriteAnimator* animat
 void pw_sprite_animator_set_looping(PWAssetManager* am, PWSpriteAnimator* animator, bool looping);
 void pw_sprite_animator_update(PWAssetManager* am, PWSpriteAnimator* animator, pw_time_t delta_time);
 
+
+// INFO
+PWAssetType pw_get_asset_type(PWAssetManager* am, pw_asset_t asset_id);
+size_t pw_asset_manager_get_sprite_offsetx(PWAssetManager* am, pw_asset_t asset_id);
+size_t pw_asset_manager_get_sprite_offsety(PWAssetManager* am, pw_asset_t asset_id);
 // int asset_to_array_image(ArrayImage* arr_image, AssetImage image, int offset_x, int offset_y);
 // void array_image_to_anim(Animation* anim, ArrayImage arr_image);
 // void anim_add_order(Animation* anim);

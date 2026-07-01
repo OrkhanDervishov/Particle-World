@@ -152,6 +152,12 @@ typedef struct{
 
 /*************************************************/
 
+#define pool_free(pool)\
+do{\
+    free((pool).elems.items);\
+    free((pool).slots.items);\
+    free((pool).free_indices.items);\
+}while(0)
 
 #define pool_append(pool, x, res_index)\
 do{\

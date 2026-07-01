@@ -289,32 +289,120 @@ void pnt_blit(PNTImage dest, PNTImage src, int x, int y){
     }
 }
 
-void pnt_blit_scaled(PNTImage dest, PNTImage src, int x, int y, int scaleX, int scaleY){
-    Rect rect = {.x = x, .y = y, .w = src.width*scaleX, .h = src.height*scaleY};
-    rect = CorrectRect(rect, dest.width, dest.height);
+void pnt_blit_scaled(PNTImage dest, PNTImage src, int x, int y, float scaleX, float scaleY){
+    Rect rect = {.x = x, .y = y, .w = (int)((float)src.width*scaleX), .h = (int)((float)src.height*scaleY)};
 
-    float addX = 1.0f/(float)scaleX;
-    float addY = 1.0f/(float)scaleY;
-    float k = 0.0f, t = 0.0f;
+    Rect rect2 = {.x = 0, .y = 0, .w = dest.width, .h = dest.height};
+    vec2 start_pos = {.x = x, .y = y};
+    Rect rect3 = get_intersection_rect2(rect, rect2);
+    start_pos = correct_start_pos(rect2, start_pos);
+
+    float addX = 1.0f/scaleX;
+    float addY = 1.0f/scaleY;
+    // float k = 0.0f, t = 0.0f;
+    float base_t = (float)rect3.x*addX;
+    float base_k = (float)rect3.y*addY;
+    float t = base_t, k = base_k;
     int prev_k = -1, prev_t = -1;
-    int endX = rect.x + rect.w;
-    int endY = rect.y + rect.h;
+    // int endX = rect.x + rect.w;
+    // int endY = rect.y + rect.h;
+    int endX = rect.x + rect2.w;
+    int endY = rect.y + rect2.h;
+    PNTColor src_color;
     PNTColor res_color;
-    for(int i = rect.y; i < rect.h; i++, k += addY){
-        for(int j = rect.x; j < rect.w; j++, t += addX){
+    for(int i = start_pos.y; i < rect3.h; i++, k += addY){
+        for(int j = start_pos.x; j < rect3.w; j++, t += addX){
+            // if((int)k != prev_k || (int)t != prev_t){
+            //     PNTColor dest_color = PNT_IMG_GET(dest, j, i);
+            //     PNTColor src_color = PNT_IMG_GET(src, (int)t, (int)k);
+            //     res_color = pnt_colors_alpha_blend(src_color, dest_color);
+            //     prev_k = (int)k;
+            //     prev_t = (int)t;
+            // }
+            // PNT_IMG_GET(dest, j, i) = res_color;
             if((int)k != prev_k || (int)t != prev_t){
-                PNTColor dest_color = PNT_IMG_GET(dest, j, i);
-                PNTColor src_color = PNT_IMG_GET(src, (int)t, (int)k);
-                res_color = pnt_colors_alpha_blend(src_color, dest_color);
+                src_color = PNT_IMG_GET(src, (int)t, (int)k);
                 prev_k = (int)k;
                 prev_t = (int)t;
             }
-            // dest.buffer[i*dest.width + j] = src.buffer[(int)k*src.width + (int)t];
+            if(src_color.a == 0) continue;
+            PNTColor dest_color = PNT_IMG_GET(dest, j, i);
+            res_color = pnt_colors_alpha_blend(dest_color, src_color);
             PNT_IMG_GET(dest, j, i) = res_color;
         }
-        t = 0.0f;
+        t = base_t;
     }
 }
+
+
+void pnt_blit_transformed(PNTImage dest, PNTImage src, vec2f pos, float rotation, vec2f scale){
+    float cx = (float)src.width/2;
+    float cy = (float)src.height/2;
+    float s = sin(rotation);
+    float c = cos(rotation);
+
+    vec2f v[4];
+    
+    // scaling
+    v[0] = (vec2f){-cx * scale.x,  cy * scale.y};
+    v[1] = (vec2f){ cx * scale.x,  cy * scale.y};
+    v[2] = (vec2f){ cx * scale.x, -cy * scale.y};
+    v[3] = (vec2f){-cx * scale.x, -cy * scale.y};
+    // rotation
+    float tempx;
+    tempx = v[0].x, v[0].x = c*v[0].x + s*v[0].y, v[0].y = -s*tempx + c*v[0].y;
+    tempx = v[1].x, v[1].x = c*v[1].x + s*v[1].y, v[1].y = -s*tempx + c*v[1].y;
+    tempx = v[2].x, v[2].x = c*v[2].x + s*v[2].y, v[2].y = -s*tempx + c*v[2].y;
+    tempx = v[3].x, v[3].x = c*v[3].x + s*v[3].y, v[3].y = -s*tempx + c*v[3].y;
+    // translation
+    v[0] = vec2_sum(v[0], pos);
+    v[1] = vec2_sum(v[1], pos);
+    v[2] = vec2_sum(v[2], pos);
+    v[3] = vec2_sum(v[3], pos);
+
+    int minx = (int)v[0].x;
+    int miny = (int)v[0].y;
+    int maxx = (int)v[0].x;
+    int maxy = (int)v[0].y;
+    for(int i = 0; i < 4; i++) if(minx > (int)v[i].x) minx = (int)v[i].x;
+    for(int i = 0; i < 4; i++) if(miny > (int)v[i].y) miny = (int)v[i].y;
+    for(int i = 0; i < 4; i++) if(maxx < (int)v[i].x) maxx = (int)v[i].x;
+    for(int i = 0; i < 4; i++) if(maxy < (int)v[i].y) maxy = (int)v[i].y;
+    
+
+
+    float div_sin_scalex    = s/scale.x;
+    float div_cos_scalex    = c/scale.x;
+    float div_msin_scaley   = -s/scale.y;
+    float div_cos_scaley    = c/scale.y;
+
+    for(int v = miny; v < maxy; v++){
+        if(v < 0 || v >= dest.height) continue;
+        float ry = (float)v - pos.y;
+
+        float pre_comp_y_sx = ry*div_sin_scalex + cx;
+        float pre_comp_y_sy = ry*div_cos_scaley + cy;
+
+        for(int u = minx; u < maxx; u++){
+            if(u < 0 || u >= dest.width) continue;
+            
+            float rx = (float)u - pos.x;
+
+            float sx = div_cos_scalex*rx + pre_comp_y_sx;
+            float sy = div_msin_scaley*rx + pre_comp_y_sy;
+
+            if(sx < 0.0f || sy < 0.0f || sx >= src.width || sy >= src.height) continue;
+
+
+            PNTColor src_color = PNT_IMG_GET(src, (int)sx, (int)sy);
+            if(src_color.a == 0) continue;
+
+            PNTColor dest_color = PNT_IMG_GET(dest, u, v);
+            PNT_IMG_GET(dest, u, v) = pnt_colors_alpha_blend(dest_color, src_color);
+        }
+    }
+}
+
 
 // void draw_image_on_fimage(PNTFormatImage dest, PNTImage src, int x, int y){
 //     Rect rect = {.x = x, .y = y, .w = src.width, .h = src.height};
@@ -988,79 +1076,6 @@ void pnt_draw_line_from_points(PNTImage img, vec2* points, int count, PNTColor c
 
 //##################################################################
 
-
-//##################################################################
-
-void pnt_blit_transformed(PNTImage dest, PNTImage src, vec2f pos, float rotation, vec2f scale){
-    float cx = (float)src.width/2;
-    float cy = (float)src.height/2;
-    float s = sin(rotation);
-    float c = cos(rotation);
-
-    vec2f v[4];
-    
-    // scaling
-    v[0] = (vec2f){-cx * scale.x,  cy * scale.y};
-    v[1] = (vec2f){ cx * scale.x,  cy * scale.y};
-    v[2] = (vec2f){ cx * scale.x, -cy * scale.y};
-    v[3] = (vec2f){-cx * scale.x, -cy * scale.y};
-    // rotation
-    float tempx;
-    tempx = v[0].x, v[0].x = c*v[0].x + s*v[0].y, v[0].y = -s*tempx + c*v[0].y;
-    tempx = v[1].x, v[1].x = c*v[1].x + s*v[1].y, v[1].y = -s*tempx + c*v[1].y;
-    tempx = v[2].x, v[2].x = c*v[2].x + s*v[2].y, v[2].y = -s*tempx + c*v[2].y;
-    tempx = v[3].x, v[3].x = c*v[3].x + s*v[3].y, v[3].y = -s*tempx + c*v[3].y;
-    // translation
-    v[0] = vec2_sum(v[0], pos);
-    v[1] = vec2_sum(v[1], pos);
-    v[2] = vec2_sum(v[2], pos);
-    v[3] = vec2_sum(v[3], pos);
-
-    int minx = (int)v[0].x;
-    int miny = (int)v[0].y;
-    int maxx = (int)v[0].x;
-    int maxy = (int)v[0].y;
-    for(int i = 0; i < 4; i++) if(minx > (int)v[i].x) minx = (int)v[i].x;
-    for(int i = 0; i < 4; i++) if(miny > (int)v[i].y) miny = (int)v[i].y;
-    for(int i = 0; i < 4; i++) if(maxx < (int)v[i].x) maxx = (int)v[i].x;
-    for(int i = 0; i < 4; i++) if(maxy < (int)v[i].y) maxy = (int)v[i].y;
-    
-
-
-    float div_sin_scalex    = s/scale.x;
-    float div_cos_scalex    = c/scale.x;
-    float div_msin_scaley   = -s/scale.y;
-    float div_cos_scaley    = c/scale.y;
-
-    for(int v = miny; v < maxy; v++){
-        if(v < 0 || v >= dest.height) continue;
-        float ry = (float)v - pos.y;
-
-        float pre_comp_y_sx = ry*div_sin_scalex + cx;
-        float pre_comp_y_sy = ry*div_cos_scaley + cy;
-
-        for(int u = minx; u < maxx; u++){
-            if(u < 0 || u >= dest.width) continue;
-            
-            float rx = (float)u - pos.x;
-
-            float sx = div_cos_scalex*rx + pre_comp_y_sx;
-            float sy = div_msin_scaley*rx + pre_comp_y_sy;
-
-            if(sx < 0.0f || sy < 0.0f || sx >= src.width || sy >= src.height) continue;
-
-
-            PNTColor src_color = PNT_IMG_GET(src, (int)sx, (int)sy);
-            if(src_color.a == 0) continue;
-
-            PNTColor dest_color = PNT_IMG_GET(dest, u, v);
-            PNT_IMG_GET(dest, u, v) = pnt_colors_alpha_blend(dest_color, src_color);
-        }
-    }
-}
-
-
-//##################################################################
 
 
 // PNTImage save, load

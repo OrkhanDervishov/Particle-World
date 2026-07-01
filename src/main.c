@@ -13,7 +13,8 @@
 #include "particle_data.h"
 #include "simulator.h"
 
-
+#include "uchar.h"
+#include "locale.h"
 
 
 
@@ -25,6 +26,14 @@ int main(int argc, char* argv[]){
     // myconfig_free_pairs(pairs);
 
     // return 0;
+
+    // setlocale(LC_ALL, "en_US.UTF-8");
+    // // char32_t str = "ü";
+    // // printf("%s", str);
+    // const wchar_t *euro_symbol = L"€";
+
+    // wprintf(L"The Euro symbol is: %ls\n", euro_symbol);
+    // wprintf("ü\n");
 
     ParticleEngine* game;
     

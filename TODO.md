@@ -8,9 +8,9 @@
 
 3. ~~Rename ParticleGame to ParticleEngine.~~
 
-4. Add texture fonts.
+4. ~~Add texture fonts.~~
 
-5. Improve pnt_blit_scaled, so that it supports float scaling.
+5. ~~Improve pnt_blit_scaled, so that it supports float scaling.~~
 
 6. ~~In pw_draw_animation only pass animator argumant.~~
 

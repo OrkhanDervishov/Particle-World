@@ -186,7 +186,7 @@ int pnt_fimage_to_image(PNTFormatImage fimg, PNTImage img);
 
 
 void pnt_blit(PNTImage dest, PNTImage src, int x, int y);
-void pnt_blit_scaled(PNTImage dest, PNTImage src, int x, int y, int scaleX, int scaleY);
+void pnt_blit_scaled(PNTImage dest, PNTImage src, int x, int y, float scaleX, float scaleY);
 void pnt_blit_transformed(PNTImage dest, PNTImage src, vec2f pos, float rotation, vec2f scale);
 // void draw_image_on_fimage(PNTFormatImage dest, PNTImage src, int x, int y);
 // void draw_image_on_fimage_scaled(PNTFormatImage dest, PNTImage src, int x, int y, int scaleX, int scaleY);

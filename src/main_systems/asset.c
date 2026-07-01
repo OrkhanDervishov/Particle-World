@@ -7,6 +7,8 @@
 #include "ht.h"
 
 
+
+
 inline Image pw_image_get_frame(Image img, PWSprite sprite, pw_anim_frame_t frame_index){
     vec2ui frame_coords = {frame_index % sprite.cols, frame_index / sprite.cols};
     vec2ui img_coords = {frame_coords.x * sprite.offsetx, frame_coords.y * sprite.offsety};
@@ -94,6 +96,7 @@ pw_image_t pw_load_asset_image(PWAssetManager* am, const char* path){
         Image image = {0};
         pnt_load_png(&image, path);
         pool_append(am->image_pool, image, index);
+        *ht_put(&(am->loaded_images), path) = index;
     } else {
         index = *index_p;
     }
@@ -186,10 +189,12 @@ int pw_asset_manager_init(PWAssetManager* am){
     return 0;
 }
 
-PWAssetType get_asset_type(PWAssetManager* am, pw_asset_t asset_id){
-    PWAsset asset = pool_get(am->asset_pool, asset_id);
-    return asset.type;
+void pw_asset_manager_free(PWAssetManager* am){
+    pool_free(am->asset_pool);
+    pool_free(am->image_pool);
+    ht_free(&am->loaded_images);
 }
+
 
 pw_asset_t pw_load_asset(PWAssetManager* am, const char* path, PWAssetType type){
     pw_asset_t asset_id;
@@ -306,6 +311,64 @@ void pw_sprite_animator_update(PWAssetManager* am, PWSpriteAnimator* animator, p
         }
     }
 }
+
+
+
+
+// INFO
+
+
+PWAssetType pw_get_asset_type(PWAssetManager* am, pw_asset_t asset_id){
+    PWAsset asset = pool_get(am->asset_pool, asset_id);
+    return asset.type;
+}
+
+
+// TODO: Change the first 2
+
+size_t pw_asset_manager_get_image_height(PWAssetManager* am, pw_asset_t asset_id){
+    PWAsset asset = pool_get(am->asset_pool, asset_id);
+    if(asset.type != PW_ASSET_SPRITE){
+        return 0;
+    }
+
+    PWSprite sprite = asset.sprite;
+    Image image = pool_get(am->image_pool, sprite.image_id);
+
+    return image.height;
+}
+
+size_t pw_asset_manager_get_image_width(PWAssetManager* am, pw_asset_t asset_id){
+    PWAsset asset = pool_get(am->asset_pool, asset_id);
+    if(asset.type != PW_ASSET_SPRITE){
+        return 0;
+    }
+
+    PWSprite sprite = asset.sprite;
+    Image image = pool_get(am->image_pool, sprite.image_id);
+
+    return image.width;
+}
+
+
+size_t pw_asset_manager_get_sprite_offsetx(PWAssetManager* am, pw_asset_t asset_id){
+    PWAsset asset = pool_get(am->asset_pool, asset_id);
+    if(asset.type != PW_ASSET_SPRITE){
+        return 0;
+    }
+    PWSprite sprite = asset.sprite;
+    return sprite.offsetx;
+}
+
+size_t pw_asset_manager_get_sprite_offsety(PWAssetManager* am, pw_asset_t asset_id){
+    PWAsset asset = pool_get(am->asset_pool, asset_id);
+    if(asset.type != PW_ASSET_SPRITE){
+        return 0;
+    }
+    PWSprite sprite = asset.sprite;
+    return sprite.offsety;
+}
+
 
 
 /************************************************************/

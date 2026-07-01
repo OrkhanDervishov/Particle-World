@@ -1,5 +1,6 @@
 #include "game.h"
 
+
 // Time
 clock_t sumTime = 0;
 clock_t deltaTime = 0;
@@ -467,7 +468,10 @@ typedef struct{
 
 int RunEntityGame(ParticleEngine* game){
 
-    
+    Image image;
+    image.buffer = NULL;
+    pnt_load_png(&image, "resources/CHESS.png");
+
     pw_asset_t barrel_asset = pw_load_asset(&game->am, "resources/bomb.png", PW_ASSET_SPRITE);
     pw_asset_t active_bombs_asset = pw_load_asset(&game->am, "resources/active_bomb_sprites.png", PW_ASSET_SPRITE);
     pw_asset_t eye_asset = pw_load_asset(&game->am, "resources/eye_sprites.png", PW_ASSET_SPRITE);
@@ -510,6 +514,18 @@ int RunEntityGame(ParticleEngine* game){
     bomb.pos.y = 100.0f;
 
     // entity_id_t bomb0 = entity_add(&game->ep, bomb);
+
+    /******************************************************/
+    
+    pw_asset_t font_sprite = pw_load_asset(&game->am, "resources/font.png", PW_ASSET_SPRITE);
+    pw_make_asset_image_multiple_auto(&game->am, font_sprite, (vec2){1,99});
+
+    PWSpriteFonts fonts = pw_load_sprite_fonts_manual(font_sprite, " !#$%%&'{}*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz(|)~\"");
+    
+    
+    
+    
+    /******************************************************/
 
     action_t act_exit = 0;
     action_t act_create_bomb = 1;
@@ -571,6 +587,9 @@ int RunEntityGame(ParticleEngine* game){
         // pnt_blit(game->win->context, frame1, 500, 400);
         // pnt_blit(game->win->context, frame2, 550, 400);
 
+        // pnt_blit_scaled(game->win->context, image, 100, 10, 2.5f, 1.0f);
+
+
         pw_draw_renderable(
             game->win->context, 
             &game->am,
@@ -582,6 +601,13 @@ int RunEntityGame(ParticleEngine* game){
             },
             PW_DELTA_TIME
         );
+
+        Transforms2d font_transforms = {
+            .translation = {100.0f, 100.0f},
+            .rotation = 0.0f,
+            .scale = {1.5f, 1.5f}
+        };
+        pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!", font_transforms);
 
         draw_entities(game);
         pw_window_present(game->win);
