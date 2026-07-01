@@ -78,6 +78,7 @@ void DestroyWindow(Window** win){
 }
 
 
+
 void pw_window_present(Window* win){
     pnt_image_to_fimage(win->context, win->fcontext);
     SDL_UpdateWindowSurface(win->window);
@@ -90,12 +91,12 @@ void Clear(Window* win){
 }
 
 
-int SetWindowIcon(Window* window, char* path){
+int pw_window_set_icon(Window* window, const char* path){
     SDL_Surface* icon = SDL_LoadBMP(path);
     if(icon == NULL){
         return 1;
     }
-    else SDL_SetWindowIcon(window->window, icon);
+    SDL_SetWindowIcon(window->window, icon);
     SDL_FreeSurface(icon);
     return 0;
 }

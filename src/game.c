@@ -471,17 +471,27 @@ int RunEntityGame(ParticleEngine* game){
     pw_asset_t barrel_asset = pw_load_asset(&game->am, "resources/bomb.png", PW_ASSET_SPRITE);
     pw_asset_t active_bombs_asset = pw_load_asset(&game->am, "resources/active_bomb_sprites.png", PW_ASSET_SPRITE);
     pw_asset_t eye_asset = pw_load_asset(&game->am, "resources/eye_sprites.png", PW_ASSET_SPRITE);
+    pw_make_asset_image_multiple_auto(&game->am, active_bombs_asset, (vec2){1,3});
     pw_make_asset_image_multiple_auto(&game->am, eye_asset, (vec2){1,5});
 
+    // PWFrames frames = {0};
+    // da_append(frames, 0);
+    // da_append(frames, 1);
+    // da_append(frames, 2);
+    // da_append(frames, 3);
+    // da_append(frames, 4);
+    // PWTimes delays = {0};
+    // da_append(delays, 0.8f);
+    // da_append(delays, 0.2f);
+    // da_append(delays, 0.2f);
+    // da_append(delays, 0.2f);
+    // da_append(delays, 0.2f);
+    
     PWFrames frames = {0};
     da_append(frames, 0);
     da_append(frames, 1);
     da_append(frames, 2);
-    da_append(frames, 3);
-    da_append(frames, 4);
     PWTimes delays = {0};
-    da_append(delays, 0.8f);
-    da_append(delays, 0.2f);
     da_append(delays, 0.2f);
     da_append(delays, 0.2f);
     da_append(delays, 0.2f);
@@ -494,7 +504,7 @@ int RunEntityGame(ParticleEngine* game){
     // return 0;
 
     Entity bomb;
-    bomb.renderable = eye_animator;
+    bomb.renderable = bomb_animator;
     bomb.collider = (RectCollider){.collider = (Rectf){500.0f, 10.0f, 10.0f*2, 10.0f*2}};
     bomb.pos.x = 100.0f;
     bomb.pos.y = 100.0f;
@@ -528,7 +538,7 @@ int RunEntityGame(ParticleEngine* game){
             bomb.pos.x = game->is.mouse.x;
             bomb.pos.y = game->is.mouse.y;
             entity_add(&game->ep, bomb);
-            entity_pool_print_stats(&game->ep);
+            // entity_pool_print_stats(&game->ep);
         }
         if(action_pressed(&game->is, act_delete_entites)){
             delete_all_entities(game);
@@ -564,7 +574,7 @@ int RunEntityGame(ParticleEngine* game){
         pw_draw_renderable(
             game->win->context, 
             &game->am,
-            &eye_animator,
+            &bomb_animator,
              (Transforms2d){
                 .translation = (vec2f){(float)game->win->w/2, (float)game->win->h/2},
                 .rotation = 0.0f,

@@ -20,6 +20,8 @@ typedef struct{
     char title[MAX_TITLE_LEN];
     bool isrunning;
 
+
+
     FormatImage fcontext;
     Image       context;
 
@@ -37,7 +39,7 @@ void DestroyWindow(Window** win);
 void pw_window_present(Window* win);
 void Clear(Window* win);
 
-int SetWindowIcon(Window* window, char* path);
+int pw_window_set_icon(Window* win, const char* icon_path);
 void GetWindowInfo(Window* window);
 
 #endif

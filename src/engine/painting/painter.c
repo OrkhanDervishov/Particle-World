@@ -204,7 +204,6 @@ int pnt_copy_image(PNTImage* dest, PNTImage src){
 int pnt_create_image(PNTImage* img, size_t w, size_t h){
     if(img->buffer != NULL){
         pnt_delete_image(img);
-        printf("buffer is not null\n");
         return 1;
     }
     img->buffer = (PNTColor*)malloc(w * h * sizeof(PNTColor));

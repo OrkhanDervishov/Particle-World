@@ -36,12 +36,12 @@ int CreateParticleEngine(ParticleEngine** game){
 
     
     pw_engine_read_config(*game, "./src/confs/game_startup_config.conf");
-
-
-
+    
+    
     //******************************************/
     // Initializing game window
     if(CreateWindow(&((*game)->win), (*game)->s_params.width, (*game)->s_params.height, (*game)->s_params.title, (*game)->s_params.fullscreen)) return 1;
+    pw_window_set_icon((*game)->win, (*game)->s_params.icon_path);
     //******************************************/
     
     //******************************************/
@@ -117,6 +117,10 @@ int CreateParticleEngine(ParticleEngine** game){
 
 void DeleteParticleEngine(ParticleEngine** game){
     // save_image_png(&(*game)->mouse.cursor_img_normal, "hello.png");
+
+    free((*game)->s_params.title);
+    free((*game)->s_params.icon_path);
+    
     free_cursor_image(&(*game)->mouse);
     DeleteGuiBox((GuiBox**)(&(*game)->gui.element));
     DeleteChunkSpace(&(*game)->cs);
