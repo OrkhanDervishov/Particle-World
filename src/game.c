@@ -145,7 +145,7 @@ int RunParticleEngine(ParticleEngine* game){
 
     // Image background;
     // background.buffer = NULL;
-    // load_png(&background, "resources/background.png");
+    // load_image(&background, "resources/background.png");
     // Image minimized_bg = minimize_resolution(background, 16, 16);
 
     // EntityPool pool;
@@ -154,7 +154,7 @@ int RunParticleEngine(ParticleEngine* game){
     // Entity bomb;
     // Image bomb_image;
     // bomb_image.buffer = NULL;
-    // load_png(&bomb_image, "resources/bomb.png");
+    // load_image(&bomb_image, "resources/bomb.png");
     // bomb.sprite.sprite = &bomb_image;
     // bomb.collider = (RectCollider){.collider = (Rectf){500.0f, 10.0f, (float)bomb_image.width*2, (float)bomb_image.height*2}};
     // bool deleted = FALSE;
@@ -162,7 +162,7 @@ int RunParticleEngine(ParticleEngine* game){
     // Entity wizard;
     // Image wizard_image;
     // wizard_image.buffer = NULL;
-    // load_png(&wizard_image, "resources/wizard.png");
+    // load_image(&wizard_image, "resources/wizard.png");
     // wizard.sprite.sprite = &wizard_image;
     // wizard.collider = (RectCollider){.collider = (Rectf){10.0f, 10.0f, (float)wizard_image.width*2, (float)wizard_image.height*2}};
     // game->camera.pos.x = 100.0f;
@@ -470,7 +470,7 @@ int RunEntityGame(ParticleEngine* game){
 
     Image image;
     image.buffer = NULL;
-    pnt_load_png(&image, "resources/CHESS.png");
+    pnt_load_image(&image, "resources/CHESS.bmp");
 
     pw_asset_t barrel_asset = pw_load_asset(&game->am, "resources/bomb.png", PW_ASSET_SPRITE);
     pw_asset_t active_bombs_asset = pw_load_asset(&game->am, "resources/active_bomb_sprites.png", PW_ASSET_SPRITE);
@@ -520,7 +520,7 @@ int RunEntityGame(ParticleEngine* game){
     pw_asset_t font_sprite = pw_load_asset(&game->am, "resources/font.png", PW_ASSET_SPRITE);
     pw_make_asset_image_multiple_auto(&game->am, font_sprite, (vec2){1,99});
 
-    PWSpriteFonts fonts = pw_load_sprite_fonts_manual(font_sprite, " !#$%%&'{}*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz(|)~\"");
+    PWSpriteFonts fonts = pw_load_sprite_fonts_manual(font_sprite, " !#$%%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\"");
     
     
     
@@ -587,7 +587,7 @@ int RunEntityGame(ParticleEngine* game){
         // pnt_blit(game->win->context, frame1, 500, 400);
         // pnt_blit(game->win->context, frame2, 550, 400);
 
-        // pnt_blit_scaled(game->win->context, image, 100, 10, 2.5f, 1.0f);
+        pnt_blit_scaled(game->win->context, image, 100, 10, 2.5f, 1.0f);
 
 
         pw_draw_renderable(
@@ -605,7 +605,7 @@ int RunEntityGame(ParticleEngine* game){
         Transforms2d font_transforms = {
             .translation = {100.0f, 100.0f},
             .rotation = 0.0f,
-            .scale = {1.5f, 1.5f}
+            .scale = {2.5f, 2.5f}
         };
         pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!", font_transforms);
 

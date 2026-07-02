@@ -1124,7 +1124,7 @@ This function creates image itself.
 If you pass already created image it will be deleted.
 NOTE: This will be changed in the future
 */
-int pnt_load_png(PNTImage* img, const char* path){
+int pnt_load_image(PNTImage* img, const char* path){
     if(img->buffer != NULL){
         // free(img->buffer);
         pnt_delete_image(img);

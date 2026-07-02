@@ -195,6 +195,6 @@ void pnt_blit_transformed(PNTImage dest, PNTImage src, vec2f pos, float rotation
 // PNTImage formats create and load
 int pnt_save_image_ppm(PNTImage* img, char* filename);
 int pnt_save_image_png(PNTImage* img, char* filename);
-int pnt_load_png(PNTImage* img, const char* path);
+int pnt_load_image(PNTImage* img, const char* path);
 
 #endif

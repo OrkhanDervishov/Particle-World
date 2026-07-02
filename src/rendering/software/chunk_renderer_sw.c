@@ -190,7 +190,7 @@ void ShowChunkSpaceAllSW(Window* window, ChunkSpace* cs, int x, int y){
 void add_light(Window* window, Chunk* chunk, int x, int y){
     Image light;
     light.buffer = NULL;
-    pnt_load_png(&light, "resources/weak_light.png");
+    pnt_load_image(&light, "resources/weak_light.png");
 
     for(int i = 0; i < chunk->h; i++)
     for(int j = 0; j < chunk->w; j++){

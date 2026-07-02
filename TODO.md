@@ -2,7 +2,7 @@
 
 <h2>Short term tasks</h2>
 
-1. Support different image formats.
+1. ~~Support different image formats.~~
 
 2. ~~Configuration for engine.~~
 

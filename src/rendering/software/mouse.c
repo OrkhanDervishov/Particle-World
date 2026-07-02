@@ -9,7 +9,7 @@ void draw_cursor(FormatImage screen, Mouse mouse){
 
 int load_cursor_image(Mouse* mouse, const char* path){
     mouse->cursor_img_normal.buffer = NULL;
-    return pnt_load_png(&mouse->cursor_img_normal, path);
+    return pnt_load_image(&mouse->cursor_img_normal, path);
 }
 
 void free_cursor_image(Mouse* mouse){

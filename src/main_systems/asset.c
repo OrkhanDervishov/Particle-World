@@ -94,7 +94,7 @@ pw_image_t pw_load_asset_image(PWAssetManager* am, const char* path){
     pw_image_t *index_p = ht_find(&(am->loaded_images), path);
     if(index_p == NULL){
         Image image = {0};
-        pnt_load_png(&image, path);
+        pnt_load_image(&image, path);
         pool_append(am->image_pool, image, index);
         *ht_put(&(am->loaded_images), path) = index;
     } else {
