@@ -3,7 +3,7 @@
 C_COMPILER=gcc
 FLAGS="-O3"
 THIRDPARTY_INCLUDE_FOLDER="-Ithird_party/include"
-LIB_FOLDER="-Lthird_party/lib"
+LIB_FOLDER="-Lthird_party/lib/SDL2"
 LINUX_LINKER_LIBS="-lSDL2 -lm"
 OUTPUT_NAME="linux_build"
 

@@ -11,7 +11,16 @@
 
 <h4>Windows</h4>
 
-Put SDL2.dll to the main directory and run
+Download SDL2 MINGW binaries from https://github.com/libsdl-org/SDL/releases?q=2.&expanded=true#release
+
+Copy `bin/SDL2.dll` to the main directory
+
+Copy `include/SDL2` to `third_party/` folder
+
+Copy `.a` library files from `lib/ folder` to `third_party/SDL2` folder
+
+Build project using either
+
 ```
 make windows
 ```
@@ -22,9 +31,12 @@ build.bat
 
 <h4>Linux</h4>
 
-NOTE: at least in ubuntu it must work
-
 Install SDL2
+
+https://wiki.libsdl.org/SDL2/Installation
+
+Build project using either
+
 ```
 make linux
 ```

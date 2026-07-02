@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 set C_COMPILER=gcc
 set FLAGS=-O3
 set THIRDPARTY_INCLUDE_FOLDER=-Ithird_party/include
-set LIB_FOLDER=-Lthird_party/lib
+set LIB_FOLDER=-Lthird_party/lib/SDL2
 set WINDOWS_LINKER_LIBS=-lmingw32 -lSDL2main -lSDL2 -lm
 set OUTPUT_NAME=windows_build
 
