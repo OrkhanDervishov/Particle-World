@@ -13,11 +13,13 @@
 
 Download SDL2 MINGW binaries from https://github.com/libsdl-org/SDL/releases?q=2.&expanded=true#release
 
-Copy `bin/SDL2.dll` to the main directory
+From downloaded zip file
 
-Copy `include/SDL2` to `third_party/` folder
+Copy file `bin/SDL2.dll` to the project's root directory
 
-Copy `.a` library files from `lib/ folder` to `third_party/SDL2` folder
+Copy files from `include/SDL2` to `third_party/SDL2` directory
+
+Copy `.a` library files from `lib/` to `third_party/SDL2/` directory
 
 Build project using either
 
