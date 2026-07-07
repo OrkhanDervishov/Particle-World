@@ -7,3 +7,4 @@ bin/
 linux_build
 third_party/include/SDL2/
 third_party/lib/SDL2/
+imgui.ini

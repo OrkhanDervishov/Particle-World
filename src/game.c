@@ -414,9 +414,9 @@ int RunParticleEngine(ParticleEngine* game){
 void poll_events(InputSystem* is, InputSystem* gui){
     SDL_Event e;
     while (SDL_PollEvent(&e))
-    {
-        // printf("window_id: %d\n", e.window.windowID);
-        cImGui_ImplSDL2_ProcessEvent(&e);
+    {        
+        if(imgui_read_event(e)) continue;
+            
         update_sdl_event_input_system(is, e);
         // update_sdl_event_input_system(gui, e);
     }
@@ -472,8 +472,8 @@ typedef struct{
 
 int RunEntityGame(ParticleEngine* game){
 
-    ParticleEngine* gui_engine;
-    CreateParticleEngine(&gui_engine, "./src/confs/gui_conf.conf");
+    // ParticleEngine* gui_engine;
+    // CreateParticleEngine(&gui_engine, "./src/confs/gui_conf.conf");
     
     Image image;
     image.buffer = NULL;
@@ -583,9 +583,6 @@ int RunEntityGame(ParticleEngine* game){
         if(action_pressed(&game->is, act_delete_entites)){
             delete_all_entities(game);
         }
-        if(action_pressed(&game->is, act_delete_entites)){
-            delete_all_entities(game);
-        }
         if(action_pressed(&game->is, act_reload)){
             game->s_params.is_running = FALSE;
             game->s_params.restart = TRUE;
@@ -643,7 +640,7 @@ int RunEntityGame(ParticleEngine* game){
     }
 
     imgui_uninit(game);
-    DeleteParticleEngine(&gui_engine);
+    // DeleteParticleEngine(&gui_engine);
     
     return 0;
 }

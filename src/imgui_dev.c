@@ -32,8 +32,6 @@
 #define igGetIO igGetIO_Nil
 
 
-// ImGuiIO* io = igGetIO();
-// ImGuiStyle* style = igGetStyle();
 static ImGuiIO* io;
 static ImGuiStyle* style;
 
@@ -43,20 +41,21 @@ static bool quit;
 
 static ImVec4 clear_color;
 
+static bool imgui_read_event(SDL_Event e){
+    cImGui_ImplSDL2_ProcessEvent(&e);   
+    ImGuiIO* io = igGetIO();
+    if (io->WantCaptureMouse || io->WantCaptureKeyboard)
+        return true;
+    return false;
+}
 
 static void imgui_init(ParticleEngine* engine){
-#ifdef _WIN32
-    // SetProcessDPIAware();
-#endif
 
     SDL_Window* window = engine->win->window;
     SDL_Renderer* renderer = engine->win->renderer;
-    // SDL_GLContext gl_context = engine->win->gl_context;
 
     const char* glsl_version = "#version 130";
     float main_scale = cImGui_ImplSDL2_GetContentScaleForDisplay(0);
-
-    // SDL_GL_SetSwapInterval(1);
 
     // Create ImGui context
     igCreateContext(NULL);
@@ -79,9 +78,6 @@ static void imgui_init(ParticleEngine* engine){
 #endif
 
     // Initialize backends
-    // cImGui_ImplOpenGL3_Init(glsl_version);
-    // cImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-    // cImGui_ImplSDLRenderer2_Init(renderer);
     cImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
     cImGui_ImplSDLRenderer2_Init(renderer);
 
@@ -97,7 +93,6 @@ static void imgui_init(ParticleEngine* engine){
 }
 
 static void imgui_uninit(ParticleEngine* engine){
-    // cImGui_ImplOpenGL3_Shutdown();
     cImGui_ImplSDLRenderer2_Shutdown();
     cImGui_ImplSDL2_Shutdown();
     igDestroyContext(NULL);
@@ -106,89 +101,58 @@ static void imgui_uninit(ParticleEngine* engine){
 
 static int imgui_dev(ParticleEngine* engine)
 {
-
-    SDL_Window* window = engine->win->window;
     SDL_Renderer* renderer = engine->win->renderer;
-    // SDL_GLContext gl_context = engine->win->gl_context;
 
     // Begin frame
-    // cImGui_ImplOpenGL3_NewFrame();
     cImGui_ImplSDL2_NewFrame();
     cImGui_ImplSDLRenderer2_NewFrame();
     igNewFrame();
 
-    if (show_demo)
-        igShowDemoWindow(&show_demo);
+    static bool paused = false;
+    static float simulation_speed = 1.0f;
+    static int particle_size = 4;
+    static int brush_radius = 16;
+    static float gravity = 9.81f;
 
+    igBegin("Particle Engine", NULL, 0);
+
+    igText("Particle Sandbox");
+    igSeparator();
+
+    igCheckbox("Pause Simulation", &paused);
+    igSliderFloat("Simulation Speed", &simulation_speed,0.1f, 5.0f, "%.2fx", 0);
+    igSliderInt("Particle Size", &particle_size, 1, 16, "%d", 0);
+    igSliderInt("Brush Radius", &brush_radius, 1, 128, "%d", 0);
+    igSliderFloat("Gravity", &gravity, -20.0f, 20.0f, "%.2f", 0);
+
+    igSeparator();
+
+    if (igButton("Clear Particles", (ImVec2){120, 0}))
     {
-        static float f = 0.0f;
-        static int counter = 0;
-
-        igBegin("Hello, world!", NULL, 0);
-
-        igText("This is some useful text");
-        igCheckbox("Demo window", &show_demo);
-        igCheckbox("Another window", &show_another);
-
-        igSliderFloat("Float", &f, 0.0f, 1.0f, "%.3f", 0);
-        igColorEdit3("clear color", (float*)&clear_color, 0);
-
-        ImVec2 sz = {0,0};
-        if (igButton("Button", sz))
-            counter++;
-
-        igSameLine(0, -1);
-        igText("counter = %d", counter);
-
-        igText("Application average %.3f ms/frame (%.1f FPS)",
-                1000.0f / io->Framerate,
-                io->Framerate);
-
-        igEnd();
+        // TODO: clear particle world
     }
 
-    if (show_another)
+    igSameLine(0, -1);
+
+    if (igButton("Reset", (ImVec2){120, 0}))
     {
-        igBegin("Another Window", &show_another, 0);
-        igText("Hello from imgui");
-
-        ImVec2 sz = {0,0};
-        if (igButton("Close me", sz))
-            show_another = false;
-
-        igEnd();
+        simulation_speed = 1.0f;
+        particle_size = 4;
+        brush_radius = 16;
+        gravity = 9.81f;
+        paused = false;
     }
+
+    igSeparator();
+
+    igText("FPS: %.1f", io->Framerate);
+    igText("Frame Time: %.3f ms", 1000.0f / io->Framerate);
+
+    igEnd();
 
     // Render
     igRender();
-
-    // SDL_GL_MakeCurrent(window, gl_context);
-
-    // glViewport(0, 0, (int)io->DisplaySize.x, (int)io->DisplaySize.y);
-    // glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    // glClear(GL_COLOR_BUFFER_BIT);
-
-
-    // cImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
     cImGui_ImplSDLRenderer2_RenderDrawData(igGetDrawData(), renderer);
-
-    // if (SDL_GetError()[0] != '\0')
-    //     printf("SDL error: %s\n", SDL_GetError());
-
-#ifdef IMGUI_HAS_DOCK
-    // if (io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    // {
-    //     SDL_Window* backup_window = SDL_GL_GetCurrentWindow();
-    //     SDL_GLContext backup_ctx = SDL_GL_GetCurrentContext();
-
-    //     igUpdatePlatformWindows();
-    //     igRenderPlatformWindowsDefault(NULL, NULL);
-
-    //     // SDL_GL_MakeCurrent(backup_window, backup_ctx);
-    // }
-#endif
-
-    // SDL_GL_SwapWindow(window);
 
     return 0;
 }
