@@ -27,15 +27,14 @@ void pw_draw_animation(Image context , PWAssetManager* am, PWSpriteAnimator *ani
 }
 
 void pw_draw_renderable(Image context , PWAssetManager* am, PWRenderable *renderable, Transforms2d transforms, pw_time_t delta){
-
     switch(renderable->type){
         case PW_RENDERABLE_SPRITE_STATIC:
-            pw_draw_sprite(context, am, renderable->asset, transforms);
-            break;
+        pw_draw_sprite(context, am, renderable->asset, transforms);
+        break;
         case PW_RENDERABLE_SPRITE_ANIMATOR:
-            pw_draw_animation(context, am, &(renderable->sprite_animator), transforms, delta);
-            break;
+        pw_draw_animation(context, am, &(renderable->sprite_animator), transforms, delta);
+        break;
         default:
-            printf("ERROR (pw_draw_asset): Unable to draw asset of given type\n"); // TODO: Get type name
+        printf("ERROR (pw_draw_asset): Unable to draw asset of given type\n"); // TODO: Get type name
     }
 }

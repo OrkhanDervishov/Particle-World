@@ -6,8 +6,15 @@
 #define HT_IMPLEMENTATION
 #include "ht.h"
 
+PWAsset* pw_asset_manager_get_asset(PWAssetManager* am, pw_asset_t asset_id){
+    PWAsset *asset = &pool_get(am->asset_pool, asset_id);
+    return asset;
+}
 
-
+Image* pw_asset_manager_get_image(PWAssetManager* am, pw_image_t image_id){
+    Image *image = &pool_get(am->image_pool, image_id);
+    return image;
+}
 
 inline Image pw_image_get_frame(Image img, PWSprite sprite, pw_anim_frame_t frame_index){
     vec2ui frame_coords = {frame_index % sprite.cols, frame_index / sprite.cols};

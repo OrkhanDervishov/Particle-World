@@ -121,6 +121,7 @@ typedef struct{
 #define MAX_BINDINGS 4096
 #define MAX_SDL_SCANCODE_TO_KEY_MAP 512
 typedef struct{
+    int window_id;
     ButtonState     buttons[MAX_INPUT_BUTTONS];   // KeyCodes are indices
     KeyList         bindings[MAX_BINDINGS]; // Actions are indices
     KeyCode         scancode_keycode_map[MAX_SDL_SCANCODE_TO_KEY_MAP];
@@ -132,7 +133,7 @@ typedef struct{
 
 #define SCANCODE_TO_KEYCODE(in_sys_p, scancode) (in_sys_p)->scancode_keycode_map[(scancode)]
 
-void init_input_system(InputSystem* is);
+void init_input_system(InputSystem* is, int window_id);
 void update_input_system(InputSystem* is);
 void add_binding(InputSystem* is, KeyCode keycode, action_t action);
 void remove_binding(InputSystem* is, KeyCode keycode, action_t action);
@@ -143,6 +144,9 @@ bool action_down(InputSystem* is, action_t action);
 bool action_pressed(InputSystem* is, action_t action);
 bool action_released(InputSystem* is, action_t action);
 void update_mouse(InputSystem* is);
+
+void reset_button_states(InputSystem* is);
+void update_sdl_event_input_system(InputSystem *is, SDL_Event event);
 
 // #undef MAX_BUTTONS
 // #undef MAX_BINDINGS

@@ -15,7 +15,6 @@
 #define INF 0x3F3F3F3F
 #define GENERIC_FUNC_POINTER void (*)()
 
-#define byte char
 // #define bool uint8_t
 #define TRUE true
 #define FALSE false

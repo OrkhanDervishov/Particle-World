@@ -119,11 +119,18 @@ void pw_draw_sprite_symbol(Image context, PWAssetManager *am, PWSpriteFonts *fon
 void pw_draw_sprite_text(Image context, PWAssetManager *am, PWSpriteFonts *fonts, const char* text, Transforms2d transforms){
     size_t text_len = strlen(text);
 
+    Transforms2d transforms_copy = transforms;
     float font_width = pw_asset_manager_get_sprite_offsetx(am, fonts->fonts_sprite);
-    float font_offset = font_width*transforms.scale.x;
+    float font_offsetx = font_width*transforms.scale.x;
+    float font_offsety = font_width*transforms.scale.y;
 
     for(size_t i = 0; i < text_len; i++){
-        transforms.translation.x += font_offset;
+        if(text[i] == '\n'){
+            transforms.translation.y += font_offsety;
+            transforms.translation.x = transforms_copy.translation.x;
+            continue;
+        }
+        transforms.translation.x += font_offsetx;
         pw_draw_sprite_symbol(context, am, fonts, text[i], transforms);
     }
 }

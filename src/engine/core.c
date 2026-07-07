@@ -2,19 +2,19 @@
 
 void* Malloc2D(int rows, int cols, int elemSize){
 
-    void** arr = malloc(rows * sizeof(void*));
-    for(int i = 0; i < rows; i++){
-        arr[i] = malloc(cols * elemSize);
-    }
-    return arr;
+    // void** arr = malloc(rows * sizeof(void*));
+    // for(int i = 0; i < rows; i++){
+    //     arr[i] = malloc(cols * elemSize);
+    // }
+    // return arr;
 }
 
 void Free2D(void* arr, int rows){
-    void** mat = arr;
-    for(int i = 0; i < rows; i++){
-        free(mat[i]);
-    }
-    free(mat);
+    // void** mat = arr;
+    // for(int i = 0; i < rows; i++){
+    //     free(mat[i]);
+    // }
+    // free(mat);
 }
 
 long GetTimeNano(){

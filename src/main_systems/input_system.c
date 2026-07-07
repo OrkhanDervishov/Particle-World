@@ -205,8 +205,45 @@ void update_input_system(InputSystem* is){
 }
 
 
-void init_input_system(InputSystem* is){
+void update_sdl_event_input_system(InputSystem *is, SDL_Event e){
+    // printf("window_id: %d\n", e.window.windowID);
+    // printf("window_id: %d\n\n", is->window_id);
+    if(e.window.windowID != is->window_id) return;
+
+    update_mouse(is);
+
+    if(e.type == SDL_KEYDOWN && !e.key.repeat){
+        KeyCode kc = SCANCODE_TO_KEYCODE(is, e.key.keysym.scancode);
+        if(kc == BUTTON_UNKNOWN) return;
+
+        is->buttons[kc].pressed = TRUE;
+        is->buttons[kc].down = TRUE;
+    }
+    else if(e.type == SDL_KEYUP){  
+        KeyCode kc = SCANCODE_TO_KEYCODE(is, e.key.keysym.scancode);
+        if(kc == BUTTON_UNKNOWN) return;
+
+        is->buttons[kc].released = TRUE;
+        is->buttons[kc].down = FALSE;
+    }
+    if(e.type == SDL_MOUSEMOTION){
+        is->mouse.xrel = e.motion.xrel;
+        is->mouse.yrel = e.motion.yrel;
+    }
+    if(e.type == SDL_MOUSEWHEEL){
+        is->mouse.xwheel = (float)e.wheel.x;
+        is->mouse.ywheel = (float)e.wheel.y;
+        // printf("xwheel:%f ywheel:%f\n", is->mouse.xwheel, is->mouse.ywheel);
+    }
+}
+
+
+
+
+
+void init_input_system(InputSystem* is, int window_id){
     *is = (InputSystem){0};
+    is->window_id = window_id;
     // memset(is->buttons, 0, MAX_INPUT_BUTTONS*sizeof(ButtonState));
     // memset(is->bindings, 0, MAX_BINDINGS*sizeof(KeyCode));
 

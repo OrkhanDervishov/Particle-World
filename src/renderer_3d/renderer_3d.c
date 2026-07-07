@@ -1,6 +1,7 @@
 #include "renderer_3d.h"
 #define HT_IMPLEMENTATION
 #include "ht.h"
+#include "glad/glad.h"
 
 inline float rad_to_deg(float radian){
     return 180/PI_CONST * radian;

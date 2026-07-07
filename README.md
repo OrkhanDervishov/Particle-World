@@ -17,9 +17,9 @@ From downloaded zip file
 
 Copy file `bin/SDL2.dll` to the project's root directory
 
-Copy files from `include/SDL2` to `third_party/SDL2` directory
+Copy files from `include/SDL2` to `third_party/include/SDL2` directory
 
-Copy `.a` library files from `lib/` to `third_party/SDL2/` directory
+Copy `.a` library files from `lib/` to `third_party/lib/SDL2/` directory
 
 Build project using either
 

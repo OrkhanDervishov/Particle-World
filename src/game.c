@@ -1,16 +1,5 @@
 #include "game.h"
-
-
-// Time
-clock_t sumTime = 0;
-clock_t deltaTime = 0;
-
-//Pragram params
-int Delay = 20;
-int RAD = 6;
-float fps = 0;
-int drawlines = 0;
-
+#include "imgui_dev.c"
 
 void Guide(ParticleEngine* game, Color textColor);
 void init_buttons(ParticleEngine* game, Button** buttons);
@@ -421,6 +410,21 @@ int RunParticleEngine(ParticleEngine* game){
     return 0;
 }
 
+
+void poll_events(InputSystem* is, InputSystem* gui){
+    SDL_Event e;
+    while (SDL_PollEvent(&e))
+    {
+        // printf("window_id: %d\n", e.window.windowID);
+        cImGui_ImplSDL2_ProcessEvent(&e);
+        update_sdl_event_input_system(is, e);
+        // update_sdl_event_input_system(gui, e);
+    }
+}
+
+
+
+
 void draw_entity(ParticleEngine* game, entity_id_t id){
     pw_draw_renderable(
         game->win->context, 
@@ -468,16 +472,19 @@ typedef struct{
 
 int RunEntityGame(ParticleEngine* game){
 
+    ParticleEngine* gui_engine;
+    CreateParticleEngine(&gui_engine, "./src/confs/gui_conf.conf");
+    
     Image image;
     image.buffer = NULL;
     pnt_load_image(&image, "resources/CHESS.bmp");
-
+    
     pw_asset_t barrel_asset = pw_load_asset(&game->am, "resources/bomb.png", PW_ASSET_SPRITE);
     pw_asset_t active_bombs_asset = pw_load_asset(&game->am, "resources/active_bomb_sprites.png", PW_ASSET_SPRITE);
     pw_asset_t eye_asset = pw_load_asset(&game->am, "resources/eye_sprites.png", PW_ASSET_SPRITE);
     pw_make_asset_image_multiple_auto(&game->am, active_bombs_asset, (vec2){1,3});
     pw_make_asset_image_multiple_auto(&game->am, eye_asset, (vec2){1,5});
-
+    
     // PWFrames frames = {0};
     // da_append(frames, 0);
     // da_append(frames, 1);
@@ -499,39 +506,45 @@ int RunEntityGame(ParticleEngine* game){
     da_append(delays, 0.2f);
     da_append(delays, 0.2f);
     da_append(delays, 0.2f);
-
+    
     pw_asset_t bomb_animation = pw_sprite_animation_create_load(&game->am, active_bombs_asset, frames, delays);
     pw_asset_t eye_animation = pw_sprite_animation_create_load(&game->am, eye_asset, frames, delays);
-
+    
     PWRenderable bomb_animator = pw_sprite_animator_create_renderable(&game->am, bomb_animation, TRUE, TRUE);
     PWRenderable eye_animator = pw_sprite_animator_create_renderable(&game->am, eye_animation, TRUE, TRUE);
     // return 0;
-
-    Entity bomb;
-    bomb.renderable = bomb_animator;
-    bomb.collider = (RectCollider){.collider = (Rectf){500.0f, 10.0f, 10.0f*2, 10.0f*2}};
-    bomb.pos.x = 100.0f;
-    bomb.pos.y = 100.0f;
-
+    
+    Entity bomb = {
+        .renderable = bomb_animator,
+        .collider = (RectCollider){.collider = (Rectf){500.0f, 10.0f, 10.0f*2, 10.0f*2}},
+        .pos = {100.0f, 100.0f},
+    };
+    
     // entity_id_t bomb0 = entity_add(&game->ep, bomb);
-
+    
     /******************************************************/
     
     pw_asset_t font_sprite = pw_load_asset(&game->am, "resources/font.png", PW_ASSET_SPRITE);
     pw_make_asset_image_multiple_auto(&game->am, font_sprite, (vec2){1,99});
-
-    PWSpriteFonts fonts = pw_load_sprite_fonts_manual(font_sprite, " !#$%%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\"");
+    pw_asset_t font2_sprite = pw_load_asset(&game->am, "resources/font2.png", PW_ASSET_SPRITE);
+    pw_make_asset_image_multiple_auto(&game->am, font2_sprite, (vec2){6,18});
     
+    PWAsset *font2_asset = pw_asset_manager_get_asset(&game->am, font2_sprite);
+    Image *font2_image = pw_asset_manager_get_image(&game->am, font2_asset->sprite.image_id);
+    pnt_change_color(*font2_image, (Color){.rgba = 0xFF000000}, (Color){.rgba = 0x00000000});
+    
+    PWSpriteFonts fonts = pw_load_sprite_fonts_manual(font_sprite, "\r!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\"");
+    // PWSpriteFonts fonts2 = pw_load_sprite_fonts_manual(font2_sprite, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
     
     
     
     /******************************************************/
-
+    
     action_t act_exit = 0;
     action_t act_create_bomb = 1;
     action_t act_delete_entites = 2;
     action_t act_reload = 3;
-
+    
     add_binding(&game->is, BUTTON_ESCAPE, act_exit);
     add_binding(&game->is, BUTTON_MOUSE_LEFT, act_create_bomb);
     add_binding(&game->is, BUTTON_SPACE, act_create_bomb);
@@ -541,12 +554,23 @@ int RunEntityGame(ParticleEngine* game){
     add_binding(&game->is, BUTTON_X, act_delete_entites);
     add_binding(&game->is, BUTTON_1, act_delete_entites);
     add_binding(&game->is, BUTTON_F1, act_reload);
+    
+    // printf("works10\n");
+    imgui_init(game);
+    // printf("works20\n");
 
     while(game->s_params.is_running){
         
         update_global_time();
-        update_input_system(&game->is);
-        
+        // printf("fps:%.1lf\n", 1.0/PW_DELTA_TIME);
+        // imgui_poll_events(gui_engine);
+        // update_input_system(&game->is);
+        reset_button_states(&game->is);
+        // update_mouse(&game->is);
+        // reset_button_states(&gui_engine->is);
+        // update_mouse(&gui_engine->is);
+        poll_events(&game->is, NULL);
+
         if(action_pressed(&game->is, act_exit)){
             game->s_params.is_running = FALSE;
         }
@@ -587,32 +611,40 @@ int RunEntityGame(ParticleEngine* game){
         // pnt_blit(game->win->context, frame1, 500, 400);
         // pnt_blit(game->win->context, frame2, 550, 400);
 
-        pnt_blit_scaled(game->win->context, image, 100, 10, 2.5f, 1.0f);
+        // pnt_blit_scaled(game->win->context, image, 100, 10, 2.5f, 1.0f);
 
 
-        pw_draw_renderable(
-            game->win->context, 
-            &game->am,
-            &bomb_animator,
-             (Transforms2d){
-                .translation = (vec2f){(float)game->win->w/2, (float)game->win->h/2},
-                .rotation = 0.0f,
-                .scale = (vec2f){10.0f, 10.0f}
-            },
-            PW_DELTA_TIME
-        );
+        // pw_draw_renderable(
+        //     game->win->context, 
+        //     &game->am,
+        //     &bomb_animator,
+        //      (Transforms2d){
+        //         .translation = (vec2f){(float)game->win->w/2, (float)game->win->h/2},
+        //         .rotation = 0.0f,
+        //         .scale = (vec2f){10.0f, 10.0f}
+        //     },
+        //     PW_DELTA_TIME
+        // );
 
         Transforms2d font_transforms = {
             .translation = {100.0f, 100.0f},
             .rotation = 0.0f,
             .scale = {2.5f, 2.5f}
         };
-        pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!", font_transforms);
+        pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!\nerfegrg\nwefefef", font_transforms);
 
         draw_entities(game);
-        pw_window_present(game->win);
+        // pw_window_present(game->win);
+        // SDL_SetRenderDrawColor(game->win->renderer, 18, 18, 18, 255);
+        // SDL_RenderClear(game->win->renderer);
+        pw_window_prepare_renderer(game->win);
+        imgui_dev(game);
+        pw_window_present_renderer(game->win);
     }
 
+    imgui_uninit(game);
+    DeleteParticleEngine(&gui_engine);
+    
     return 0;
 }
 

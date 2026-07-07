@@ -28,7 +28,7 @@ int CreateChunk(Chunk* chunk, int w, int h){
     );
 
 
-    byte* p = chunk->data_block;            chunk->state = (STATE_DT*)p;
+    STATE_DT* p = chunk->data_block;        chunk->state = (STATE_DT*)p;
     p += chunk->size*sizeof(STATE_DT);      chunk->type = (TYPE_DT*)p;
     p += chunk->size*sizeof(TYPE_DT);       chunk->xvel = (XVEL_DT*)p;
     p += chunk->size*sizeof(XVEL_DT);       chunk->yvel = (YVEL_DT*)p;

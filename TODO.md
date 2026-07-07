@@ -20,6 +20,7 @@
 
 
 
+
 <h2>Long term tasks</h2>
 
 
@@ -81,3 +82,18 @@
 
     1. Engine must have comfortable API that can should be basic and let customisation
 </h3>
+
+
+<h3>
+8. Add Multithreading Support For All Modules:
+
+    1. Add semaphores to all modules.
+</h3>
+
+
+<h3>
+9. Memory Leaks:
+
+    1. Resolve all memory leaks.
+</h3>
+

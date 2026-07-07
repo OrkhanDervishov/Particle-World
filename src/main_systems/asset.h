@@ -138,6 +138,9 @@ void pw_asset_manager_free(PWAssetManager* am);
 
 pw_asset_t pw_load_asset(PWAssetManager* am, const char* path, PWAssetType type);
 
+PWAsset* pw_asset_manager_get_asset(PWAssetManager* am, pw_asset_t asset_id);
+Image* pw_asset_manager_get_image(PWAssetManager* am, pw_image_t image_id);
+
 void pw_make_asset_image_multiple_auto(PWAssetManager* am, pw_asset_t asset_id, vec2 rows_cols);
 Image pw_sprite_multiple_get_image(PWAssetManager* am, pw_asset_t asset_id, int index);
 

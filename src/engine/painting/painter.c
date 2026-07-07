@@ -203,6 +203,7 @@ int pnt_copy_image(PNTImage* dest, PNTImage src){
 
 int pnt_create_image(PNTImage* img, size_t w, size_t h){
     if(img->buffer != NULL){
+        // printf("buffer is not null\n");
         pnt_delete_image(img);
         return 1;
     }

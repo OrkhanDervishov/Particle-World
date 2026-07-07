@@ -1,36 +1,68 @@
 CPP_COMPILER = g++
 C_COMPILER = gcc
+COMPILER = 
 FLAGS = -O3
 THIRDPARTY_INCLUDE_FOLDER = -Ithird_party/include
-LIB_FOLDER = -Lthird_party/lib/SDL2
-WINDOWS_LINKER_LIBS = -lmingw32 -lSDL2main -lSDL2 -lm
-LINUX_LINKER_LIBS = -lSDL2 -lm
+LIB_FOLDER = -Lthird_party/lib/SDL2 -Lthird_party/lib/cimgui
+WINDOWS_LINKER_LIBS = -lmingw32 -lcimgui -lSDL2main -lSDL2 -lm -lopengl32
+LINUX_LINKER_LIBS = -lSDL2 -lm -lopengl32
 
-rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
-SRC := $(call rwildcard,src/,*.c)
 
-OBJ = $(SRC:%.c=bin/%.o)
+# rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+# SRC := $(call rwildcard,src/,*.c)
+
+# OBJ = $(SRC:%.c=bin/%.o)
 
 rwildir = $(foreach d,$(wildcard $1*/),$(call rwildir,$d) $d)
-INCLUDE_DIRS := src/ $(call rwildir,src/)
-PROJECT_INCLUDES := $(addprefix -I,$(INCLUDE_DIRS))
+
+
+rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+C_SRC   := $(call rwildcard,src/,*.c)
+CPP_SRC := $(call rwildcard,src/,*.cpp)
+
+SRC := $(C_SRC) $(CPP_SRC)
+
+# Object files
+C_OBJ   := $(C_SRC:%.c=bin/%.o)
+CPP_OBJ := $(CPP_SRC:%.cpp=bin/%.o)
+OBJ = $(C_OBJ) $(CPP_OBJ)
 
 BIN_DIR = bin
 
 
+INCLUDE_DIRS := src/ $(call rwildir,src/)
+PROJECT_INCLUDES := $(addprefix -I,$(INCLUDE_DIRS))
 
 windows_build: $(SRC)
-	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(WINDOWS_LINKER_LIBS)
+	$(CPP_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(WINDOWS_LINKER_LIBS)
+
+# win_build: $(OBJ)
+# 	$(CPP_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(IMGUI_BACKENDS) $(WINDOWS_LINKER_LIBS)
 
 win_build: $(OBJ)
-	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(WINDOWS_LINKER_LIBS)
+	$(CPP_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(WINDOWS_LINKER_LIBS)
+
 
 linux_build: $(SRC)
-	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINUX_LINKER_LIBS)
+	$(CPP_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINUX_LINKER_LIBS)
+
+
+lin_build: $(OBJ)
+	$(CPP_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) $(LIB_FOLDER) -o $@ $^ $(LINUX_LINKER_LIBS)
+
+# bin/%.o: %.c
+# 	@if not exist "$(dir $@)" mkdir "$(dir $@)"
+# 	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) -c $< -o $@
+
 
 bin/%.o: %.c
 	@if not exist "$(dir $@)" mkdir "$(dir $@)"
 	$(C_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) -c $< -o $@
+
+bin/%.o: %.cpp
+	@if not exist "$(dir $@)" mkdir "$(dir $@)"
+	$(CPP_COMPILER) $(FLAGS) $(PROJECT_INCLUDES) $(THIRDPARTY_INCLUDE_FOLDER) -c $< -o $@
 
 
 

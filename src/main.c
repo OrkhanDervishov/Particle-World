@@ -13,12 +13,23 @@
 #include "particle_data.h"
 #include "simulator.h"
 
-#include "uchar.h"
-#include "locale.h"
+// #include "uchar.h"
+// #include "locale.h"
 
 
+
+
+
+#define TYPE_GAME(type)\
+do{\
+    type x;\
+}while(0)
 
 int main(int argc, char* argv[]){
+    // ht__typeof
+    // int x;
+    // TYPE_GAME(int);
+    // test();
 
     // const char* config_text = myconfig_load_config("./src/confs/game_startup_config.conf");
     // ConfigPairs pairs = myconfig_read_all_pairs(&config_text);
@@ -35,18 +46,22 @@ int main(int argc, char* argv[]){
     // wprintf(L"The Euro symbol is: %ls\n", euro_symbol);
     // wprintf("ü\n");
 
-    ParticleEngine* game;
     
     while(1){
-        if(CreateParticleEngine(&game)){
+        bool restart = false;
+        ParticleEngine* game;
+        if(CreateParticleEngine(&game, "./src/confs/game_conf.conf")){
             printf("failed\n");
             break;
-        }
+        };
+        if (SDL_GetError()[0] != '\0')
+            printf("SDL error: %s\n", SDL_GetError());
         RunEntityGame(game);
-        DeleteParticleEngine(&game);
         if(game->s_params.restart){
-            continue;
+            restart = true;
         }
+        DeleteParticleEngine(&game);
+        if(restart) continue;
         break;
     }
 
@@ -54,92 +69,3 @@ int main(int argc, char* argv[]){
 
     return 0;
 }
-
-
-// int Chess(){
-//     Window* cwin;
-//     ChessSimulator* csim;
-//     if(InitWindow(&cwin, SCR_WIDTH, SCR_HEIGHT, WIN_TITLE)) return 1;
-//     if(InitChessSimulator(&csim, cwin, SimWidth, SimWidth, SimWidth/8)) return 1;
-
-//     Color c1 = {20, 20, 20, 255};
-//     Color c2 = {120, 120, 120, 255};
-//     Color c3 = {255, 243, 128, 100};
-//     AssignTileColors(c1, c2, c3);
-//     ChessGame(csim);
-//     DestroyChessSimulator(&csim);
-//     DestroyWindow(&cwin);
-//     return 0;
-// }
-
-
-// int RigidTest(){
-//     // Inits
-//     if(InitWindow(&win, SCR_WIDTH, SCR_HEIGHT, WIN_TITLE)) return 1;
-//     if(InitRigidSimulator(&rsim, R_Sim_Width, R_Sim_Height)) return 1;
-
-//     SDL_Surface* icon = SDL_LoadBMP(ICON_PATH);
-//     if(icon == NULL) printf("fail\n");
-//     SDL_SetWindowIcon(win->window, icon);
-
-//     SDL_RendererInfo info;
-//     SDL_GetRendererInfo(win->renderer, &info);
-//     printf("%s\n", info.name);
-
-//     clock_t start = 0, end = 1;
-//     // Loop
-//     SDL_Event event;
-
-//     // CreateRect(rsim, 10, 10, 100, 100);
-//     // CreateRect(rsim, 200, 90, 100, 100);
-//     // CreateRect(rsim, 100, 90, 100, 100);
-//     // CreateRect(rsim, 200, 480, 100, 100);
-//     // CreateRect(rsim, 400, 800, 100, 100);
-//     // CreateRect(rsim, 500, 600, 100, 100);
-//     // RigidObj* rect1 = GetObjectById(rsim, 0);
-//     // RigidObj* rect2 = GetObjectById(rsim, 1);
-
-//     int xmove = -2;
-//     int ymove = -2;
-
-//     Polygon* p;
-//     CreateTriangle(rsim, &p, 100, 100, 200, 200, 50, 200);
-
-//     while(win->isrunning){
-//         deltaTime = end - start;
-//         sumTime += deltaTime;
-
-//         if(sumTime > 500){
-//             fps = 1000 / (end - start);
-//             sumTime = 0;
-//             sprintf(win->title, "FPS: %d", fps);
-//             SDL_SetWindowTitle(win->window, win->title);
-//         }
-//         start = clock();
-
-//         // Input handling
-//         // ProcessInput(event, win, sim, &color);
-//         ProcessRigidInput(event, win, rsim);
-
-//         // MovePolygon(rsim, p, 1, 1);
-
-//         // Render
-//         // int mx, my;
-//         // SDL_GetMouseState(&mx, &my);
-//         DrawObjects(win, rsim);
-//         DrawPolygon(win, rsim, p);
-
-        
-        
-//         // End Frame
-//         SDL_RenderPresent(win->renderer);
-//         SDL_Delay(Delay);
-//         end = clock();
-//     }
-
-//     DeletePolygon(rsim, &p);
-//     // Destroy
-//     SDL_FreeSurface(icon);
-//     DestroyRigidSimulator(&rsim);
-//     DestroyWindow(&win);
-// }

@@ -4,7 +4,7 @@
 #include "core.h"
 #include "painter.h"
 
-#define STATE_DT        byte
+#define STATE_DT        int8_t
 #define TYPE_DT         int32_t
 #define XVEL_DT         uint8_t
 #define YVEL_DT         uint8_t
@@ -16,7 +16,7 @@
 #define DURABILITY_DT   uint32_t
 #define CUSTOM_DT       void*
 
-typedef byte            part_state_t;
+typedef int8_t          part_state_t;
 typedef int32_t         part_type_t;
 typedef uint8_t         part_xvel_t;
 typedef uint8_t         part_yvel_t;

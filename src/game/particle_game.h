@@ -36,6 +36,8 @@ typedef struct{
     size_t width;
     size_t height;
     bool fullscreen;
+    bool window_visible;
+    PWWindowRenderingApi window_render_api;
 
     // Visual
     char* icon_path;
@@ -71,7 +73,7 @@ typedef struct ParticleEngine{
 #define DISABLE_HEATMAP_MOD(g) (*g)->s_params.hm_mode = FALSE
 
 
-int CreateParticleEngine(ParticleEngine** game);
+int CreateParticleEngine(ParticleEngine** game, const char* conf_path);
 void DeleteParticleEngine(ParticleEngine** game);
 
 int add_callback_pg(ParticleEngine* game, void (*callback)(ParticleEngine* game));

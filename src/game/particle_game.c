@@ -1,5 +1,6 @@
 #include "particle_game.h"
 #include "custom_parser.h"
+#include "renderer_3d.h"
 
 
 #define CS_WIDTH    DEFAULT_CS_WIDTH
@@ -11,7 +12,7 @@
 
 void pw_engine_read_config(ParticleEngine* pe, const char *conf_path);
 
-int CreateParticleEngine(ParticleEngine** game){
+int CreateParticleEngine(ParticleEngine** game, const char* conf_path){
 
     (*game) = (ParticleEngine*)malloc(sizeof(ParticleEngine));
 
@@ -26,6 +27,7 @@ int CreateParticleEngine(ParticleEngine** game){
     (*game)->s_params.frameLockEnabled = TRUE;
     (*game)->s_params.frameLock = 90;
     (*game)->s_params.clear_color.rgba = 0x00181818;
+    (*game)->s_params.window_render_api = PW_WINDOW_SURFACE;
     //******************************************/
     
     //******************************************/
@@ -35,15 +37,19 @@ int CreateParticleEngine(ParticleEngine** game){
     //******************************************/
 
     
-    pw_engine_read_config(*game, "./src/confs/game_startup_config.conf");
+    pw_engine_read_config(*game, conf_path);
     
     
     //******************************************/
     // Initializing game window
-    if(CreateWindow(&((*game)->win), (*game)->s_params.width, (*game)->s_params.height, (*game)->s_params.title, (*game)->s_params.fullscreen)) return 1;
+    if(pw_window_create(&((*game)->win), (*game)->s_params.width, (*game)->s_params.height, (*game)->s_params.title, (*game)->s_params.fullscreen, (*game)->s_params.window_render_api)) return 1;
     pw_window_set_icon((*game)->win, (*game)->s_params.icon_path);
+    pw_window_visible((*game)->win, (*game)->s_params.window_visible);
+    if((*game)->s_params.window_render_api == PW_WINDOW_OPENGL)
+        init_opengl((*game)->win);
     //******************************************/
     
+
     //******************************************/
     // Initializing chunk system
     ChunkSpace* cs = &((*game)->cs);
@@ -78,7 +84,7 @@ int CreateParticleEngine(ParticleEngine** game){
     
     //******************************************/
     // Initializing gui system
-    init_input_system(&(*game)->is);
+    init_input_system(&(*game)->is, (*game)->win->id);
     //******************************************/
 
     //******************************************/
@@ -116,16 +122,16 @@ int CreateParticleEngine(ParticleEngine** game){
 }
 
 void DeleteParticleEngine(ParticleEngine** game){
-    // save_image_png(&(*game)->mouse.cursor_img_normal, "hello.png");
-
     free((*game)->s_params.title);
     free((*game)->s_params.icon_path);
-    
+
+    pw_asset_manager_free(&(*game)->am);
     free_cursor_image(&(*game)->mouse);
     DeleteGuiBox((GuiBox**)(&(*game)->gui.element));
     DeleteChunkSpace(&(*game)->cs);
-    DestroyWindow(&((*game)->win));
+    pw_window_destroy(&((*game)->win));
     free(*game);
+    *game = NULL;
 }
 
 int add_callback_pg(ParticleEngine* game, void (*callback)(ParticleEngine* game)){
@@ -222,8 +228,14 @@ void pw_engine_read_config(ParticleEngine* pe, const char *conf_path){
     pe->s_params.width = (size_t)myconfig_get_value_number(pairs, "window_width", "window");
     pe->s_params.height = (size_t)myconfig_get_value_number(pairs, "window_height", "window");
     pe->s_params.fullscreen = myconfig_get_value_bool(pairs, "window_fullscreen", "window");
+    pe->s_params.window_visible = myconfig_get_value_bool(pairs, "window_visible", "window");
     pe->s_params.icon_path = myconfig_get_value_string_new(pairs, "icon_image_path", "window");
     
+    char* api = myconfig_get_value_string_new(pairs, "window_render_api", "window");
+    if(strcmp(api, "surface") == 0) pe->s_params.window_render_api = PW_WINDOW_SURFACE;
+    if(strcmp(api, "renderer") == 0) pe->s_params.window_render_api = PW_WINDOW_RENDERER;
+    free(api);
+
     pe->s_params.frameLockEnabled = myconfig_get_value_bool(pairs, "frame_lock_enabled", "window");
     pe->s_params.frameLock = (int)myconfig_get_value_number(pairs, "frame_lock", "window");
     
