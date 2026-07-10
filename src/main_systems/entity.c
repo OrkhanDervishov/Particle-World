@@ -1,5 +1,5 @@
 #include "entity.h"
-
+#include "stdlib.h"
 
 int pw_entity_manager_init(PWEntityManager* em){
     *em = (PWEntityManager){0};
@@ -108,25 +108,32 @@ bool collide_rect_to_rect(RectCollider a, RectCollider b){
 
 
 
-bool are_colliding_aabb(PWEntity e1, PWEntity e2){
+int are_colliding_aabb(PWEntity e1, PWEntity e2){
 
-    float a_sx = e1.pos.x + e1.aabb.x;
-    float a_sy = e1.pos.y + e1.aabb.y;
-    float b_sx = e2.pos.x + e2.aabb.x;
-    float b_sy = e2.pos.y + e2.aabb.y;
+    float a_sx = e1.pos.x + e1.aabb.x;// + e1.aabb.w/2;
+    float a_sy = e1.pos.y + e1.aabb.y;// + e1.aabb.h/4;
+    float b_sx = e2.pos.x + e2.aabb.x;// + e2.aabb.w/2;
+    float b_sy = e2.pos.y + e2.aabb.y;// + e2.aabb.h/4;
     
-    float a_endx = e1.pos.x + e1.aabb.x + e1.aabb.w;
-    float a_endy = e1.pos.y + e1.aabb.y + e1.aabb.h;
-    float b_endx = e2.pos.x + e2.aabb.x + e2.aabb.w;
-    float b_endy = e2.pos.y + e2.aabb.y + e2.aabb.h;
+    float a_ex = e1.pos.x + e1.aabb.x + e1.aabb.w;
+    float a_ey = e1.pos.y + e1.aabb.y + e1.aabb.h;
+    float b_ex = e2.pos.x + e2.aabb.x + e2.aabb.w;
+    float b_ey = e2.pos.y + e2.aabb.y + e2.aabb.h;
     
-    if(
-        a_sx < b_endx && a_endx > b_sx && 
-        a_sy < b_endy && a_endy > b_sy
-    ){
-        return TRUE;
+
+    bool is_colliding = false;
+    float x_overlap, y_overlap;
+    if(a_sy < b_ey && a_ey > b_sy){
+        if(a_sx < b_ex && a_ex > b_sx){
+            is_colliding = true;
+            x_overlap = fmin(a_ex - b_sx, b_ex - a_sx);
+            y_overlap = fmin(a_ey - b_sy, b_ey - a_sy);
+        }
     }
-    
-    return FALSE;
+
+    if(!is_colliding) return 0;
+
+    if(x_overlap < y_overlap) return 1;
+    else return 2;
 }
 /************************************************************/

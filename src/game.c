@@ -520,7 +520,7 @@ void init_scene(ParticleEngine *game){
     player_id = pw_entity_manager_add(&game->em, player);
 }
 
-#define GRAVITY 500.0f * PW_DELTA_TIME
+#define GRAVITY gravity0*50.0f * PW_DELTA_TIME
 void apply_gravity(ParticleEngine* game){
     for(int i = 0; i < 8; i++){
         PWEntity* ent = pw_entity_manager_get(&game->em, entity_ids[i]);
@@ -542,11 +542,18 @@ void handle_collisions(ParticleEngine* game){
     for(int i = 0; i < 8; i++){
         PWEntity* ent = pw_entity_manager_get(&game->em, entity_ids[i]);
         
-        if(are_colliding_aabb(*player_ent, *ent)){
-            // player_ent->pos = vec2_sub(player_ent->pos, last_move);
-            // game->camera.pos = vec2_sub(game->camera.pos, last_move);
-            player_ent->pos.y += GRAVITY;
-            game->camera.pos.y += GRAVITY;
+        int side = are_colliding_aabb(*player_ent, *ent);
+        if(side){
+            if(side == 1){
+                player_ent->pos.x   -= last_move.x;
+                game->camera.pos.x  -= last_move.x;
+            }
+            if(side == 2){
+                player_ent->pos.y   -= last_move.y;
+                game->camera.pos.y  -= last_move.y;
+            }
+            // player_ent->pos.y += GRAVITY;
+            // game->camera.pos.y += GRAVITY;
         }
     }
 }
@@ -603,7 +610,7 @@ int RunEntityGame(ParticleEngine* game){
         .type = PW_ENTITY_DYNAMIC,
         .pos = {0.0f, 100.0f},
         .renderable.asset = player_asset,
-        .aabb = (PWColliderAABB){0.0f, 0.0f, 16.0f*2, 32.0f*2},
+        .aabb = (PWColliderAABB){0.0f, 0.0f, 64.0f, 32.0f*2},
     };
 
 
@@ -688,29 +695,31 @@ int RunEntityGame(ParticleEngine* game){
             game->s_params.is_running = FALSE;
             game->s_params.restart = TRUE;
         }
-        #define SPEED_X 700.0f * PW_DELTA_TIME
-        #define SPEED_Y 1000.0f * PW_DELTA_TIME
-        if(button_down(&game->is, BUTTON_W)){
-            game->camera.pos.y += SPEED_Y;
-            ENTITY_GET(game->em.pool, player_id).pos.y += SPEED_Y;
+
+        if(!paused){
+            #define SPEED_X 700.0f * PW_DELTA_TIME
+            #define SPEED_Y 1000.0f * PW_DELTA_TIME
+            if(button_down(&game->is, BUTTON_W)){
+                game->camera.pos.y += SPEED_Y;
+                ENTITY_GET(game->em.pool, player_id).pos.y += SPEED_Y;
+            }
+            if(button_down(&game->is, BUTTON_S)){
+                game->camera.pos.y -= SPEED_Y;
+                ENTITY_GET(game->em.pool, player_id).pos.y -= SPEED_Y;
+            }
+            if(button_down(&game->is, BUTTON_A)){
+                game->camera.pos.x -= SPEED_X;
+                ENTITY_GET(game->em.pool, player_id).pos.x -= SPEED_X;
+            }
+            if(button_down(&game->is, BUTTON_D)){
+                game->camera.pos.x += SPEED_X;
+                ENTITY_GET(game->em.pool, player_id).pos.x += SPEED_X;
+            }
+            apply_gravity(game);
+            last_move = vec2_sub(ENTITY_GET(game->em.pool, player_id).pos, prev_pos);
+            handle_collisions(game);
+            prev_pos = ENTITY_GET(game->em.pool, player_id).pos;
         }
-        if(button_down(&game->is, BUTTON_S)){
-            game->camera.pos.y -= SPEED_Y;
-            ENTITY_GET(game->em.pool, player_id).pos.y -= SPEED_Y;
-        }
-        if(button_down(&game->is, BUTTON_A)){
-            game->camera.pos.x -= SPEED_X;
-            ENTITY_GET(game->em.pool, player_id).pos.x -= SPEED_X;
-        }
-        if(button_down(&game->is, BUTTON_D)){
-            game->camera.pos.x += SPEED_X;
-            ENTITY_GET(game->em.pool, player_id).pos.x += SPEED_X;
-        }
-        apply_gravity(game);
-        // last_move = vec2_sub(ENTITY_GET(game->em.pool, player_id).pos, prev_pos);
-        // prev_pos = ENTITY_GET(game->em.pool, player_id).pos;
-        handle_collisions(game);
-        
         // clear_game_window(game);
 
         Transforms2d t = (Transforms2d){

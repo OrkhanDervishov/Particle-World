@@ -44,6 +44,18 @@ static bool quit;
 
 static ImVec4 clear_color;
 
+
+static bool paused = false;
+static float simulation_speed = 1.0f;
+static int particle_size = 4;
+static int brush_radius = 16;
+static float gravity0 = 9.81f;
+static int count = 0;
+
+
+
+
+
 static bool imgui_read_event(SDL_Event e){
     cImGui_ImplSDL2_ProcessEvent(&e);   
     ImGuiIO* io = igGetIO();
@@ -111,12 +123,6 @@ static int imgui_dev(ParticleEngine* engine)
     cImGui_ImplSDLRenderer2_NewFrame();
     igNewFrame();
 
-    static bool paused = false;
-    static float simulation_speed = 1.0f;
-    static int particle_size = 4;
-    static int brush_radius = 16;
-    static float gravity = 9.81f;
-    static int count = 0;
 
     igBegin("Particle Engine", NULL, 0);
 
@@ -127,7 +133,7 @@ static int imgui_dev(ParticleEngine* engine)
     igSliderFloat("Simulation Speed", &simulation_speed,0.1f, 5.0f, "%.2fx", 0);
     igSliderInt("Particle Size", &particle_size, 1, 16, "%d", 0);
     igSliderInt("Brush Radius", &brush_radius, 1, 128, "%d", 0);
-    igSliderFloat("Gravity", &gravity, -20.0f, 20.0f, "%.2f", 0);
+    igSliderFloat("Gravity", &gravity0, -20.0f, 20.0f, "%.2f", 0);
     if(igButton("count", (ImVec2_c){100, 25})) count++;
     igSameLine(0, -1);
     igText("count = %d", count);
@@ -146,7 +152,7 @@ static int imgui_dev(ParticleEngine* engine)
         simulation_speed = 1.0f;
         particle_size = 4;
         brush_radius = 16;
-        gravity = 9.81f;
+        gravity0 = 9.81f;
         paused = false;
     }
 

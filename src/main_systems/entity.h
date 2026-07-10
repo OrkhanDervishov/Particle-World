@@ -96,7 +96,7 @@ void draw_rect_collider_f(FormatImage image, RectCollider rc, Color color);
 bool collide_rect_to_particle(ChunkSpace* cs, RectCollider rc);
 bool collide_rect_to_rect(RectCollider a, RectCollider b);
 
-bool are_colliding_aabb(PWEntity e1, PWEntity e2);
+int are_colliding_aabb(PWEntity e1, PWEntity e2);
 
 /************************************************************/
 
