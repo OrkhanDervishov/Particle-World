@@ -1,4 +1,5 @@
 #include "game.h"
+#include "chunk_system.h"
 #include "imgui_dev.c"
 
 void Guide(ParticleEngine* game, Color textColor);
@@ -415,19 +416,21 @@ void poll_events(InputSystem* is, InputSystem* gui){
     SDL_Event e;
     while (SDL_PollEvent(&e))
     {
+        bool mouse_update = true;
         #ifdef PW_USE_IMGUI
-        if(imgui_read_event(e)) continue;
+        if(imgui_read_event(e)) mouse_update = false;
         #endif
 
-        update_sdl_event_input_system(is, e);
-        // update_sdl_event_input_system(gui, e);
+        update_sdl_event_input_system(is, e, mouse_update);
     }
 }
 
 
 Transforms2d get_view_transform(Transforms2d transform, PWCamera2D camera){
-    transform.translation.x -= camera.pos.x;
-    transform.translation.y -= camera.pos.y;
+    // printf("resx:%f, resy:%f\n", camera.resolution.x, camera.resolution.y);
+    transform.translation.x -= camera.pos.x - camera.resolution.x/2;
+    transform.translation.y -= camera.pos.y + camera.resolution.y/2;
+
     return transform;
 }
 
@@ -487,6 +490,67 @@ void draw_scene(ParticleEngine* game){
 }
 
 
+PWEntity block;
+PWEntity player;
+
+vec2f last_move;
+vec2f prev_pos;
+
+pw_entity_id_t player_id;
+pw_entity_id_t entity_ids[10];
+
+void init_scene(ParticleEngine *game){
+    block.pos = (Posf){0.0f, 0.0f};
+    entity_ids[0] = pw_entity_manager_add(&game->em, block);
+    block.pos = (Posf){-200.0f, 0.0f};
+    entity_ids[1] = pw_entity_manager_add(&game->em, block);
+    block.pos = (Posf){-400.0f, 0.0f};
+    entity_ids[2] = pw_entity_manager_add(&game->em, block);
+    block.pos = (Posf){-600.0f, 0.0f};
+    entity_ids[3] = pw_entity_manager_add(&game->em, block);
+    block.pos = (Posf){-800.0f, 0.0f};
+    entity_ids[4] = pw_entity_manager_add(&game->em, block);
+    block.pos = (Posf){-1000.0f, 0.0f};
+    entity_ids[5] = pw_entity_manager_add(&game->em, block);
+    block.pos = (Posf){-1200.0f, 0.0f};
+    entity_ids[6] = pw_entity_manager_add(&game->em, block);
+    block.pos = (Posf){-1400.0f, 0.0f};
+    entity_ids[7] = pw_entity_manager_add(&game->em, block);
+
+    player_id = pw_entity_manager_add(&game->em, player);
+}
+
+#define GRAVITY 500.0f * PW_DELTA_TIME
+void apply_gravity(ParticleEngine* game){
+    for(int i = 0; i < 8; i++){
+        PWEntity* ent = pw_entity_manager_get(&game->em, entity_ids[i]);
+        if(ent->type == PW_ENTITY_DYNAMIC){
+            ent->pos.y -= GRAVITY;
+        }
+    }
+    
+    PWEntity* ent = pw_entity_manager_get(&game->em, player_id);
+    if(ent->type == PW_ENTITY_DYNAMIC){
+        ent->pos.y -= GRAVITY;
+        game->camera.pos.y -= GRAVITY;
+    }
+}
+
+void handle_collisions(ParticleEngine* game){
+    PWEntity* player_ent = pw_entity_manager_get(&game->em, player_id);
+
+    for(int i = 0; i < 8; i++){
+        PWEntity* ent = pw_entity_manager_get(&game->em, entity_ids[i]);
+        
+        if(are_colliding_aabb(*player_ent, *ent)){
+            // player_ent->pos = vec2_sub(player_ent->pos, last_move);
+            // game->camera.pos = vec2_sub(game->camera.pos, last_move);
+            player_ent->pos.y += GRAVITY;
+            game->camera.pos.y += GRAVITY;
+        }
+    }
+}
+
 
 typedef struct{
     int *items;
@@ -510,6 +574,9 @@ int RunEntityGame(ParticleEngine* game){
     image.buffer = NULL;
     pnt_load_image(&image, "resources/CHESS.bmp");
     
+    
+    pw_asset_t player_asset = pw_load_asset(&game->am, "resources/wizard.png", PW_ASSET_SPRITE);
+    pw_asset_t block_asset = pw_load_asset(&game->am, "resources/block.png", PW_ASSET_SPRITE);
     pw_asset_t barrel_asset = pw_load_asset(&game->am, "resources/bomb.png", PW_ASSET_SPRITE);
     pw_asset_t active_bombs_asset = pw_load_asset(&game->am, "resources/active_bomb_sprites.png", PW_ASSET_SPRITE);
     pw_asset_t eye_asset = pw_load_asset(&game->am, "resources/eye_sprites.png", PW_ASSET_SPRITE);
@@ -531,12 +598,30 @@ int RunEntityGame(ParticleEngine* game){
     PWRenderable bomb_animator = pw_sprite_animator_create_renderable(&game->am, bomb_animation, TRUE, TRUE);
     PWRenderable eye_animator = pw_sprite_animator_create_renderable(&game->am, eye_animation, TRUE, TRUE);
     
+
+    player = (PWEntity){
+        .type = PW_ENTITY_DYNAMIC,
+        .pos = {0.0f, 100.0f},
+        .renderable.asset = player_asset,
+        .aabb = (PWColliderAABB){0.0f, 0.0f, 16.0f*2, 32.0f*2},
+    };
+
+
+    block = (PWEntity){
+        .type = PW_ENTITY_STATIC,
+        .pos = {100.0f, 100.0f},
+        .renderable.asset = block_asset,
+        .aabb = (PWColliderAABB){0.0f, 0.0f, 32.0f*2, 32.0f*2},
+    };
+
     PWEntity bomb = {
         .type = PW_ENTITY_DYNAMIC,
         .pos = {100.0f, 100.0f},
         .renderable = bomb_animator,
         .aabb = (PWColliderAABB){0.0f, 0.0f, 10.0f*2, 10.0f*2},
     };
+
+    init_scene(game);
     
     // entity_id_t bomb0 = entity_add(&game->em, bomb);
     
@@ -594,7 +679,7 @@ int RunEntityGame(ParticleEngine* game){
         if(action_down(&game->is, act_create_bomb)){
             bomb.pos.x = game->camera.pos.x + game->is.mouse.x;
             bomb.pos.y = game->camera.pos.y - game->is.mouse.y;
-            pw_entity_manager_add(&game->em, bomb);
+            // pw_entity_manager_add(&game->em, bomb);
         }
         if(action_pressed(&game->is, act_delete_entites)){
             delete_all_entities(game);
@@ -603,18 +688,29 @@ int RunEntityGame(ParticleEngine* game){
             game->s_params.is_running = FALSE;
             game->s_params.restart = TRUE;
         }
+        #define SPEED_X 700.0f * PW_DELTA_TIME
+        #define SPEED_Y 1000.0f * PW_DELTA_TIME
         if(button_down(&game->is, BUTTON_W)){
-            game->camera.pos.y += 700.0f * PW_DELTA_TIME;
+            game->camera.pos.y += SPEED_Y;
+            ENTITY_GET(game->em.pool, player_id).pos.y += SPEED_Y;
         }
         if(button_down(&game->is, BUTTON_S)){
-            game->camera.pos.y -= 700.0f * PW_DELTA_TIME;
+            game->camera.pos.y -= SPEED_Y;
+            ENTITY_GET(game->em.pool, player_id).pos.y -= SPEED_Y;
         }
         if(button_down(&game->is, BUTTON_A)){
-            game->camera.pos.x -= 700.0f * PW_DELTA_TIME;
+            game->camera.pos.x -= SPEED_X;
+            ENTITY_GET(game->em.pool, player_id).pos.x -= SPEED_X;
         }
         if(button_down(&game->is, BUTTON_D)){
-            game->camera.pos.x += 700.0f * PW_DELTA_TIME;
+            game->camera.pos.x += SPEED_X;
+            ENTITY_GET(game->em.pool, player_id).pos.x += SPEED_X;
         }
+        apply_gravity(game);
+        // last_move = vec2_sub(ENTITY_GET(game->em.pool, player_id).pos, prev_pos);
+        // prev_pos = ENTITY_GET(game->em.pool, player_id).pos;
+        handle_collisions(game);
+        
         // clear_game_window(game);
 
         Transforms2d t = (Transforms2d){

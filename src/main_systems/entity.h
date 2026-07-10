@@ -81,7 +81,7 @@ int pw_entity_manager_free(PWEntityManager* em);
 
 pw_entity_id_t pw_entity_manager_add(PWEntityManager* em, PWEntity item);
 void pw_entity_manager_delete(PWEntityManager* em, pw_entity_id_t index);
-PWEntity pw_entity_manager_get(PWEntityManager* em, pw_entity_id_t id);
+PWEntity* pw_entity_manager_get(PWEntityManager* em, pw_entity_id_t id);
 void pw_entity_manager_pool_print_stats(PWEntityManager* em);
 
 /************************************************************/

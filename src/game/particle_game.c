@@ -49,7 +49,7 @@ int CreateParticleEngine(ParticleEngine** game, const char* conf_path){
         init_opengl((*game)->win);
     //******************************************/
     
-    pw_create_camera2d((vec2f){0.0f, 0.0f}, (vec2f){(*game)->win->w, (*game)->win->h}, 1.0f);
+    (*game)->camera = pw_create_camera2d((vec2f){0.0f, 0.0f}, (vec2f){(float)(*game)->win->w, (float)(*game)->win->h}, 1.0f);
 
     //******************************************/
     // Initializing chunk system

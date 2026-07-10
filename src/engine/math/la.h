@@ -25,7 +25,7 @@ typedef struct{
 typedef struct{
     float x, y;
 } vec2f;
-typedef vec2 Posf;
+typedef vec2f Posf;
 
 typedef struct{
     float x, y, z;

@@ -22,8 +22,8 @@ void pw_entity_manager_delete(PWEntityManager* em, pw_entity_id_t index){
     pool_delete(em->pool, index);
 }
 
-PWEntity pw_entity_manager_get(PWEntityManager* em, pw_entity_id_t id){
-    return pool_get(em->pool, id);
+PWEntity* pw_entity_manager_get(PWEntityManager* em, pw_entity_id_t id){
+    return &pool_get(em->pool, id);
 }
 
 void pw_entity_manager_print_stats(PWEntityManager* em){
@@ -109,14 +109,20 @@ bool collide_rect_to_rect(RectCollider a, RectCollider b){
 
 
 bool are_colliding_aabb(PWEntity e1, PWEntity e2){
-    float a_endx = e1.aabb.x + e1.aabb.w;
-    float a_endy = e1.aabb.y + e1.aabb.h;
-    float b_endx = e2.aabb.x + e2.aabb.w;
-    float b_endy = e2.aabb.y + e2.aabb.h;
+
+    float a_sx = e1.pos.x + e1.aabb.x;
+    float a_sy = e1.pos.y + e1.aabb.y;
+    float b_sx = e2.pos.x + e2.aabb.x;
+    float b_sy = e2.pos.y + e2.aabb.y;
+    
+    float a_endx = e1.pos.x + e1.aabb.x + e1.aabb.w;
+    float a_endy = e1.pos.y + e1.aabb.y + e1.aabb.h;
+    float b_endx = e2.pos.x + e2.aabb.x + e2.aabb.w;
+    float b_endy = e2.pos.y + e2.aabb.y + e2.aabb.h;
     
     if(
-        e1.aabb.x < b_endx && a_endx > e2.aabb.x && 
-        e1.aabb.y < b_endy && a_endy > e2.aabb.y
+        a_sx < b_endx && a_endx > b_sx && 
+        a_sy < b_endy && a_endy > b_sy
     ){
         return TRUE;
     }

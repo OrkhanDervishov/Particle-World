@@ -146,7 +146,7 @@ bool action_released(InputSystem* is, action_t action);
 void update_mouse(InputSystem* is);
 
 void reset_button_states(InputSystem* is);
-void update_sdl_event_input_system(InputSystem *is, SDL_Event event);
+void update_sdl_event_input_system(InputSystem *is, SDL_Event event, bool mouse_update);
 
 // #undef MAX_BUTTONS
 // #undef MAX_BINDINGS

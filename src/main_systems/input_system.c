@@ -205,12 +205,13 @@ void update_input_system(InputSystem* is){
 }
 
 
-void update_sdl_event_input_system(InputSystem *is, SDL_Event e){
+void update_sdl_event_input_system(InputSystem *is, SDL_Event e, bool mouse_update){
     // printf("window_id: %d\n", e.window.windowID);
     // printf("window_id: %d\n\n", is->window_id);
     if(e.window.windowID != is->window_id) return;
 
-    update_mouse(is);
+    if(mouse_update)
+        update_mouse(is);
 
     if(e.type == SDL_KEYDOWN && !e.key.repeat){
         KeyCode kc = SCANCODE_TO_KEYCODE(is, e.key.keysym.scancode);
