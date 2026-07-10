@@ -53,4 +53,6 @@ void pw_window_visible(Window* window, bool visible);
 int pw_window_set_icon(PWWindow* win, const char* icon_path);
 void pw_window_get_info(PWWindow* window);
 
+void pw_mouse_visible(bool visible);
+
 #endif

@@ -8,7 +8,7 @@ typedef struct{
     Image cursor_img_normal;
 } Mouse;
 
-void draw_cursor(FormatImage screen, Mouse mouse);
+void draw_cursor(Image context, Mouse mouse);
 int load_cursor_image(Mouse* mouse, const char* path);
 void free_cursor_image(Mouse* mouse);
 

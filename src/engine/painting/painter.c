@@ -405,58 +405,6 @@ void pnt_blit_transformed(PNTImage dest, PNTImage src, vec2f pos, float rotation
 }
 
 
-// void draw_image_on_fimage(PNTFormatImage dest, PNTImage src, int x, int y){
-//     Rect rect = {.x = x, .y = y, .w = src.width, .h = src.height};
-//     rect = CorrectRect(rect, dest.width, dest.height);
-
-//     int endX = rect.x + rect.w;
-//     int endY = rect.y + rect.h;
-//     for(int i = rect.y, k = 0; i < endY; i++, k++)
-//     for(int j = rect.x, t = 0; j < endX; j++, t++){
-//         PNTColor dest_color = PNT_GET_COLOR(PNT_IMG_GET(dest, j, i), dest.format);
-//         PNTColor src_color = PNT_IMG_GET(src, (int)t, (int)k);
-//         int res_fcolor = PNT_GET_FCOLOR(colors_alpha_blend(src_color, dest_color), dest.format);
-//         PNT_IMG_GET(dest, j, i) = res_fcolor;//get_formatted_color(PNT_IMG_GET(src, t, k), dest.format);
-//     }
-// }
-
-// void draw_image_on_fimage_scaled(PNTFormatImage dest, PNTImage src, int x, int y, int scaleX, int scaleY){
-//     Rect rect = {.x = x, .y = y, .w = src.width*scaleX, .h = src.height*scaleY};
-//     Rect rect2 = {.x = 0, .y = 0, .w = dest.width, .h = dest.height};
-//     vec2 start_pos = {.x = x, .y = y};
-//     Rect rect3 = get_intersection_rect2(rect, rect2);
-//     start_pos = correct_start_pos(rect2, start_pos);
-    
-//     float addX = 1.0f/(float)scaleX;
-//     float addY = 1.0f/(float)scaleY;
-//     float base_t = (float)rect3.x*addX;
-//     float base_k = (float)rect3.y*addY;
-//     float t = base_t, k = base_k;
-//     int prev_k = -1, prev_t = -1;
-//     int endX = rect.x + rect2.w;
-//     int endY = rect.y + rect2.h;
-//     int res_fcolor;
-//     PNTColor src_color;
-//     for(int i = start_pos.y; i < rect3.h; i++, k += addY){
-//         for(int j = start_pos.x; j < rect3.w; j++, t += addX){
-//             // This condition breaks alpha blending
-//             if((int)k != prev_k || (int)t != prev_t){
-//                 src_color = PNT_IMG_GET(src, (int)t, (int)k);
-//                 prev_k = (int)k;
-//                 prev_t = (int)t;
-//             }
-
-//             if(src_color.a == 0) continue;
-//             // PNT_IMG_GET(dest, j, i) = PNT_GET_FCOLOR(PNT_IMG_GET(src, (int)t, (int)k), dest.format);
-//             PNTColor dest_color = PNT_GET_COLOR(PNT_IMG_GET(dest, j, i), dest.format);
-//             res_fcolor = PNT_GET_FCOLOR(colors_alpha_blend(dest_color, src_color), dest.format);
-        
-//             PNT_IMG_GET(dest, j, i) = res_fcolor;
-//         }
-//         t = base_t;
-//     }
-// }
-
 //##################################################################
 
 
@@ -611,12 +559,14 @@ void pnt_draw_circle(PNTImage img, int cx, int cy, int radius, PNTColor color, i
 
 
 void pnt_draw_rect(PNTImage img, Rect rect, PNTColor color, int tickness){
-    rect = CorrectRect(rect, img.width, img.height);
+    rect = CorrectRect2(rect, img.width, img.height);
 
-    Rect leftSide =     {.x = rect.x, .y = rect.y, .w = tickness, .h = rect.h};
-    Rect rightSide =    {.x = rect.x + rect.w, .y = rect.y, .w = tickness, .h = rect.h};
-    Rect upSide =       {.x = rect.x, .y = rect.y, .w = rect.w, .h = tickness};
-    Rect bottomSide =   {.x = rect.x, .y = rect.y + rect.h, .w = rect.w, .h = tickness};
+    int thick_w = rect.w <= 0 ? 0 : tickness;
+    int thick_h = rect.h <= 0 ? 0 : tickness;
+    Rect leftSide =     {.x = rect.x - thick_w, .y = rect.y, .w = thick_w, .h = rect.h};
+    Rect rightSide =    {.x = rect.x + rect.w, .y = rect.y, .w = thick_w, .h = rect.h};
+    Rect upSide =       {.x = rect.x, .y = rect.y - thick_h, .w = rect.w, .h = thick_h};
+    Rect bottomSide =   {.x = rect.x, .y = rect.y + rect.h, .w = rect.w, .h = thick_h};
 
     pnt_draw_filled_rect(img, leftSide, color);
     pnt_draw_filled_rect(img, rightSide, color);
@@ -624,20 +574,16 @@ void pnt_draw_rect(PNTImage img, Rect rect, PNTColor color, int tickness){
     pnt_draw_filled_rect(img, bottomSide, color);
 }
 
-// void draw_rect_f(PNTFormatImage fimg, Rect rect, PNTColor color, int tickness){
-//     rect = CorrectRect(rect, fimg.width, fimg.height);
-//     int fcolor = get_formatted_color(color, fimg.format);
+void pnt_draw_filled_rect(PNTImage img, Rect rect, PNTColor color){
+    rect = CorrectRect2(rect, img.width, img.height);
 
-//     Rect leftSide =     {.x = rect.x, .y = rect.y, .w = tickness, .h = rect.h};
-//     Rect rightSide =    {.x = rect.x + rect.w - tickness, .y = rect.y, .w = tickness, .h = rect.h};
-//     Rect upSide =       {.x = rect.x, .y = rect.y, .w = rect.w, .h = tickness};
-//     Rect bottomSide =   {.x = rect.x, .y = rect.y + rect.h - tickness, .w = rect.w, .h = tickness};
-
-//     draw_filled_rect_f(fimg, leftSide, color);
-//     draw_filled_rect_f(fimg, rightSide, color);
-//     draw_filled_rect_f(fimg, upSide, color);
-//     draw_filled_rect_f(fimg, bottomSide, color);
-// }
+    int endX = rect.x + rect.w;
+    int endY = rect.y + rect.h;
+    for(int i = rect.y; i < endY; i++)
+    for(int j = rect.x; j < endX; j++){
+        PNT_IMG_GET(img, j, i) = color;
+    }
+}
 
 void pnt_draw_filled_circle(PNTImage img, int x, int y, int radius, PNTColor color){
     Rect rect = {
@@ -659,52 +605,6 @@ void pnt_draw_filled_circle(PNTImage img, int x, int y, int radius, PNTColor col
     }
 }
 
-// void draw_filled_circle_f(PNTFormatImage fimg, int x, int y, int radius, PNTColor color){
-//     Rect rect = {
-//         .x = x - radius,
-//         .y = y - radius,
-//         .w = radius*2,
-//         .h = radius*2
-//     };
-    
-//     rect = CorrectRect(rect, fimg.width, fimg.height);
-//     int fcolor = get_formatted_color(color, fimg.format);
-    
-//     for(int i = rect.y; i < rect.h + rect.y; i++){
-//         int dy = y - i;
-//         for(int j = rect.x; j < rect.w + rect.x; j++){
-//             int dx = x - j;
-//             if(dx*dx + dy*dy <= radius*radius)
-//             PNT_IMG_GET(fimg, j, i) = fcolor;
-//         }
-//     }
-// }
-
-void pnt_draw_filled_rect(PNTImage img, Rect rect, PNTColor color){
-    rect = CorrectRect(rect, img.width, img.height);
-
-    int endX = rect.x + rect.w;
-    int endY = rect.y + rect.h;
-    for(int i = rect.y; i < endY; i++)
-    for(int j = rect.x; j < endX; j++){
-        PNT_IMG_GET(img, j, i) = color;
-        // printf("worked\n");
-    }
-    // printf("---------\n");
-
-}
-
-// void draw_filled_rect_f(PNTFormatImage fimg, Rect rect, PNTColor color){
-//     rect = CorrectRect(rect, fimg.width, fimg.height);
-//     int fcolor = get_formatted_color(color, fimg.format);
-
-//     int endX = rect.x + rect.w;
-//     int endY = rect.y + rect.h;
-//     for(int i = rect.y; i < endY; i++)
-//     for(int j = rect.x; j < endX; j++){
-//         PNT_IMG_GET(fimg, j, i) = fcolor;
-//     }
-// }
 
 
 void pnt_draw_triangle(PNTImage img, Triangle t, PNTColor color){
@@ -753,35 +653,6 @@ void pnt_bresenham_horizontal(PNTImage img, PNTColor color, int x0, int y0, int 
     }
 }
 
-// void bresenham_horizontal_f(PNTFormatImage fimg, PNTColor color, int x0, int y0, int x1, int y1){
-//     int dx = abs(x1 - x0);
-//     int dy = abs(y1 - y0);
-    
-//     if(x0 > x1){
-//         int temp;
-//         SWAP(x0, x1, temp);
-//         SWAP(y0, y1, temp);
-//     }
-    
-//     int D = dx;
-//     int move = -1;
-//     if(y0 < y1){
-//         move = 1;
-//     }
-//     int k = 2 * dy;
-//     int y = y0;
-
-//     int fcolor = get_formatted_color(color, fimg.format);
-//     for(int x = x0; x < x1; x++){
-//         D += k;
-//         if(D > 2 * dx){
-//             y += move;
-//             D -= 2 * dx;
-//         }
-//         PNT_IMG_GET(fimg, x, y) = fcolor;
-//     }
-// }
-
 void pnt_bresenham_vertical(PNTImage img, PNTColor color, int x0, int y0, int x1, int y1){
     if(y0 > y1){
         int temp;
@@ -811,36 +682,6 @@ void pnt_bresenham_vertical(PNTImage img, PNTColor color, int x0, int y0, int x1
     }
 }
 
-// void bresenham_vertical_f(PNTFormatImage fimg, PNTColor color, int x0, int y0, int x1, int y1){
-//     if(y0 > y1){
-//         int temp;
-//         SWAP(x0, x1, temp);
-//         SWAP(y0, y1, temp);
-//     }
-    
-//     int dx = abs(x1 - x0);
-//     int dy = abs(y1 - y0);
-    
-    
-//     int D = dy;
-//     int move = -1;
-//     if(x0 < x1){
-//         move = 1;
-//     }
-//     int k = 2 * dx;
-//     int x = x0;
-    
-//     int fcolor = get_formatted_color(color, fimg.format);
-//     for(int y = y0; y < y1; y++){
-//         D += k;
-//         if(D > 2 * dy){
-//             x += move;
-//             D -= 2 * dy;
-//         }
-//         PNT_IMG_GET(fimg, x, y) = fcolor;
-//     }
-// }
-
 // Bresenham
 void pnt_draw_line(PNTImage img, PNTColor color, int x0, int y0, int x1, int y1){
     int dx = abs(x1 - x0);
@@ -859,24 +700,6 @@ void pnt_draw_line(PNTImage img, PNTColor color, int x0, int y0, int x1, int y1)
         pnt_bresenham_vertical(img, color, x0, y0, x1, y1);
     }
 }
-
-// void draw_line_f(PNTFormatImage fimg, PNTColor color, int x0, int y0, int x1, int y1){
-//     int dx = abs(x1 - x0);
-//     int dy = abs(y1 - y0);
-
-//     vec2 p0 = correct_line_end(x0, y0, dx, dy, fimg.width, fimg.height);
-//     vec2 p1 = correct_line_end(x1, y1, dx, dy, fimg.width, fimg.height);
-//     x0 = p0.x;
-//     y0 = p0.y;
-//     x1 = p1.x;
-//     y1 = p1.y;
-
-//     if(dx > dy){
-//         bresenham_horizontal_f(fimg, color, x0, y0, x1, y1);
-//     } else {
-//         bresenham_vertical_f(fimg, color, x0, y0, x1, y1);
-//     }
-// }
 
 //##################################################################
 
@@ -905,10 +728,6 @@ void pnt_draw_line_aa_horizontal(PNTImage img, PNTColor color, int x0, int y0, i
         
         float ry = floorf(y);
         float dist = y - ry;
-        // img.buffer[((int)y)*img.width + x] = color;
-        // img.buffer[((int)y+1)*img.width + x] = color;
-        // img.buffer[((int)y)*img.width + x].a = (uint8_t)(floor((1 - dist)*255.0f));
-        // img.buffer[((int)y+1)*img.width + x].a = (uint8_t)(floor(dist*255.0f));
         PNT_IMG_GET(img, x, (int)y) = color;
         PNT_IMG_GET(img, x, (int)y+1) = color;
         PNT_IMG_GET(img, x, (int)y).a = (uint8_t)(floor((1 - dist)*255.0f));
@@ -937,11 +756,6 @@ void pnt_draw_line_aa_vertical(PNTImage img, PNTColor color, int x0, int y0, int
         
         float rx = floorf(x);
         float dist = x - rx;
-        // PNT_IMG_GET(img, (int)x, y) = color;
-        // img.buffer[(y)*img.width + (int)x] = color;
-        // img.buffer[(y+1)*img.width + (int)(x + 1)] = color;
-        // img.buffer[(y)*img.width + (int)x].a = (uint8_t)(floor((1 - dist)*255.0f));
-        // img.buffer[(y+1)*img.width + (int)(x + 1)].a = (uint8_t)(floor(dist*255.0f));
         PNT_IMG_GET(img, (int)x, y) = color;
         PNT_IMG_GET(img, (int)x+1, y+1) = color;
         PNT_IMG_GET(img, (int)x, y).a = (uint8_t)(floor((1 - dist)*255.0f));
@@ -994,86 +808,6 @@ void pnt_draw_line_from_points(PNTImage img, vec2* points, int count, PNTColor c
         }
 }
 
-//##################################################################
-// void bresenham_horizontal_f(PNTFormatImage fimg, PNTColor color, int x0, int y0, int x1, int y1){
-//     int dx = abs(x1 - x0);
-//     int dy = abs(y1 - y0);
-    
-//     if(x0 > x1){
-//         int temp;
-//         SWAP(x0, x1, temp);
-//         SWAP(y0, y1, temp);
-//     }
-    
-//     int D = dx;
-//     int move = -1;
-//     if(y0 < y1){
-//         move = 1;
-//     }
-//     int k = 2 * dy;
-//     int y = y0;
-
-//     int fcolor = get_formatted_color(color, fimg.format);
-//     for(int x = x0; x < x1; x++){
-//         D += k;
-//         if(D > 2 * dx){
-//             y += move;
-//             D -= 2 * dx;
-//         }
-//         PNT_IMG_GET(fimg, x, y) = fcolor;
-//     }
-// }
-
-
-
-// void bresenham_vertical_f(PNTFormatImage fimg, PNTColor color, int x0, int y0, int x1, int y1){
-//     if(y0 > y1){
-//         int temp;
-//         SWAP(x0, x1, temp);
-//         SWAP(y0, y1, temp);
-//     }
-    
-//     int dx = abs(x1 - x0);
-//     int dy = abs(y1 - y0);
-    
-    
-//     int D = dy;
-//     int move = -1;
-//     if(x0 < x1){
-//         move = 1;
-//     }
-//     int k = 2 * dx;
-//     int x = x0;
-    
-//     int fcolor = get_formatted_color(color, fimg.format);
-//     for(int y = y0; y < y1; y++){
-//         D += k;
-//         if(D > 2 * dy){
-//             x += move;
-//             D -= 2 * dy;
-//         }
-//         PNT_IMG_GET(fimg, x, y) = fcolor;
-//     }
-// }
-
-
-// void draw_line_f(PNTFormatImage fimg, PNTColor color, int x0, int y0, int x1, int y1){
-//     int dx = abs(x1 - x0);
-//     int dy = abs(y1 - y0);
-
-//     vec2 p0 = correct_line_end(x0, y0, dx, dy, fimg.width, fimg.height);
-//     vec2 p1 = correct_line_end(x1, y1, dx, dy, fimg.width, fimg.height);
-//     x0 = p0.x;
-//     y0 = p0.y;
-//     x1 = p1.x;
-//     y1 = p1.y;
-
-//     if(dx > dy){
-//         bresenham_horizontal_f(fimg, color, x0, y0, x1, y1);
-//     } else {
-//         bresenham_vertical_f(fimg, color, x0, y0, x1, y1);
-//     }
-// }
 
 //##################################################################
 

@@ -1,23 +1,33 @@
 #include "entity.h"
 
 
+int pw_entity_manager_init(PWEntityManager* em){
+    *em = (PWEntityManager){0};
+}
 
+int pw_entity_manager_free(PWEntityManager* em){
+    pool_free(em->pool);
+}
 
 /************************************************************/
 // Storing entities as objects
 
-entity_id_t entity_add(EntityPool* pool, Entity item){
-    entity_id_t entity_id;
-    pool_append(*pool, item, entity_id);
+pw_entity_id_t pw_entity_manager_add(PWEntityManager* em, PWEntity item){
+    pw_entity_id_t entity_id;
+    pool_append(em->pool, item, entity_id);
     return entity_id;
 }
 
-void entity_delete(EntityPool* pool, entity_id_t index){
-    pool_delete(*pool, index);
+void pw_entity_manager_delete(PWEntityManager* em, pw_entity_id_t index){
+    pool_delete(em->pool, index);
 }
 
-void entity_pool_print_stats(EntityPool* pool){
-    printf("Entity count: %zu\n", pool_get_count(*pool));
+PWEntity pw_entity_manager_get(PWEntityManager* em, pw_entity_id_t id){
+    return pool_get(em->pool, id);
+}
+
+void pw_entity_manager_print_stats(PWEntityManager* em){
+    printf("Entity count: %zu\n", pool_get_count(em->pool));
 }
 
 /************************************************************/
@@ -46,15 +56,17 @@ void draw_rect_collider(Image image, RectCollider rc, Color color){
     pnt_draw_rect(image, rect, color, 1);
 }
 
-// void draw_rect_collider_f(FormatImage image, RectCollider rc, Color color){
-//     Rect rect = {
-//         (int)rc.collider.x,
-//         (int)rc.collider.y,
-//         (int)rc.collider.w,
-//         (int)rc.collider.h
-//     };
-//     draw_rect_f(image, rect, color, 1);
-// }
+void draw_rect_aabb_collider(Image image, vec2f pos, PWColliderAABB aabb, Color color){
+    Rect rect = {
+        (int)pos.x,
+        (int)pos.y,
+        (int)aabb.w,
+        (int)aabb.h
+    };
+    pnt_draw_rect(image, rect, color, 1);
+    // pnt_draw_filled_rect(image, rect, color);
+}
+
 
 bool collide_rect_to_particle(ChunkSpace* cs, RectCollider rc){
     Rectf rect = rc.collider;
@@ -86,6 +98,25 @@ bool collide_rect_to_rect(RectCollider a, RectCollider b){
     if(
         a.collider.x < b_endx && a_endx > b.collider.x && 
         a.collider.y < b_endy && a_endy > b.collider.y
+    ){
+        return TRUE;
+    }
+    
+    return FALSE;
+}
+
+
+
+
+bool are_colliding_aabb(PWEntity e1, PWEntity e2){
+    float a_endx = e1.aabb.x + e1.aabb.w;
+    float a_endy = e1.aabb.y + e1.aabb.h;
+    float b_endx = e2.aabb.x + e2.aabb.w;
+    float b_endy = e2.aabb.y + e2.aabb.h;
+    
+    if(
+        e1.aabb.x < b_endx && a_endx > e2.aabb.x && 
+        e1.aabb.y < b_endy && a_endy > e2.aabb.y
     ){
         return TRUE;
     }

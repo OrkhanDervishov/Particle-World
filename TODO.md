@@ -14,12 +14,15 @@
 
 6. ~~In pw_draw_animation only pass animator argumant.~~
 
-7. Add aabb collider
+7. ~~Add aabb collider~~
 
-8. Add static objects
+8. ~~Add static objects~~
 
+9. ~~Add Camera2d~~
 
+10. Chunk system: create chunk system
 
+11. Add checking to all modules
 
 <h2>Long term tasks</h2>
 
@@ -95,5 +98,12 @@
 9. Memory Leaks:
 
     1. Resolve all memory leaks.
+</h3>
+
+
+<h3>
+10. Add Lua Scripting:
+
+    1. Create working functions for lua.
 </h3>
 

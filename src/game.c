@@ -414,48 +414,78 @@ int RunParticleEngine(ParticleEngine* game){
 void poll_events(InputSystem* is, InputSystem* gui){
     SDL_Event e;
     while (SDL_PollEvent(&e))
-    {        
+    {
+        #ifdef PW_USE_IMGUI
         if(imgui_read_event(e)) continue;
-            
+        #endif
+
         update_sdl_event_input_system(is, e);
         // update_sdl_event_input_system(gui, e);
     }
 }
 
 
+Transforms2d get_view_transform(Transforms2d transform, PWCamera2D camera){
+    transform.translation.x -= camera.pos.x;
+    transform.translation.y -= camera.pos.y;
+    return transform;
+}
 
+void draw_entity(ParticleEngine* game, pw_entity_id_t id){
 
-void draw_entity(ParticleEngine* game, entity_id_t id){
+    Transforms2d model = {
+        .translation = (vec2f){(ENTITY_GET(game->em.pool, id).pos.x), (ENTITY_GET(game->em.pool, id).pos.y)},
+        .rotation = 0.0f,
+        .scale = (vec2f){2.0f, 2.0f}
+    };
+
+    Transforms2d view = get_view_transform(model, game->camera);
+    
     pw_draw_renderable(
         game->win->context, 
-        &game->am, 
-        &ENTITY_GET(game->ep, id).renderable,
-        (Transforms2d){
-            .translation = (vec2f){(ENTITY_GET(game->ep, id).pos.x), (ENTITY_GET(game->ep, id).pos.y)},
-            .rotation = 0.0f,
-            .scale = (vec2f){2.0f, 2.0f}
-        },
+        &game->am,
+        &ENTITY_GET(game->em.pool, id).renderable,
+        view,
         PW_DELTA_TIME
+    );
+    
+    view.translation.y = -view.translation.y;
+    view.translation.x -= ENTITY_GET(game->em.pool, id).aabb.w/2;
+    view.translation.y -= ENTITY_GET(game->em.pool, id).aabb.h/2;
+    draw_rect_aabb_collider(
+        game->win->context, 
+        view.translation, 
+        ENTITY_GET(game->em.pool, id).aabb,
+        (Color){.rgba = 0xFF00FFFF}
     );
 }
 
 void draw_entities(ParticleEngine* game){
-    for(entity_id_t i = 0; i < game->ep.elems.count; i++){
-        if(!ENTITY_IS_DELETED(game->ep, i)) continue;
+    for(pw_entity_id_t i = 0; i < game->em.pool.elems.count; i++){
+        if(!ENTITY_IS_DELETED(game->em.pool, i)) continue;
         draw_entity(game, i);
     }
 }
 
 void delete_all_entities(ParticleEngine* game){
-    for(entity_id_t i = 0; i < game->ep.elems.count; i++){
-        if(!ENTITY_IS_DELETED(game->ep, i)) continue;
-        entity_delete(&game->ep, i);
+    for(pw_entity_id_t i = 0; i < game->em.pool.elems.count; i++){
+        if(!ENTITY_IS_DELETED(game->em.pool, i)) continue;
+        pw_entity_manager_delete(&game->em, i);
     }    
 }
 
 void clear_game_window(ParticleEngine* game){
     pnt_fill(game->win->context, game->s_params.clear_color);
 }
+
+
+void draw_scene(ParticleEngine* game){
+    clear_game_window(game);
+    draw_entities(game);
+    if(game->s_params.use_custom_cursor)
+        draw_cursor(game->win->context, game->mouse);
+}
+
 
 
 typedef struct{
@@ -470,8 +500,9 @@ typedef struct{
     Slots slots;
 } NumberPool;
 
-int RunEntityGame(ParticleEngine* game){
 
+int RunEntityGame(ParticleEngine* game){
+    
     // ParticleEngine* gui_engine;
     // CreateParticleEngine(&gui_engine, "./src/confs/gui_conf.conf");
     
@@ -484,19 +515,6 @@ int RunEntityGame(ParticleEngine* game){
     pw_asset_t eye_asset = pw_load_asset(&game->am, "resources/eye_sprites.png", PW_ASSET_SPRITE);
     pw_make_asset_image_multiple_auto(&game->am, active_bombs_asset, (vec2){1,3});
     pw_make_asset_image_multiple_auto(&game->am, eye_asset, (vec2){1,5});
-    
-    // PWFrames frames = {0};
-    // da_append(frames, 0);
-    // da_append(frames, 1);
-    // da_append(frames, 2);
-    // da_append(frames, 3);
-    // da_append(frames, 4);
-    // PWTimes delays = {0};
-    // da_append(delays, 0.8f);
-    // da_append(delays, 0.2f);
-    // da_append(delays, 0.2f);
-    // da_append(delays, 0.2f);
-    // da_append(delays, 0.2f);
     
     PWFrames frames = {0};
     da_append(frames, 0);
@@ -512,15 +530,15 @@ int RunEntityGame(ParticleEngine* game){
     
     PWRenderable bomb_animator = pw_sprite_animator_create_renderable(&game->am, bomb_animation, TRUE, TRUE);
     PWRenderable eye_animator = pw_sprite_animator_create_renderable(&game->am, eye_animation, TRUE, TRUE);
-    // return 0;
     
-    Entity bomb = {
-        .renderable = bomb_animator,
-        .collider = (RectCollider){.collider = (Rectf){500.0f, 10.0f, 10.0f*2, 10.0f*2}},
+    PWEntity bomb = {
+        .type = PW_ENTITY_DYNAMIC,
         .pos = {100.0f, 100.0f},
+        .renderable = bomb_animator,
+        .aabb = (PWColliderAABB){0.0f, 0.0f, 10.0f*2, 10.0f*2},
     };
     
-    // entity_id_t bomb0 = entity_add(&game->ep, bomb);
+    // entity_id_t bomb0 = entity_add(&game->em, bomb);
     
     /******************************************************/
     
@@ -555,15 +573,14 @@ int RunEntityGame(ParticleEngine* game){
     add_binding(&game->is, BUTTON_1, act_delete_entites);
     add_binding(&game->is, BUTTON_F1, act_reload);
     
-    // printf("works10\n");
+    #ifdef PW_USE_IMGUI
     imgui_init(game);
-    // printf("works20\n");
+    #endif
 
     while(game->s_params.is_running){
         
         update_global_time();
         // printf("fps:%.1lf\n", 1.0/PW_DELTA_TIME);
-        // imgui_poll_events(gui_engine);
         // update_input_system(&game->is);
         reset_button_states(&game->is);
         // update_mouse(&game->is);
@@ -575,10 +592,9 @@ int RunEntityGame(ParticleEngine* game){
             game->s_params.is_running = FALSE;
         }
         if(action_down(&game->is, act_create_bomb)){
-            bomb.pos.x = game->is.mouse.x;
-            bomb.pos.y = game->is.mouse.y;
-            entity_add(&game->ep, bomb);
-            // entity_pool_print_stats(&game->ep);
+            bomb.pos.x = game->camera.pos.x + game->is.mouse.x;
+            bomb.pos.y = game->camera.pos.y - game->is.mouse.y;
+            pw_entity_manager_add(&game->em, bomb);
         }
         if(action_pressed(&game->is, act_delete_entites)){
             delete_all_entities(game);
@@ -587,7 +603,19 @@ int RunEntityGame(ParticleEngine* game){
             game->s_params.is_running = FALSE;
             game->s_params.restart = TRUE;
         }
-        clear_game_window(game);
+        if(button_down(&game->is, BUTTON_W)){
+            game->camera.pos.y += 700.0f * PW_DELTA_TIME;
+        }
+        if(button_down(&game->is, BUTTON_S)){
+            game->camera.pos.y -= 700.0f * PW_DELTA_TIME;
+        }
+        if(button_down(&game->is, BUTTON_A)){
+            game->camera.pos.x -= 700.0f * PW_DELTA_TIME;
+        }
+        if(button_down(&game->is, BUTTON_D)){
+            game->camera.pos.x += 700.0f * PW_DELTA_TIME;
+        }
+        // clear_game_window(game);
 
         Transforms2d t = (Transforms2d){
             .translation = (vec2f){400.0f, 400.0f},
@@ -623,23 +651,36 @@ int RunEntityGame(ParticleEngine* game){
         //     PW_DELTA_TIME
         // );
 
-        Transforms2d font_transforms = {
-            .translation = {100.0f, 100.0f},
-            .rotation = 0.0f,
-            .scale = {2.5f, 2.5f}
-        };
-        pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!\nerfegrg\nwefefef", font_transforms);
+        // Transforms2d font_transforms = {
+        //     .translation = {100.0f, 100.0f},
+        //     .rotation = 0.0f,
+        //     .scale = {2.5f, 2.5f}
+        // };
+        // pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!\nerfegrg\nwefefef", font_transforms);
 
-        draw_entities(game);
-        // pw_window_present(game->win);
-        // SDL_SetRenderDrawColor(game->win->renderer, 18, 18, 18, 255);
-        // SDL_RenderClear(game->win->renderer);
+        draw_scene(game);
+        char camera_info[256];
+        sprintf(camera_info, "x:%.2f y:%.2f", game->camera.pos.x, game->camera.pos.y);
+        pw_draw_sprite_text(
+            game->win->context, 
+            &game->am, &fonts, 
+            camera_info, 
+            (Transforms2d){
+                .translation = (vec2f){0.0f, -20.0f},
+                .rotation = 0.0f,
+                .scale = (vec2f){2.0f, 2.0f}
+            }
+        );
         pw_window_prepare_renderer(game->win);
+        #ifdef PW_USE_IMGUI
         imgui_dev(game);
+        #endif
         pw_window_present_renderer(game->win);
     }
 
+    #ifdef PW_USE_IMGUI
     imgui_uninit(game);
+    #endif
     // DeleteParticleEngine(&gui_engine);
     
     return 0;

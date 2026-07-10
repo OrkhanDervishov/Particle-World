@@ -194,10 +194,10 @@ int pw_window_set_icon(Window* window, const char* path){
 }
 
 void pw_window_get_info(Window* window){
-    // SDL_RendererInfo info;
-    // if(window->renderer == NULL) printf("Renderer is null\n");
-    // SDL_GetRendererInfo(window->renderer, &info);
-    // printf("%s\n", info.name);
+    if(window->renderer == NULL) return;
+    SDL_RendererInfo info;
+    SDL_GetRendererInfo(window->renderer, &info);
+    printf("%s\n", info.name);
 }
 
 void pw_window_visible(Window* window, bool visible){
@@ -205,4 +205,13 @@ void pw_window_visible(Window* window, bool visible){
         SDL_ShowWindow(window->window);
     else
         SDL_HideWindow(window->window);
+}
+
+void pw_mouse_visible(bool visible){
+    if(visible){
+        SDL_ShowCursor(visible);
+    }
+    else{
+        SDL_ShowCursor(SDL_DISABLE);
+    }
 }

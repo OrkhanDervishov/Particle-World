@@ -5,6 +5,10 @@
 
 typedef struct{
     vec2f pos;
-} Camera2D;
+    vec2f resolution;
+    float zoom;
+} PWCamera2D;
+
+PWCamera2D pw_create_camera2d(vec2f pos, vec2f resolution, float zoom);
 
 #endif

@@ -1,12 +1,15 @@
 #include "asset_renderer.h"
 
+// TODO: Improve y negation.
 
 void pw_draw_image(Image context, PWAssetManager* am, pw_image_t image_id, Transforms2d transforms){
+    transforms.translation.y = -transforms.translation.y;
     Image img = pool_get(am->image_pool, image_id);
     pnt_blit_transformed(context, img, transforms.translation, transforms.rotation, transforms.scale);    
 }
 
 void pw_draw_sprite_multiple(Image context , PWAssetManager* am, pw_asset_t asset_id, Transforms2d transforms, int index){
+    transforms.translation.y = -transforms.translation.y;
     PWAsset asset = pool_get(am->asset_pool, asset_id);
     Image img = pool_get(am->image_pool, asset.sprite.image_id);
     
@@ -15,6 +18,7 @@ void pw_draw_sprite_multiple(Image context , PWAssetManager* am, pw_asset_t asse
 }
 
 void pw_draw_sprite(Image context , PWAssetManager* am, pw_asset_t asset_id, Transforms2d transforms){
+    transforms.translation.y = -transforms.translation.y;
     PWAsset asset = pool_get(am->asset_pool, asset_id);
     Image img = pool_get(am->image_pool, asset.sprite.image_id);
     pnt_blit_transformed(context, img, transforms.translation, transforms.rotation, transforms.scale);

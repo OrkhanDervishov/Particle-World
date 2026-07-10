@@ -49,6 +49,7 @@ int CreateParticleEngine(ParticleEngine** game, const char* conf_path){
         init_opengl((*game)->win);
     //******************************************/
     
+    pw_create_camera2d((vec2f){0.0f, 0.0f}, (vec2f){(*game)->win->w, (*game)->win->h}, 1.0f);
 
     //******************************************/
     // Initializing chunk system
@@ -68,37 +69,22 @@ int CreateParticleEngine(ParticleEngine** game, const char* conf_path){
     //******************************************/
     
     //******************************************/
-    // Initializing global timer
-    init_global_time();
-    //******************************************/
-    
-    //******************************************/
     // Initializing mouse
-    int loaded = load_cursor_image(&(*game)->mouse, "./resources/standard_cursor.png");
+    if((*game)->s_params.use_custom_cursor){
+        pw_mouse_visible(false);
+        load_cursor_image(&(*game)->mouse, (*game)->s_params.cursor_path);
+    } else {
+        pw_mouse_visible(true);
+    }
     //******************************************/
     
     //******************************************/
-    // Initializing camera
-    (*game)->camera.pos = (vec2f){0.0f, 0.0f};
-    //******************************************/
-    
-    //******************************************/
-    // Initializing gui system
+    init_global_time();
     init_input_system(&(*game)->is, (*game)->win->id);
-    //******************************************/
-
-    //******************************************/
-    // Initializing entity system
-    POOL_INIT((*game)->ep);
-    //******************************************/
-
+    pw_entity_manager_init(&(*game)->em);
     pw_asset_manager_init(&(*game)->am);
-    
-    //******************************************/
-    // Initializing text rendering system
     InitBasicTextRenderer();
     //******************************************/
-    
     
     //******************************************/
     // Initializing gui system
@@ -124,6 +110,7 @@ int CreateParticleEngine(ParticleEngine** game, const char* conf_path){
 void DeleteParticleEngine(ParticleEngine** game){
     free((*game)->s_params.title);
     free((*game)->s_params.icon_path);
+    free((*game)->s_params.cursor_path);
 
     pw_asset_manager_free(&(*game)->am);
     free_cursor_image(&(*game)->mouse);
@@ -229,12 +216,17 @@ void pw_engine_read_config(ParticleEngine* pe, const char *conf_path){
     pe->s_params.height = (size_t)myconfig_get_value_number(pairs, "window_height", "window");
     pe->s_params.fullscreen = myconfig_get_value_bool(pairs, "window_fullscreen", "window");
     pe->s_params.window_visible = myconfig_get_value_bool(pairs, "window_visible", "window");
-    pe->s_params.icon_path = myconfig_get_value_string_new(pairs, "icon_image_path", "window");
     
     char* api = myconfig_get_value_string_new(pairs, "window_render_api", "window");
     if(strcmp(api, "surface") == 0) pe->s_params.window_render_api = PW_WINDOW_SURFACE;
     if(strcmp(api, "renderer") == 0) pe->s_params.window_render_api = PW_WINDOW_RENDERER;
     free(api);
+
+
+    pe->s_params.icon_path = myconfig_get_value_string_new(pairs, "icon_image_path", "window");
+
+    pe->s_params.use_custom_cursor = myconfig_get_value_bool(pairs, "use_custom_cursor", "window");
+    pe->s_params.cursor_path = myconfig_get_value_string_new(pairs, "custom_cursor_path", "window");
 
     pe->s_params.frameLockEnabled = myconfig_get_value_bool(pairs, "frame_lock_enabled", "window");
     pe->s_params.frameLock = (int)myconfig_get_value_number(pairs, "frame_lock", "window");

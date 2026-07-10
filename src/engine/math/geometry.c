@@ -25,13 +25,13 @@ Rect CorrectRect2(Rect rect, int maxWidth, int maxHeight){
     
     // x, y correction
     if(rect.x < 0){
-        rect.x = abs(rect.x);
-        rect.w -= abs(rect.x);
+        rect.w += rect.x;
+        rect.x = 0;
     }
     else if(rect.x > maxWidth) rect.x = maxWidth;
     if(rect.y < 0){
-        rect.y = abs(rect.y);
-        rect.h -= abs(rect.y);
+        rect.h += rect.y;
+        rect.y = 0;
     }
     else if(rect.y > maxHeight) rect.y = maxHeight;
     

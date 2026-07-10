@@ -1,3 +1,6 @@
+#define PW_USE_IMGUI
+#ifdef PW_USE_IMGUI
+
 #include "particle_game.h"
 #include "input_system.h"
 
@@ -113,6 +116,7 @@ static int imgui_dev(ParticleEngine* engine)
     static int particle_size = 4;
     static int brush_radius = 16;
     static float gravity = 9.81f;
+    static int count = 0;
 
     igBegin("Particle Engine", NULL, 0);
 
@@ -124,6 +128,9 @@ static int imgui_dev(ParticleEngine* engine)
     igSliderInt("Particle Size", &particle_size, 1, 16, "%d", 0);
     igSliderInt("Brush Radius", &brush_radius, 1, 128, "%d", 0);
     igSliderFloat("Gravity", &gravity, -20.0f, 20.0f, "%.2f", 0);
+    if(igButton("count", (ImVec2_c){100, 25})) count++;
+    igSameLine(0, -1);
+    igText("count = %d", count);
 
     igSeparator();
 
@@ -156,3 +163,5 @@ static int imgui_dev(ParticleEngine* engine)
 
     return 0;
 }
+
+#endif //PW_USE_IMGUI

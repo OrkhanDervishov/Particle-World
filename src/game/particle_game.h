@@ -39,7 +39,11 @@ typedef struct{
     bool window_visible;
     PWWindowRenderingApi window_render_api;
 
+    
     // Visual
+    bool use_custom_cursor;
+    char* cursor_path;
+
     char* icon_path;
     Color clear_color;
 } GameSystemParameters;
@@ -57,9 +61,9 @@ typedef struct ParticleEngine{
     GameSystemParameters s_params;
     GameParameters g_params;
     Mouse mouse;
-    Camera2D camera;
+    PWCamera2D camera;
     InputSystem is;
-    EntityPool ep;
+    PWEntityManager em;
     PWAssetManager am;
     int cbCount;
     void (*callbacks[CB_COUNT_MAX])(struct ParticleEngine* game);

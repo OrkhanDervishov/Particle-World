@@ -1,10 +1,15 @@
 #include "mouse.h"
+#include "sdl2_layer.h"
 
-void draw_cursor(FormatImage screen, Mouse mouse){
-    // vec2i mouse_pos = mouse_get_pos();
-    // // vec2i mouse_pos;
-    // // int state = SDL_GetMouseState(&mouse_pos.x, &mouse_pos.y);
-    // draw_image_on_fimage_scaled(screen, mouse.cursor_img_normal, mouse_pos.x, mouse_pos.y, 1, 1);
+void draw_cursor(Image context, Mouse mouse){
+    vec2i mouse_pos = mouse_get_pos();
+    pnt_blit_scaled(
+        context, 
+        mouse.cursor_img_normal, 
+        mouse_pos.x - mouse.cursor_img_normal.width/2, 
+        mouse_pos.y - mouse.cursor_img_normal.height/2, 
+        1, 1
+    );
 }
 
 int load_cursor_image(Mouse* mouse, const char* path){
