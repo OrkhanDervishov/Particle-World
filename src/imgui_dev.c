@@ -46,11 +46,14 @@ static ImVec4 clear_color;
 
 
 static bool paused = false;
+static bool show_colliders = false;
+static bool show_positions = true;
+static bool levitate = false;
 static float simulation_speed = 1.0f;
-static int particle_size = 4;
-static int brush_radius = 16;
+static float speed_x = 700.0f;
+static float speed_y = 1500.0f;
 static float gravity0 = 9.81f;
-static int count = 0;
+
 
 
 
@@ -130,30 +133,27 @@ static int imgui_dev(ParticleEngine* engine)
     igSeparator();
 
     igCheckbox("Pause Simulation", &paused);
-    igSliderFloat("Simulation Speed", &simulation_speed,0.1f, 5.0f, "%.2fx", 0);
-    igSliderInt("Particle Size", &particle_size, 1, 16, "%d", 0);
-    igSliderInt("Brush Radius", &brush_radius, 1, 128, "%d", 0);
+    igCheckbox("Show Colliders", &show_colliders);
+    igCheckbox("Show Positions", &show_positions);
+    igCheckbox("Levitate", &levitate);
+    // igSliderFloat("Simulation Speed", &simulation_speed,0.1f, 5.0f, "%.2fx", 0);
+    igSliderFloat("Speed X", &speed_x, 0.0f, 3000.0f, "%.2f", 0);
+    igSliderFloat("Speed Y", &speed_y, 0.0f, 3000.0f, "%.2f", 0);
     igSliderFloat("Gravity", &gravity0, -20.0f, 20.0f, "%.2f", 0);
-    if(igButton("count", (ImVec2_c){100, 25})) count++;
-    igSameLine(0, -1);
-    igText("count = %d", count);
 
     igSeparator();
-
-    if (igButton("Clear Particles", (ImVec2){120, 0}))
-    {
-        // TODO: clear particle world
-    }
-
-    igSameLine(0, -1);
 
     if (igButton("Reset", (ImVec2){120, 0}))
     {
         simulation_speed = 1.0f;
-        particle_size = 4;
-        brush_radius = 16;
+        speed_x = 700.0f;
+        speed_y = 1500.0f;
         gravity0 = 9.81f;
         paused = false;
+        show_colliders = false;
+        show_positions = false;
+        levitate = false;
+
     }
 
     igSeparator();

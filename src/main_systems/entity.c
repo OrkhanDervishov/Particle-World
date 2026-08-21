@@ -108,17 +108,17 @@ bool collide_rect_to_rect(RectCollider a, RectCollider b){
 
 
 
-int are_colliding_aabb(PWEntity e1, PWEntity e2){
+int aabb(Rectf r1, Rectf r2){
 
-    float a_sx = e1.pos.x + e1.aabb.x;// + e1.aabb.w/2;
-    float a_sy = e1.pos.y + e1.aabb.y;// + e1.aabb.h/4;
-    float b_sx = e2.pos.x + e2.aabb.x;// + e2.aabb.w/2;
-    float b_sy = e2.pos.y + e2.aabb.y;// + e2.aabb.h/4;
+    float a_sx = r1.x;
+    float a_sy = r1.y;
+    float b_sx = r2.x;
+    float b_sy = r2.y;
     
-    float a_ex = e1.pos.x + e1.aabb.x + e1.aabb.w;
-    float a_ey = e1.pos.y + e1.aabb.y + e1.aabb.h;
-    float b_ex = e2.pos.x + e2.aabb.x + e2.aabb.w;
-    float b_ey = e2.pos.y + e2.aabb.y + e2.aabb.h;
+    float a_ex = r1.x + r1.w;
+    float a_ey = r1.y + r1.h;
+    float b_ex = r2.x + r2.w;
+    float b_ey = r2.y + r2.h;
     
 
     bool is_colliding = false;
@@ -135,5 +135,23 @@ int are_colliding_aabb(PWEntity e1, PWEntity e2){
 
     if(x_overlap < y_overlap) return 1;
     else return 2;
+}
+
+int are_colliding_aabb(PWEntity e1, PWEntity e2){
+
+    Rectf r1 = {
+        .x = e1.pos.x + e1.aabb.x,
+        .y = e1.pos.y + e1.aabb.y,
+        .w = e1.aabb.w,
+        .h = e1.aabb.h
+    };
+    Rectf r2 = {
+        .x = e2.pos.x + e2.aabb.x,
+        .y = e2.pos.y + e2.aabb.y,
+        .w = e2.aabb.w,
+        .h = e2.aabb.h
+    };
+    
+    return aabb(r1, r2);
 }
 /************************************************************/

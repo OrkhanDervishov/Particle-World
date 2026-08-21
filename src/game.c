@@ -1,6 +1,7 @@
 #include "game.h"
 #include "chunk_system.h"
 #include "imgui_dev.c"
+#include "chunk_system.h"
 
 void Guide(ParticleEngine* game, Color textColor);
 void init_buttons(ParticleEngine* game, Button** buttons);
@@ -412,6 +413,7 @@ int RunParticleEngine(ParticleEngine* game){
 }
 
 
+
 void poll_events(InputSystem* is, InputSystem* gui){
     SDL_Event e;
     while (SDL_PollEvent(&e))
@@ -451,16 +453,30 @@ void draw_entity(ParticleEngine* game, pw_entity_id_t id){
         view,
         PW_DELTA_TIME
     );
-    
-    view.translation.y = -view.translation.y;
-    view.translation.x -= ENTITY_GET(game->em.pool, id).aabb.w/2;
-    view.translation.y -= ENTITY_GET(game->em.pool, id).aabb.h/2;
-    draw_rect_aabb_collider(
-        game->win->context, 
-        view.translation, 
-        ENTITY_GET(game->em.pool, id).aabb,
-        (Color){.rgba = 0xFF00FFFF}
-    );
+
+
+    if(show_positions){
+        Rect rect = {
+            .x = (int)view.translation.x,
+            .y = -(int)view.translation.y,
+            .w = 5,
+            .h = 5,
+        };
+        pnt_draw_filled_rect(game->win->context, rect, (Color){.rgba = 0xFF00FF00});
+    }
+
+
+    if(show_colliders){
+        view.translation.y = -view.translation.y;
+        view.translation.x -= ENTITY_GET(game->em.pool, id).aabb.w/2;
+        view.translation.y -= ENTITY_GET(game->em.pool, id).aabb.h/2;
+        draw_rect_aabb_collider(
+            game->win->context, 
+            view.translation, 
+            ENTITY_GET(game->em.pool, id).aabb,
+            (Color){.rgba = 0xFF00FFFF}
+        );
+    }
 }
 
 void draw_entities(ParticleEngine* game){
@@ -500,21 +516,21 @@ pw_entity_id_t player_id;
 pw_entity_id_t entity_ids[10];
 
 void init_scene(ParticleEngine *game){
-    block.pos = (Posf){0.0f, 0.0f};
+    block.pos = (Posf){0.0f, -50.0f};
     entity_ids[0] = pw_entity_manager_add(&game->em, block);
     block.pos = (Posf){-200.0f, 0.0f};
     entity_ids[1] = pw_entity_manager_add(&game->em, block);
-    block.pos = (Posf){-400.0f, 0.0f};
+    block.pos = (Posf){-400.0f, 50.0f};
     entity_ids[2] = pw_entity_manager_add(&game->em, block);
-    block.pos = (Posf){-600.0f, 0.0f};
+    block.pos = (Posf){-600.0f, 100.0f};
     entity_ids[3] = pw_entity_manager_add(&game->em, block);
-    block.pos = (Posf){-800.0f, 0.0f};
+    block.pos = (Posf){-800.0f, 150.0f};
     entity_ids[4] = pw_entity_manager_add(&game->em, block);
-    block.pos = (Posf){-1000.0f, 0.0f};
+    block.pos = (Posf){-1000.0f, 200.0f};
     entity_ids[5] = pw_entity_manager_add(&game->em, block);
-    block.pos = (Posf){-1200.0f, 0.0f};
+    block.pos = (Posf){-1200.0f, 250.0f};
     entity_ids[6] = pw_entity_manager_add(&game->em, block);
-    block.pos = (Posf){-1400.0f, 0.0f};
+    block.pos = (Posf){-1400.0f, 300.0f};
     entity_ids[7] = pw_entity_manager_add(&game->em, block);
 
     player_id = pw_entity_manager_add(&game->em, player);
@@ -536,7 +552,8 @@ void apply_gravity(ParticleEngine* game){
     }
 }
 
-void handle_collisions(ParticleEngine* game){
+
+void handle_collisions_x(ParticleEngine* game){
     PWEntity* player_ent = pw_entity_manager_get(&game->em, player_id);
 
     for(int i = 0; i < 8; i++){
@@ -548,16 +565,177 @@ void handle_collisions(ParticleEngine* game){
                 player_ent->pos.x   -= last_move.x;
                 game->camera.pos.x  -= last_move.x;
             }
-            if(side == 2){
-                player_ent->pos.y   -= last_move.y;
-                game->camera.pos.y  -= last_move.y;
-            }
+            // if(side == 2){
+            //     player_ent->pos.y   -= last_move.y;
+            //     game->camera.pos.y  -= last_move.y;
+            // }
             // player_ent->pos.y += GRAVITY;
             // game->camera.pos.y += GRAVITY;
         }
     }
 }
 
+bool colliding_y;
+void handle_collisions_y(ParticleEngine* game){
+    PWEntity* player_ent = pw_entity_manager_get(&game->em, player_id);
+    
+    colliding_y = false;
+    for(int i = 0; i < 8; i++){
+        PWEntity* ent = pw_entity_manager_get(&game->em, entity_ids[i]);
+        
+        int side = are_colliding_aabb(*player_ent, *ent);
+        if(side){
+            if(side == 2){
+                player_ent->pos.y   -= last_move.y;
+                game->camera.pos.y  -= last_move.y;
+                colliding_y = true;
+            }
+        }
+        colliding_y = colliding_y ? true : false;
+    }
+}
+
+bool game_over(ParticleEngine* game){
+    if(ENTITY_GET(game->em.pool, player_id).pos.y < -200.0f) return true;
+    return false;
+}
+
+vec2f acc;
+
+void jump(ParticleEngine* game){
+    acc = (vec2f){0.0f, speed_y};
+}
+
+void accelerate(ParticleEngine* game){
+    if(acc.y <= 0.0f) acc.y = 0.0f;
+    ENTITY_GET(game->em.pool, player_id).pos.y += acc.y*PW_DELTA_TIME;
+    acc.y -= speed_y/100;
+}
+
+void draw_key(ParticleEngine* game, PWSpriteFonts fonts, const char* key, Color color, vec2 pos){
+    Rect button_rect = {pos.x, pos.y, 50, 50};
+    pnt_draw_rect(game->win->context, button_rect, color, 5);
+    pw_draw_sprite_text(
+        game->win->context, 
+        &game->am, &fonts, 
+        key, 
+        (Transforms2d){
+            .translation = (vec2f){(float)pos.x, (float)-(pos.y + button_rect.h/2)},
+            .rotation = 0.0f,
+            .scale = (vec2f){5.0f, 5.0f}
+        }
+    );
+}
+
+void show_if_hold(ParticleEngine* game, PWSpriteFonts fonts){
+    Color white = {.rgba = 0xFFFFFFFF};
+    Color yellow = {.rgba = 0xFF00FFFF};
+
+    int offset = 5;
+    vec2 w_pos = {70 + offset*2, game->win->h-130-offset};
+    vec2 s_pos = {70 + offset*2, game->win->h-70};
+    vec2 a_pos = {10 + offset, game->win->h-70};
+    vec2 d_pos = {130 + offset*3, game->win->h-70};
+
+    if(button_down(&game->is, BUTTON_W)){
+        draw_key(game, fonts, "W", yellow, w_pos);
+    } else {
+        draw_key(game, fonts, "W", white, w_pos);
+    }
+
+    if(button_down(&game->is, BUTTON_S)){
+        draw_key(game, fonts, "S", yellow, s_pos);
+    } else {
+        draw_key(game, fonts, "S", white, s_pos);
+    }
+
+    if(button_down(&game->is, BUTTON_A)){
+        draw_key(game, fonts, "A", yellow, a_pos);
+    } else {
+        draw_key(game, fonts, "A", white, a_pos);
+    }
+
+    if(button_down(&game->is, BUTTON_D)){
+        draw_key(game, fonts, "D", yellow, d_pos);
+    } else {
+        draw_key(game, fonts, "D", white, d_pos);
+    }
+}
+
+
+
+#define CHUNK_WIDTH     256
+#define CHUNK_HEIGHT    256
+#define FIELD_WIDTH     10
+#define FIELD_HEIGHT    10
+
+#define TURN_CHUNK_X(x, w) ((x) / (w)) * (w)
+#define TURN_CHUNK_Y(y, h) ((y) / (h)) * (h)
+
+#define VECF_TO_VECI(vf) (vec2){(int)vf.x, (int)vf.y}
+#define VECI_TO_VECF(vi) (vec2f){(float)vi.x, (float)vi.y}
+
+int chunk_x(int x)
+{
+    return (x >= 0) ? (x / CHUNK_WIDTH) * CHUNK_WIDTH : ((x - CHUNK_WIDTH + 1) / CHUNK_WIDTH) * CHUNK_WIDTH;
+}
+
+int chunk_y(int y)
+{
+    return (y >= 0) ? (y / CHUNK_HEIGHT) * CHUNK_HEIGHT : ((y - CHUNK_HEIGHT + 1) / CHUNK_HEIGHT) * CHUNK_HEIGHT;
+}
+
+vec2f get_view_vec(vec2f pos, PWCamera2D camera){
+    pos.x -= camera.pos.x - camera.resolution.x/2;
+    pos.y -= camera.pos.y + camera.resolution.y/2;
+    return pos;
+}
+
+void draw_chunk_grid(ParticleEngine *game, PWSpriteFonts fonts){
+    vec2f pos = ENTITY_GET(game->em.pool, player_id).pos;
+    vec2 posi = {(int)pos.x, (int)pos.y};
+    vec2 chunk_pos = {chunk_x(posi.x), chunk_y(posi.y)};
+    vec2 rel_chunk_pos = VECF_TO_VECI(get_view_vec(VECI_TO_VECF(chunk_pos), game->camera));
+
+    char chunk_info[256];
+    sprintf(chunk_info, "x:%d y:%d", chunk_pos.x, chunk_pos.y);
+    pw_draw_sprite_text(
+        game->win->context, 
+        &game->am, &fonts, 
+        chunk_info, 
+        (Transforms2d){
+            .translation = (vec2f){0.0f, -40.0f},
+            .rotation = 0.0f,
+            .scale = (vec2f){2.0f, 2.0f}
+        }
+    );
+
+    for(int i = -FIELD_HEIGHT/2; i < FIELD_HEIGHT/2+1; i++){
+        for(int j = -FIELD_WIDTH/2; j < FIELD_WIDTH/2+1; j++){
+            Rect rect = {
+                .x = rel_chunk_pos.x + j*CHUNK_WIDTH,// CHUNK_WIDTH,
+                .y = -rel_chunk_pos.y - CHUNK_HEIGHT + i*CHUNK_HEIGHT,
+                .w = CHUNK_WIDTH,
+                .h = CHUNK_HEIGHT
+            };
+            pnt_draw_rect(game->win->context, rect, (Color){.rgba=0xFF00FF00}, 1);
+            // char rel_chunk_info[256];
+            // sprintf(rel_chunk_info, "x:%d y:%d", rect.x, rect.y);
+            // pw_draw_sprite_text(
+            //     game->win->context, 
+            //     &game->am, &fonts, 
+            //     rel_chunk_info, 
+            //     (Transforms2d){
+            //         .translation = (vec2f){0.0f, -60.0f},
+            //         .rotation = 0.0f,
+            //         .scale = (vec2f){2.0f, 2.0f}
+            //     }
+            // );
+        }
+    }
+
+
+}
 
 typedef struct{
     int *items;
@@ -575,12 +753,15 @@ typedef struct{
 int RunEntityGame(ParticleEngine* game){
     
     // ParticleEngine* gui_engine;
-    // CreateParticleEngine(&gui_engine, "./src/confs/gui_conf.conf");
+    // CreateParticleEngine(&gui_engine, "./configs/gui_conf.conf");
     
     Image image;
     image.buffer = NULL;
     pnt_load_image(&image, "resources/CHESS.bmp");
     
+    PWField field = {0};
+    // pw_field_init(&field, 3, 3, 5, 5, 256, 256);
+    pw_field_init(&field, 3, 3, 5, 5, 128, 128);
     
     pw_asset_t player_asset = pw_load_asset(&game->am, "resources/wizard.png", PW_ASSET_SPRITE);
     pw_asset_t block_asset = pw_load_asset(&game->am, "resources/block.png", PW_ASSET_SPRITE);
@@ -610,7 +791,8 @@ int RunEntityGame(ParticleEngine* game){
         .type = PW_ENTITY_DYNAMIC,
         .pos = {0.0f, 100.0f},
         .renderable.asset = player_asset,
-        .aabb = (PWColliderAABB){0.0f, 0.0f, 64.0f, 32.0f*2},
+        // .aabb = (PWColliderAABB){16.0f, 0.0f, 48.0f, 64.0f},
+        .aabb = (PWColliderAABB){16.0f, 0.0f, 32.0f, 64.0f},
     };
 
 
@@ -669,15 +851,13 @@ int RunEntityGame(ParticleEngine* game){
     imgui_init(game);
     #endif
 
+
+    acc = (vec2f){0.0f, 0.0f};
+
     while(game->s_params.is_running){
-        
+    
         update_global_time();
-        // printf("fps:%.1lf\n", 1.0/PW_DELTA_TIME);
-        // update_input_system(&game->is);
         reset_button_states(&game->is);
-        // update_mouse(&game->is);
-        // reset_button_states(&gui_engine->is);
-        // update_mouse(&gui_engine->is);
         poll_events(&game->is, NULL);
 
         if(action_pressed(&game->is, act_exit)){
@@ -697,16 +877,30 @@ int RunEntityGame(ParticleEngine* game){
         }
 
         if(!paused){
-            #define SPEED_X 700.0f * PW_DELTA_TIME
-            #define SPEED_Y 1000.0f * PW_DELTA_TIME
+            vec2f move;
+            #define SPEED_X speed_x * PW_DELTA_TIME
+            #define SPEED_Y speed_y * PW_DELTA_TIME
             if(button_down(&game->is, BUTTON_W)){
-                game->camera.pos.y += SPEED_Y;
-                ENTITY_GET(game->em.pool, player_id).pos.y += SPEED_Y;
+                if(levitate){
+                    game->camera.pos.y += SPEED_Y;
+                    ENTITY_GET(game->em.pool, player_id).pos.y += SPEED_Y;
+                }
+                else{
+                    if(colliding_y)
+                        jump(game);
+                }
             }
             if(button_down(&game->is, BUTTON_S)){
-                game->camera.pos.y -= SPEED_Y;
-                ENTITY_GET(game->em.pool, player_id).pos.y -= SPEED_Y;
+                if(levitate){
+                    game->camera.pos.y -= SPEED_Y;
+                    ENTITY_GET(game->em.pool, player_id).pos.y -= SPEED_Y;
+                }
             }
+            accelerate(game);
+            apply_gravity(game);
+            move.y = ENTITY_GET(game->em.pool, player_id).pos.y - prev_pos.y;
+            last_move.y = move.y != 0.0f ? move.y : last_move.y;
+            handle_collisions_y(game);
             if(button_down(&game->is, BUTTON_A)){
                 game->camera.pos.x -= SPEED_X;
                 ENTITY_GET(game->em.pool, player_id).pos.x -= SPEED_X;
@@ -715,18 +909,25 @@ int RunEntityGame(ParticleEngine* game){
                 game->camera.pos.x += SPEED_X;
                 ENTITY_GET(game->em.pool, player_id).pos.x += SPEED_X;
             }
-            apply_gravity(game);
-            last_move = vec2_sub(ENTITY_GET(game->em.pool, player_id).pos, prev_pos);
-            handle_collisions(game);
+            move.x = ENTITY_GET(game->em.pool, player_id).pos.x - prev_pos.x;
+            last_move.x = move.x != 0.0f ? move.x : last_move.x;
+            handle_collisions_x(game);
+            game->camera.pos = ENTITY_GET(game->em.pool, player_id).pos;
+            // vec2f move = vec2_sub(ENTITY_GET(game->em.pool, player_id).pos, prev_pos);
+
             prev_pos = ENTITY_GET(game->em.pool, player_id).pos;
         }
-        // clear_game_window(game);
 
         Transforms2d t = (Transforms2d){
             .translation = (vec2f){400.0f, 400.0f},
             .rotation = 0.0f,
             .scale = (vec2f){3.0f, 3.0f}
         };
+
+        if(game_over(game)){
+            ENTITY_GET(game->em.pool, player_id).pos = player.pos;
+            game->camera.pos = player.pos;
+        }
 
         // pw_draw_asset(
         //     game->win->context, 
@@ -764,6 +965,26 @@ int RunEntityGame(ParticleEngine* game){
         // pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!\nerfegrg\nwefefef", font_transforms);
 
         draw_scene(game);
+        pw_field_update(
+            &field, 
+            (pw_chunk_coord_t)ENTITY_GET(game->em.pool, player_id).pos.x, 
+            (pw_chunk_coord_t)ENTITY_GET(game->em.pool, player_id).pos.y 
+        );
+        // printf("region_count: %d\n", pool_get_count(field.regions));
+        // printf("field_x:%d field_y:%d\n", field.x, field.y);
+        pw_field_regions_render(game->win->context, game->camera, field, FALSE);
+        pw_field_chunks_render(game->win->context, game->camera, field, TRUE);
+        // pw_chunk_render(
+        //     game->win->context, game->camera,
+        //     &field.chunks[0], 
+        //     (int)field.x + 0*field.chunk_width, 
+        //     (int)field.y + 0*field.chunk_height,
+        //     (Color){.rgba = 0xFF00FFFF}
+        // );
+        // printf("x:%d y:%d\n", (int)field.x, (int)field.y);
+        // draw_chunk_grid(game, fonts);
+        show_if_hold(game, fonts);
+
         char camera_info[256];
         sprintf(camera_info, "x:%.2f y:%.2f", game->camera.pos.x, game->camera.pos.y);
         pw_draw_sprite_text(

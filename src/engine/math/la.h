@@ -15,6 +15,10 @@ typedef struct{
 typedef vec2 vec2i;
 
 typedef struct{
+    int64_t x, y;
+} vec2li;
+
+typedef struct{
     int x, y, z;
 } vec3;
 

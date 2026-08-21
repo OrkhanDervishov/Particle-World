@@ -24,6 +24,8 @@
 
 11. Add checking to all modules
 
+12. Fix problem caused by collider overlap
+
 <h2>Long term tasks</h2>
 
 
