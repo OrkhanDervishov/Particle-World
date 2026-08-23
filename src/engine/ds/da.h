@@ -203,6 +203,208 @@ do{\
 
 //#################################################################################
 
+// LINKED LIST
+//#################################################################################
 
+#define LL_ALLOCATOR(size) malloc((size))
+#define LL_FREE(mem) free((mem))
+#define LL_TYPEOF(ll) __typeof__((ll).head)
+#define LL_TYPEOF_VALUE(ll) __typeof__((ll).head->value)
+
+#define Ll(Type)                \
+    struct{                     \
+        struct LLNode{          \
+            Type value;         \
+            struct LLNode *next;\
+            struct LLNode *prev;\
+        } *head, *tail;         \
+                                \
+        size_t count;           \
+    }
+
+#define LL_INITIALIZATION {\
+    .head = NULL,\
+    .tail = NULL,\
+    .count = 0\
+}
+
+#define ll_init(ll)\
+do{\
+    (ll).head = NULL;\
+    (ll).tail = NULL;\
+    (ll).count = 0;\
+}while(0)
+
+#define ll_create_node(ll, node_return, next_node, prev_node, new_value)\
+do{\
+    (node_return) = LL_ALLOCATOR(sizeof(*node));\
+    (node_return)->prev = (prev_node);\
+    (node_return)->next = (next_node);\
+    (node_return)->value = (new_value);\
+}while(0)
+
+// for(size_t i = 0; i < index && curr; i++){
+#define ll_get_node_by_index(ll, node_return, index)\
+do{\
+    LL_TYPEOF(ll) ll_curr = (ll).head;\
+    (node_return) = NULL;\
+    for(size_t ll_i = 0; ll_i != (index) && ll_curr; ll_i++)\
+        ll_curr = ll_curr->next;\
+\
+    if(ll_curr)\
+        (node_return) = ll_curr;\
+}while(0)
+
+
+#define ll_push_head(ll, value)\
+do{\
+    LL_TYPEOF(ll) node;\
+    ll_create_node(ll, node, (ll).head, NULL, value);\
+\
+    if((ll).head){\
+        (ll).head->prev = node;\
+    }\
+    else{\
+        (ll).tail = node;\
+    }\
+\
+    (ll).head = node;\
+    (ll).count++;\
+} while(0)
+
+#define ll_push_tail(ll, value)\
+do{\
+    LL_TYPEOF(ll) node;\
+    ll_create_node(ll, node, NULL, (ll).tail, value);\
+\
+    if((ll).tail){\
+        (ll).tail->next = node;\
+    }\
+    else{\
+        (ll).head = node;\
+    }\
+\
+    (ll).tail = node;\
+    (ll).count++;\
+} while(0)
+
+#define ll_pop_head(ll)\
+do{\
+    LL_TYPEOF(ll) node = (ll).head;\
+    \
+    if(node == NULL) break;\
+    (ll).head = node->next;\
+\
+    if(node->next){\
+        (ll).head->prev = NULL;\
+    }\
+    else{\
+        (ll).tail = NULL;\
+    }\
+\
+    LL_FREE(node);\
+    (ll).count--;\
+} while(0)
+
+#define ll_pop_tail(ll)\
+do{\
+    LL_TYPEOF(ll) node = (ll).tail;\
+    \
+    if(node == NULL) break;\
+    (ll).tail = node->prev;\
+\
+    if(node->prev){\
+        (ll).tail->next = NULL;\
+    }\
+    else{\
+        (ll).head = NULL;\
+    }\
+\
+    LL_FREE(node);\
+    (ll).count--;\
+} while(0)
+
+#define ll_push_index(ll, index, value)\
+do{\
+    LL_TYPEOF(ll) node;\
+    LL_TYPEOF(ll) new_node;\
+    ll_get_node_by_index(ll, node, index);\
+    if(node == NULL){\
+        ll_create_node(ll, new_node, NULL, NULL, value);\
+        (ll).head = (ll).tail = new_node;\
+    }\
+\
+    LL_TYPEOF(ll) prev = node->prev;\
+\
+    ll_create_node(ll, new_node, node, prev, value);\
+    node->prev = new_node;\
+    if(prev) prev->next = new_node;\
+    (ll).count++;\
+} while(0)
+
+#define ll_pop_index(ll, index)\
+do{\
+    LL_TYPEOF(ll) node;\
+    ll_get_node_by_index(ll, node, index);\
+    if(node == NULL){\
+        break;\
+    }\
+    LL_TYPEOF(ll) next = node->next, prev = node->prev;\
+    if(prev) prev->next = next;\
+    if(next) next->prev = prev;\
+    LL_FREE(node);\
+    (ll).count--;\
+} while(0)
+
+#define ll_pop_node(ll, node, value)\
+do{\
+    if((node) == NULL){\
+        break;\
+    }\
+    LL_TYPEOF(ll) next = (node)->next, prev = (node)->prev;\
+    if(prev) prev->next = next;\
+    if(next) next->prev = prev;\
+    LL_FREE((node));\
+    (ll).count--;\
+} while(0)
+
+#define ll_get_head_val_direct(ll) (ll).head->value
+
+#define ll_get_tail_val_direct(ll) (ll).tail->value
+
+#define ll_get_head_val(ll, var)\
+do{\
+    var = (ll).head->value;\
+} while(0)
+
+#define ll_get_tail_val(ll, var)\
+do{\
+    var = (ll).tail->value;\
+} while(0)
+
+#define ll_get_val(ll, var, index)\
+do{\
+    LL_TYPEOF(ll) node = NULL;\
+    ll_get_node_by_index(ll, node, index);\
+    if(node) var = node->value;\
+} while(0)
+
+#define ll_free(ll)\
+do{\
+    LL_TYPEOF(ll) curr = (ll).head;\
+    while(curr){\
+        LL_FREE(curr);\
+        curr = curr->next;\
+    }\
+    (ll).count = 0;\
+} while(0)
+
+#define ll_cycle(ll)\
+do{\
+    (ll).tail->next = (ll).head;\
+    (ll).head->prev = (ll).tail;\
+} while(0)
+
+//#################################################################################
 
 #endif //DYNAMIC_ARRAY_H_

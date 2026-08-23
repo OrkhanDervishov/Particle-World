@@ -12,6 +12,7 @@
 #include "dirtyrect.h"
 #include "particle_data.h"
 #include "simulator.h"
+#include "da.h"
 
 // #include "uchar.h"
 // #include "locale.h"
@@ -46,6 +47,19 @@ int main(int argc, char* argv[]){
     // myconfig_free_pairs(pairs);
 
     // return 0;
+
+    Ll(int) llist = LL_INITIALIZATION;
+    ll_push_head(llist, 10);
+    ll_push_head(llist, 11);
+    ll_push_head(llist, 12);
+    ll_push_head(llist, 13);
+    ll_push_head(llist, 14);
+
+    for(int i = 0; i < llist.count; i++){
+        int var;
+        ll_get_val(llist, var, i);
+        printf("%d\n", var);
+    } 
 
     // setlocale(LC_ALL, "en_US.UTF-8");
     // // char32_t str = "ü";

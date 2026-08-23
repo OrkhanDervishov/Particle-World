@@ -442,9 +442,10 @@ void draw_entity(ParticleEngine* game, pw_entity_id_t id){
         .translation = (vec2f){(ENTITY_GET(game->em.pool, id).pos.x), (ENTITY_GET(game->em.pool, id).pos.y)},
         .rotation = 0.0f,
         .scale = (vec2f){2.0f, 2.0f}
-    };
+    }; 
 
-    Transforms2d view = get_view_transform(model, game->camera);
+    Transforms2d view = pw_world_to_view_transform(model, game->camera);
+    // Transforms2d view = get_view_transform(model, game->camera);
     
     pw_draw_renderable(
         game->win->context, 
@@ -472,7 +473,7 @@ void draw_entity(ParticleEngine* game, pw_entity_id_t id){
         view.translation.y -= ENTITY_GET(game->em.pool, id).aabb.h/2;
         draw_rect_aabb_collider(
             game->win->context, 
-            view.translation, 
+            view.translation,
             ENTITY_GET(game->em.pool, id).aabb,
             (Color){.rgba = 0xFF00FFFF}
         );

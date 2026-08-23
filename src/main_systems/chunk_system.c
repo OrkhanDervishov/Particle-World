@@ -56,6 +56,7 @@ void pw_chunk_delete(PWChunk *chunk){
 /*********************************************/
 
 const char* pw_gen_region_path(pw_chunk_coord_t x, pw_chunk_coord_t y){
+    
     return NULL;
 }
 
@@ -150,7 +151,7 @@ void pw_field_destroy(PWField *field){
 
 void pw_field_chunk_organize(PWField field){
     
-    return;
+    // return;
     // Organize chunks from region list
     for(size_t i = 0; i < field.field_height_in_chunks; i++)
     for(size_t j = 0; j < field.field_width_in_chunks; j++){
@@ -311,16 +312,27 @@ void pw_field_region_load(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y
     // }
 }
 
-void pw_field_region_unload_last(){
+int pw_field_regions_to_unload_count(PWField field){
+    return (int)pool_get_count(field.regions) - (int)field.max_loaded_regions_count;
+}
+
+
+void pw_field_region_unload_last(PWField *field){
+    int unload_count = pw_field_regions_to_unload_count(*field);
+
     
 }
 
-void pw_field_region_unload_far(){
-    
+void pw_field_region_unload_far(PWField *field){
+    int unload_count = pw_field_regions_to_unload_count(*field);
+
+
 }
 
-void pw_field_region_unload_lru(){
-    
+void pw_field_region_unload_lru(PWField *field){
+    int unload_count = pw_field_regions_to_unload_count(*field);
+
+
 }
 
 
@@ -329,13 +341,14 @@ void pw_field_region_unload_lru(){
 
 void pw_rect_render(Image context, PWCamera2D camera, float x, float y, float w, float h, Color color){
     // printf("x:%.2f y:%.2f\n",x, y);
-    vec2 chunk_pos = pw_world_to_view((vec2f){x, y}, camera);\
+    // vec2 chunk_pos = pw_world_to_view((vec2f){x, y}, camera);
     Rect rect = {
-        .x = chunk_pos.x, 
-        .y = chunk_pos.y, 
+        .x = (int)x, 
+        .y = (int)y, 
         .w = (int)w, 
         .h = (int)h
     };
+    rect = pw_world_to_view_rect(rect, camera);
 
     // CONSOLE_RECT(rect);
     pnt_draw_rect(context, rect, color, 1);
@@ -343,12 +356,13 @@ void pw_rect_render(Image context, PWCamera2D camera, float x, float y, float w,
 }
 
 void pw_chunk_render(Image context, PWCamera2D camera, PWChunk* chunk, float x, float y, Color color){
-    vec2 chunk_pos = pw_world_to_view((vec2f){x, y}, camera);\
     Rect rect = {
-        .x = chunk_pos.x, 
-        .y = chunk_pos.y, 
-        .w = chunk->w, .h = chunk->h
+        .x = (int)x, 
+        .y = (int)y, 
+        .w = (int)chunk->w, 
+        .h = (int)chunk->h
     };
+    rect = pw_world_to_view_rect(rect, camera);
 
     CONSOLE_RECT(rect);
     pnt_draw_rect(context, rect, color, 1);
@@ -362,13 +376,14 @@ void pw_region_render(Image context, PWCamera2D camera, PWRegion region, size_t 
     // size_t field_width = region.field_width_in_chunks * field.chunk_width;
     // size_t field_height = region.field_height_in_chunks * field.chunk_height;
 
-    vec2 region_pos = pw_world_to_view((vec2f){(float)region.x, (float)region.y}, camera);
+    // vec2 region_pos = pw_world_to_view((vec2f){(float)region.x, (float)region.y}, camera);
     Rect rect = {
-        .x = region_pos.x,
-        .y = region_pos.y,
+        .x = region.x,
+        .y = region.y,
         .w = region.width,
         .h = region.height
     };
+    rect = pw_world_to_view_rect(rect, camera);
     // CONSOLE_RECT(rect);
     pnt_draw_rect(context, rect, red, 3);
 
@@ -400,13 +415,14 @@ void pw_field_chunks_render(Image context, PWCamera2D camera, PWField field, boo
     size_t field_width = field.field_width_in_chunks * field.chunk_width;
     size_t field_height = field.field_height_in_chunks * field.chunk_height;
 
-    vec2 field_pos = pw_world_to_view((vec2f){(float)field.x, (float)field.y}, camera);
+    // vec2 field_pos = pw_world_to_view((vec2f){(float)field.x, (float)field.y}, camera);
     Rect rect = {
-        .x = field_pos.x,
-        .y = field_pos.y,
+        .x = field.x,
+        .y = field.y,
         .w = field.field_width_in_chunks*field.chunk_width,
         .h = field.field_height_in_chunks*field.chunk_height
     };
+    rect = pw_world_to_view_rect(rect, camera);
     pnt_draw_rect(context, rect, blue, 3);
 
 
