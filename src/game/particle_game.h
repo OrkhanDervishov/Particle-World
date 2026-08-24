@@ -18,6 +18,7 @@
 #include "constants.h"
 #include "asset.h"
 #include "asset_renderer.h"
+#include "chunk_system.h"
 
 
 typedef struct{
@@ -57,6 +58,7 @@ typedef struct{
 typedef struct ParticleEngine{
     Window* win;
     ChunkSpace cs;
+    PWField field;
     GuiElement gui;
     GameSystemParameters s_params;
     GameParameters g_params;

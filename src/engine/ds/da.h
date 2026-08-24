@@ -356,12 +356,14 @@ do{\
     (ll).count--;\
 } while(0)
 
-#define ll_pop_node(ll, node, value)\
+#define ll_pop_node(ll, node)\
 do{\
     if((node) == NULL){\
         break;\
     }\
     LL_TYPEOF(ll) next = (node)->next, prev = (node)->prev;\
+    if((node) == (ll).head) (ll).head = next;\
+    if((node) == (ll).tail) (ll).tail = prev;\
     if(prev) prev->next = next;\
     if(next) next->prev = prev;\
     LL_FREE((node));\
@@ -404,6 +406,8 @@ do{\
     (ll).tail->next = (ll).head;\
     (ll).head->prev = (ll).tail;\
 } while(0)
+
+#define ll_get_count(ll) (ll).count
 
 //#################################################################################
 

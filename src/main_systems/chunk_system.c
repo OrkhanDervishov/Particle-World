@@ -110,11 +110,11 @@ int pw_field_init(
     PWField *field, 
     size_t region_width_in_chunks, size_t region_height_in_chunks,
     size_t field_width_in_chunks, size_t field_height_in_chunks,
-    size_t chunk_width, size_t chunk_height
+    size_t chunk_width, size_t chunk_height,
+    size_t max_loaded_regions_count
 ){
     if(!field) return 1;
 
-    printf("works0\n");
     field->field_width_in_chunks = field_width_in_chunks;
     field->field_height_in_chunks = field_height_in_chunks;
     
@@ -124,34 +124,33 @@ int pw_field_init(
     field->chunk_width = chunk_width;
     field->chunk_height = chunk_height;
     
-    printf("works1\n");
-    
+    field->max_loaded_regions_count = max_loaded_regions_count;
+    field->loading_algo = PW_FIELD_LOAD_LAST;
+
     if(field->chunks != NULL){
         free(field->chunks);
     }
-    printf("works2\n");
-    pool_free(field->regions);
-    printf("works3\n");
+    // pool_free(field->regions);
     
-    field->regions = (PWRegionPool){0};
-    printf("works4\n");
+    // field->regions = (PWRegionPool){0};
+    ll_init(field->region_list);
+
     field->chunks = (PWChunk*)calloc(
         field->field_width_in_chunks * field->field_height_in_chunks, 
         sizeof(PWChunk)
     );
-    printf("works5\n");
 
     return 0;
 }
 
 void pw_field_destroy(PWField *field){
-    pool_free(field->regions);
+    // pool_free(field->regions);
+    ll_free(field->region_list);
     free(field->chunks);
 }
 
 void pw_field_chunk_organize(PWField field){
     
-    // return;
     // Organize chunks from region list
     for(size_t i = 0; i < field.field_height_in_chunks; i++)
     for(size_t j = 0; j < field.field_width_in_chunks; j++){
@@ -164,17 +163,21 @@ void pw_field_chunk_organize(PWField field){
         pw_chunk_coord_t ry = (cy / region_height) * region_height;
 
         PWChunk chunk = {0};
-        for(size_t k = 0; k < pool_get_count(field.regions); k++){
-            PWRegion region = pool_get(field.regions, k);
-            if(region.x == rx && region.y == ry){
+
+        LL_TYPEOF(field.region_list) curr_region = field.region_list.head;
+        while(curr_region){
+            // PWRegion region = pool_get(field->regions, k);
+            if(curr_region->value.x == rx && curr_region->value.y == ry){
                 size_t ri = (cy - ry) / field.chunk_height;
                 size_t rj = (cx - rx) / field.chunk_width;
 
                 size_t index = ri * (field.region_width_in_chunks) + rj;
-                chunk = pool_get(field.regions, k).chunks[index];
+                chunk = curr_region->value.chunks[index];
                 break;
             }
+            curr_region = curr_region->next;
         }
+
 
         field.chunks[i * field.field_width_in_chunks + j] = chunk;
     }
@@ -197,8 +200,6 @@ void pw_field_update(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
         curr_central_chunk_x != new_central_chunk_x ||
         curr_central_chunk_y != new_central_chunk_y
     ) {
-        // printf("curr_x:%d curr_y:%d\n", curr_central_chunk_x, curr_central_chunk_y);
-        // printf("new_x:%d new_y:%d\n", new_central_chunk_x, new_central_chunk_y);
         is_changed = TRUE;
     }
 
@@ -206,13 +207,11 @@ void pw_field_update(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
     field->y_center = (y / field->chunk_height + 1) * field->chunk_height;
     field->x = field->x_center - (field->field_width_in_chunks/2) * field->chunk_width;
     field->y = field->y_center + (field->field_height_in_chunks/2) * field->chunk_height;
-    // printf("field_x:%d field_y:%d\n", field->x, field->y);
-    // printf("field_x_c:%d field_y_c:%d\n", field->x_center, field->y_center);
 
     // 2 - check if all required regions are loaded
 
     if(is_changed){
-        pw_field_region_load(field, x, y);
+        pw_field_regions_load(field, x, y);
         
         // 4 - organize chunks in field
         pw_field_chunk_organize(*field);
@@ -233,19 +232,32 @@ vec2_chunk_coord pw_field_coord_region(PWField field, pw_chunk_coord_t x, pw_chu
     };
 }
 
+bool pw_field_region_is_loaded(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y, size_t *index){
+    bool is_loaded = FALSE;
+    LL_TYPEOF(field->region_list) curr_region = field->region_list.head;
 
-void pw_field_region_load(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
+    size_t i = 0;
+    while(curr_region){
+        if(curr_region->value.x == x && curr_region->value.y == y){
+            is_loaded = TRUE;
+            break;
+        }
+        curr_region = curr_region->next;
+        i++;
+    }
+    
+    if(is_loaded && index != NULL) *index = i;
+    return is_loaded;
+}
+
+
+void pw_field_regions_load(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
     /*
     If region is stored - load region
     If region is not generated - generate
     */
     // TODO: need region file naming convention
 
-    // size_t region_width = field->region_width_in_chunks * field->chunk_width;
-    // size_t region_height = field->region_height_in_chunks * field->chunk_height;
-    // pw_chunk_coord_t rx = (field->x / (pw_chunk_coord_t)region_width + (field->x < 0 ? -1 : 0)) * (pw_chunk_coord_t)region_width;
-    // pw_chunk_coord_t ry = (field->y / (pw_chunk_coord_t)region_height + (field->y < 0 ? 0 : 1)) * (pw_chunk_coord_t)region_height;
-    
     pw_chunk_coord_t field_endx = field->x + (pw_chunk_coord_t)(field->chunk_width * (field->field_width_in_chunks));
     pw_chunk_coord_t field_endy = field->y - (pw_chunk_coord_t)(field->chunk_height * (field->field_height_in_chunks));
 
@@ -257,84 +269,136 @@ void pw_field_region_load(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y
     pw_chunk_coord_t end_rx = region_end_pos.x;
     pw_chunk_coord_t end_ry = region_end_pos.y;
 
-    // printf("start_rx:%d start_ry:%d\n", start_rx, start_ry);
-    // printf("end_rx:%d end_ry:%d\n", end_rx, end_ry);
-    // printf("field.x:%d field.y:%d\n", field->x, field->y);
-    // printf("field.ex:%d field.ey:%d\n", field->x + field, field->y);
-
     for(pw_chunk_coord_t i = start_ry; i >= end_ry; i -= field->region_height_in_chunks*field->chunk_height){
         for(pw_chunk_coord_t j = start_rx; j <= end_rx; j += field->region_width_in_chunks*field->chunk_width){
-            bool is_loaded = FALSE;
-            for(size_t k = 0; k < pool_get_count(field->regions); k++){
-                PWRegion region = pool_get(field->regions, k);
-                if(region.x == j && region.y == i){
-                    is_loaded = TRUE;
-                    break;
-                }
-            }
-
-            if(!is_loaded){
-                // printf("field_x:%d field_y:%d\n", field->x, field->y);
-                // printf("requested region: %d %d\n", j, i);
-                PWRegion region = pw_region_create_or_load(
-                    pw_gen_region_path(j, i), 
-                    j, i, 
-                    field->region_width_in_chunks,
-                    field->region_height_in_chunks,
-                    field->chunk_width,
-                    field->chunk_height
-                );
-                
-                // printf("region: %d %d\n", region.x, region.y);
-                size_t index;
-                pool_append(field->regions, region, index);
-            }
+            
+            pw_field_region_load(field, j, i);   
         }
     }
-
-    // 3 - load all required regions
-    
-    // if(!is_loaded){
-    //     printf("field_x:%d field_y:%d\n", field->x, field->y);
-    //     printf("requested region: %d %d\n", rx, ry);
-    //     PWRegion region = pw_region_create_or_load(
-    //         pw_gen_region_path(rx, ry), 
-    //         rx, ry, 
-    //         field->region_width_in_chunks,
-    //         field->region_height_in_chunks,
-    //         field->chunk_width,
-    //         field->chunk_height
-    //     );
-        
-    //     printf("region: %d %d\n", region.x, region.y);
-    //     size_t index;
-    //     pool_append(field->regions, region, index);
-    // }
 }
 
+
+
+
+
+/*************************************************/
+// Region Load/Unload algorithms
+
 int pw_field_regions_to_unload_count(PWField field){
-    return (int)pool_get_count(field.regions) - (int)field.max_loaded_regions_count;
+    return (int)field.region_list.count - (int)field.max_loaded_regions_count;
 }
 
 
 void pw_field_region_unload_last(PWField *field){
-    int unload_count = pw_field_regions_to_unload_count(*field);
+    int unload_count = pw_field_regions_to_unload_count(*field) + 1;
+    if(unload_count <= 0) return;
+    // if(field->region_list.count < field->max_loaded_regions_count) return;
+    // if(field->region_list.count == 0) return;
+    for(int i = 0; i < unload_count; i++){
+        pw_region_delete(&field->region_list.head->value);
+        ll_pop_head(field->region_list);
+    }
+}
+
+void pw_field_region_load_last(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
+    if(pw_field_region_is_loaded(field, x, y, NULL)) return;
+
+    pw_field_region_unload_last(field);
+
+    PWRegion region = pw_region_create_or_load(
+        pw_gen_region_path(x, y), 
+        x, y, 
+        field->region_width_in_chunks,
+        field->region_height_in_chunks,
+        field->chunk_width,
+        field->chunk_height
+    );
+    ll_push_tail(field->region_list, region);
+}
+
+
+#define SQUARE_DISTANCE(x1, y1, x2, y2) ((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2))
+void pw_field_region_unload_far(PWField *field){
+    int unload_count = pw_field_regions_to_unload_count(*field) + 1;
+    if(unload_count <= 0) return;
+    // if(field->region_list.count < field->max_loaded_regions_count) return;
+    // if(field->region_list.count == 0) return;
 
     
+    for(int i = 0; i < unload_count; i++){
+        float max_dist = -1.0f;
+        LL_TYPEOF(field->region_list) curr_region = field->region_list.head;
+        LL_TYPEOF(field->region_list) region_for_delete = NULL;
+        while(curr_region){
+            float dist = SQUARE_DISTANCE(field->x_center, field->y_center, curr_region->value.x, curr_region->value.y);
+            if(dist > max_dist){
+                max_dist = dist;
+                region_for_delete = curr_region;
+            }
+            curr_region = curr_region->next;
+        }
+        pw_region_delete(&region_for_delete->value);
+        ll_pop_node(field->region_list, region_for_delete);
+    }
 }
 
-void pw_field_region_unload_far(PWField *field){
-    int unload_count = pw_field_regions_to_unload_count(*field);
 
+void pw_field_region_load_far(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
+    if(pw_field_region_is_loaded(field, x, y, NULL)) return;
 
+    pw_field_region_unload_far(field);
+
+    PWRegion region = pw_region_create_or_load(
+        pw_gen_region_path(x, y), 
+        x, y, 
+        field->region_width_in_chunks,
+        field->region_height_in_chunks,
+        field->chunk_width,
+        field->chunk_height
+    );
+    ll_push_tail(field->region_list, region);
 }
 
-void pw_field_region_unload_lru(PWField *field){
-    int unload_count = pw_field_regions_to_unload_count(*field);
+void pw_field_region_load_lru(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
+    size_t region_index;
+    if(pw_field_region_is_loaded(field, x, y, &region_index)){
 
+        LL_TYPEOF(field->region_list) node = NULL;
+        ll_get_node_by_index(field->region_list, node, region_index);
+        PWRegion region = node->value;
+        ll_pop_node(field->region_list, node);
+        ll_push_tail(field->region_list, region);
+    } 
+    else {
+        PWRegion region = pw_region_create_or_load(
+            pw_gen_region_path(x, y), 
+            x, y, 
+            field->region_width_in_chunks,
+            field->region_height_in_chunks,
+            field->chunk_width,
+            field->chunk_height
+        );
 
+        if(field->region_list.count >= field->max_loaded_regions_count)
+            pw_field_region_unload_last(field);
+        ll_push_tail(field->region_list, region);
+    }
 }
 
+void pw_field_region_load(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
+    if(field->max_loaded_regions_count <= 0) return;
+    switch(field->loading_algo){
+        case PW_FIELD_LOAD_LAST:
+            pw_field_region_load_last(field, x, y);
+            break;
+        case PW_FIELD_LOAD_FAR:
+            pw_field_region_load_far(field, x, y);
+            break;
+        case PW_FIELD_LOAD_LRU:
+            pw_field_region_load_lru(field, x, y);
+            break;
+    }
+}
 
 /*********************************************/
 
@@ -457,10 +521,12 @@ void pw_field_chunks_render(Image context, PWCamera2D camera, PWField field, boo
 
 void pw_field_regions_render(Image context, PWCamera2D camera, PWField field, bool show_chunks){
     
-    for(size_t i = 0; i < field.regions.elems.count; i++){
+    LL_TYPEOF(field.region_list) curr_region = field.region_list.head;
+    while(curr_region){
         // if(pool_is_deleted(field.regions, i)) continue;
         // printf("works\n");
-        pw_region_render(context, camera, pool_get(field.regions, i), field.chunk_width, field.chunk_height, show_chunks);
+        pw_region_render(context, camera, curr_region->value, field.chunk_width, field.chunk_height, show_chunks);
+        curr_region = curr_region->next;
     }
 }
 

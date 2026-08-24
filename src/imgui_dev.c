@@ -141,6 +141,8 @@ static int imgui_dev(ParticleEngine* engine)
     igSliderFloat("Speed Y", &speed_y, 0.0f, 3000.0f, "%.2f", 0);
     igSliderFloat("Gravity", &gravity0, -20.0f, 20.0f, "%.2f", 0);
     igSliderFloat("Zoom", &engine->camera.zoom, 0.0f, 5.0f, "%.2f", 0);
+    igSliderInt("Max Regions", &engine->field.max_loaded_regions_count, 0, 50, "%zu", 0);
+    igSliderInt("Load Algo", &engine->field.loading_algo, 0, 2, "%zu", 0);
 
     igSeparator();
 
@@ -151,6 +153,8 @@ static int imgui_dev(ParticleEngine* engine)
         speed_y = 1500.0f;
         gravity0 = 9.81f;
         engine->camera.zoom = 1.0f;
+        engine->field.max_loaded_regions_count = 20;
+        engine->field.loading_algo = PW_FIELD_LOAD_LRU;
         paused = false;
         show_colliders = false;
         show_positions = false;

@@ -762,7 +762,7 @@ int RunEntityGame(ParticleEngine* game){
     
     PWField field = {0};
     // pw_field_init(&field, 3, 3, 5, 5, 256, 256);
-    pw_field_init(&field, 3, 3, 5, 5, 128, 128);
+    // pw_field_init(&field, 3, 3, 5, 5, 128, 128, 20);
     
     pw_asset_t player_asset = pw_load_asset(&game->am, "resources/wizard.png", PW_ASSET_SPRITE);
     pw_asset_t block_asset = pw_load_asset(&game->am, "resources/block.png", PW_ASSET_SPRITE);
@@ -967,14 +967,14 @@ int RunEntityGame(ParticleEngine* game){
 
         draw_scene(game);
         pw_field_update(
-            &field, 
+            &game->field, 
             (pw_chunk_coord_t)ENTITY_GET(game->em.pool, player_id).pos.x, 
             (pw_chunk_coord_t)ENTITY_GET(game->em.pool, player_id).pos.y 
         );
         // printf("region_count: %d\n", pool_get_count(field.regions));
         // printf("field_x:%d field_y:%d\n", field.x, field.y);
-        pw_field_regions_render(game->win->context, game->camera, field, FALSE);
-        pw_field_chunks_render(game->win->context, game->camera, field, TRUE);
+        pw_field_regions_render(game->win->context, game->camera, game->field, FALSE);
+        pw_field_chunks_render(game->win->context, game->camera, game->field, TRUE);
         // pw_chunk_render(
         //     game->win->context, game->camera,
         //     &field.chunks[0], 

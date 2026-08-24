@@ -87,6 +87,11 @@ typedef struct{
 
 /*********************************************/
 
+typedef enum{
+    PW_FIELD_LOAD_LAST = 0,
+    PW_FIELD_LOAD_FAR,
+    PW_FIELD_LOAD_LRU,
+} PWFieldRegionLoadAlgo;
 
 typedef struct{
     pw_chunk_coord_t    x, y;
@@ -101,21 +106,31 @@ typedef struct{
         Field first loads regions after it originizes chunks for simulation.
     */
     size_t          max_loaded_regions_count;
+    Ll(PWRegion)    region_list;
+    PWFieldRegionLoadAlgo loading_algo;
+
     PWRegionPool    regions;
     PWChunk*        chunks;
 } PWField;
-
 
 int pw_field_init(
     PWField *field, 
     size_t region_width_in_chunks, size_t region_height_in_chunks,
     size_t field_width_in_chunks, size_t field_height_in_chunks,
-    size_t chunk_width, size_t chunk_height
+    size_t chunk_width, size_t chunk_height,
+    size_t max_loaded_regions_count
 );
 void pw_field_destroy(PWField *field);
 void pw_field_chunk_organize(PWField field);
 void pw_field_update(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y);
+
+void pw_field_region_unload_last(PWField *field);
+void pw_field_region_unload_far(PWField *field);
+void pw_field_region_unload_lru(PWField *field);
+
+void pw_field_regions_load(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y);
 void pw_field_region_load(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y);
+void pw_field_region_unload(PWField *field);
 
 /*********************************************/
 
