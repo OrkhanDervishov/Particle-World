@@ -283,6 +283,7 @@ void pw_field_regions_load(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t 
 
 /*************************************************/
 // Region Load/Unload algorithms
+// TODO: Store regions before deleteing
 
 int pw_field_regions_to_unload_count(PWField field){
     return (int)field.region_list.count - (int)field.max_loaded_regions_count;
@@ -318,11 +319,12 @@ void pw_field_region_load_last(PWField *field, pw_chunk_coord_t x, pw_chunk_coor
 
 
 #define SQUARE_DISTANCE(x1, y1, x2, y2) ((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2))
+/*
+    This function stores and deletes all regions that are to far from the field.
+*/
 void pw_field_region_unload_far(PWField *field){
     int unload_count = pw_field_regions_to_unload_count(*field) + 1;
     if(unload_count <= 0) return;
-    // if(field->region_list.count < field->max_loaded_regions_count) return;
-    // if(field->region_list.count == 0) return;
 
     
     for(int i = 0; i < unload_count; i++){
@@ -330,7 +332,13 @@ void pw_field_region_unload_far(PWField *field){
         LL_TYPEOF(field->region_list) curr_region = field->region_list.head;
         LL_TYPEOF(field->region_list) region_for_delete = NULL;
         while(curr_region){
-            float dist = SQUARE_DISTANCE(field->x_center, field->y_center, curr_region->value.x, curr_region->value.y);
+            // Distance from field center to current region center
+            float dist = SQUARE_DISTANCE(
+                field->x_center, 
+                field->y_center, 
+                curr_region->value.x + field->region_width_in_chunks*field->chunk_width/2, 
+                curr_region->value.y + field->region_height_in_chunks*field->chunk_height/2
+            );
             if(dist > max_dist){
                 max_dist = dist;
                 region_for_delete = curr_region;
