@@ -321,24 +321,27 @@ void pw_field_region_load_last(PWField *field, pw_chunk_coord_t x, pw_chunk_coor
 #define SQUARE_DISTANCE(x1, y1, x2, y2) ((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2))
 /*
     This function stores and deletes all regions that are to far from the field.
+    TODO: Consider field width and height
 */
 void pw_field_region_unload_far(PWField *field){
     int unload_count = pw_field_regions_to_unload_count(*field) + 1;
     if(unload_count <= 0) return;
 
-    
+    pw_chunk_coord_t field_width = (pw_chunk_coord_t)(field->chunk_width * field->field_width_in_chunks);
+    pw_chunk_coord_t field_height = (pw_chunk_coord_t)(field->chunk_height * field->field_height_in_chunks);
     for(int i = 0; i < unload_count; i++){
-        float max_dist = -1.0f;
+        pw_chunk_coord_t max_dist = -1.0f;
         LL_TYPEOF(field->region_list) curr_region = field->region_list.head;
         LL_TYPEOF(field->region_list) region_for_delete = NULL;
         while(curr_region){
             // Distance from field center to current region center
-            float dist = SQUARE_DISTANCE(
-                field->x_center, 
-                field->y_center, 
-                curr_region->value.x + field->region_width_in_chunks*field->chunk_width/2, 
-                curr_region->value.y + field->region_height_in_chunks*field->chunk_height/2
-            );
+            pw_chunk_coord_t region_center_x = curr_region->value.x + field->region_width_in_chunks*field->chunk_width/2;
+            pw_chunk_coord_t region_center_y = curr_region->value.y + field->region_height_in_chunks*field->chunk_height/2;
+            float dist = 
+            SQUARE_DISTANCE(field->x, field->y, region_center_x, region_center_y) + 
+            SQUARE_DISTANCE(field->x + field_width, field->y, region_center_x, region_center_y) + 
+            SQUARE_DISTANCE(field->x, field->y + field_height, region_center_x, region_center_y) + 
+            SQUARE_DISTANCE(field->x + field_width, field->y + field_height, region_center_x, region_center_y);
             if(dist > max_dist){
                 max_dist = dist;
                 region_for_delete = curr_region;
