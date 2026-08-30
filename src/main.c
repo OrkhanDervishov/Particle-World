@@ -13,18 +13,11 @@
 #include "particle_data.h"
 #include "simulator.h"
 #include "da.h"
+#include "console.h"
 
 // #include "uchar.h"
 // #include "locale.h"
 
-
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
 
 
 #define TYPE_GAME(type)\
@@ -37,9 +30,9 @@ int main(int argc, char* argv[]){
     // int x;
     // TYPE_GAME(int);
     // test();
-    printf(ANSI_COLOR_RED);
-    printf("Hello World!\n");
-    printf(ANSI_COLOR_RESET);
+
+    PW_CONSOLE_STR("Hello World!", PW_ANSI_BACK_RED);
+    PW_CONSOLE_NL;
 
     // const char* config_text = myconfig_load_config("./src/confs/game_startup_config.conf");
     // ConfigPairs pairs = myconfig_read_all_pairs(&config_text);
