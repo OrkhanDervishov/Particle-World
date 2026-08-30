@@ -760,9 +760,17 @@ int RunEntityGame(ParticleEngine* game){
     image.buffer = NULL;
     pnt_load_image(&image, "resources/CHESS.bmp");
     
-    PWField field = {0};
-    // pw_field_init(&field, 3, 3, 5, 5, 256, 256);
-    // pw_field_init(&field, 3, 3, 5, 5, 128, 128, 20);
+
+    PWLayerSystem ls = {0};
+    PWLayer layer1 = pw_layer_create(PW_LAYER_GRID, 32, 100, 32, 32);
+    PWLayer layer2 = pw_layer_create(PW_LAYER_ENTITY, 16, 100, 32, 32);
+    PWLayer layer3 = pw_layer_create(PW_LAYER_GRID, 20, 100, 32, 32);
+    pw_layer_sys_layer_add(&ls, layer1);
+    pw_layer_sys_layer_add(&ls, layer2);
+    pw_layer_sys_layer_add(&ls, layer3);
+    pw_layer_sys_info(&ls);
+
+
     
     pw_asset_t player_asset = pw_load_asset(&game->am, "resources/wizard.png", PW_ASSET_SPRITE);
     pw_asset_t block_asset = pw_load_asset(&game->am, "resources/block.png", PW_ASSET_SPRITE);

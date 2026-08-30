@@ -3,7 +3,7 @@ C_COMPILER = gcc
 DEFINITIONS = -D PW_USE_IMGUI
 
 COMPILER = 
-FLAGS = -O3
+FLAGS = -O3 -g
 THIRDPARTY_INCLUDE_FOLDER = -Ithird_party/include
 LIB_FOLDER = -Lthird_party/lib/SDL2 -Lthird_party/lib/cimgui
 WINDOWS_LINKER_LIBS = -lmingw32 -lcimgui -lSDL2main -lSDL2 -lm -lopengl32

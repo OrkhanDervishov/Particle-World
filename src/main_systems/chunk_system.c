@@ -1,36 +1,83 @@
 #include "chunk_system.h"
 
-void pw_draw_chunk(Image context, PWChunk *chunk){
-    Rect rect = {
-        .x = chunk->x,
-        .y = chunk->y,
-        .w = chunk->w,
-        .h = chunk->h,
-    };
-    pnt_draw_rect(context, rect, (Color){.rgba=0xFF00FF00}, 1);
-}
-
-
 PWLayers pw_layers_copy(PWLayers layers){
     for(size_t i = 0; i < layers.count; i++){
-        da_get(layers, i).data = (AnyData){0};
-        if(da_get(layers, i).type == PW_LAYER_GRID){
-            da_reserve(layers, da_get(layers, i).item_size * da_get(layers, i).size);
+        PWLayer *layer = &da_get(layers, i);
+        for(size_t j = 0; j < layers.count; j++){
+            PWSubLayer *sublayer = &da_get(layer->sublayers, j);
+            da_zero(sublayer->data);
+            if(layer->type == PW_LAYER_GRID){
+                da_reserve(sublayer->data, sublayer->item_size * layer->size);
+            }
         }
     }
     return layers;
 }
 
 void pw_layer_free(PWLayer layer){
-    da_free(layer.data);
+    for(size_t i = 0; i < layer.sublayers.count; i++){
+        da_free(da_get(layer.sublayers, i).data);
+    }
+    da_free(layer.sublayers);
 }
 
 void pw_layers_free(PWLayers layers){
+
     for(size_t i = 0; i < layers.count; i++){
         pw_layer_free(da_get(layers, i));
     }
+    da_free(layers);
 }
 
+void* pw_layer_get(PWLayer layer, size_t x, size_t y){
+
+}
+
+//--------------------
+
+PWLayer pw_layer_create(PWLayerType type, size_t item_size, size_t size, size_t width, size_t height){
+    return (PWLayer){
+        .id = -1,
+        .type = type,
+        .item_size = item_size,
+        .size = type == PW_LAYER_GRID ? width*height : size,
+        .width = width,
+        .height = height
+    };
+}
+
+void pw_layer_add_sublayer(PWLayer *layer, size_t item_size){
+    PWSubLayer sublayer = {
+        .item_size = item_size
+    };
+    da_append(layer->sublayers, sublayer);
+}
+
+int pw_layer_sys_layer_add(PWLayerSystem *ls, PWLayer layer){
+    layer.id = ls->registered_layer_count;
+    da_append(ls->layers, layer);
+    ls->registered_layer_count++;
+}
+
+void pw_layer_sys_info(PWLayerSystem *ls){
+    printf("Layer System Info\n");
+
+    for(size_t i = 0; i < ls->layers.count; i++){
+        PWLayer layer = da_get(ls->layers, i);
+        printf(
+            "------------------\n"
+            "Layer      %zu\n"
+            "id         %zu\n"
+            "type:      %s\n"
+            "item size: %zu\n"
+            "size:      %zu\n"
+            "width:     %zu\n"
+            "height:    %zu\n"
+            "------------------\n",
+            i, layer.id, layer.type == PW_LAYER_GRID ? "GRID" : "ENTITY", layer.item_size, layer.size, layer.width, layer.height
+        );
+    }
+}
 
 
 /*********************************************/
@@ -38,11 +85,11 @@ void pw_layers_free(PWLayers layers){
 PWChunk pw_chunk_create(
     pw_chunk_coord_t x, pw_chunk_coord_t y,
     pw_chunk_coord_t w, pw_chunk_coord_t h,
-    PWLayers layers
+    PWLayerSystem ls
 ){
     PWChunk chunk = {
         .x = x, .y = y, .w = w, .h = h,
-        .layers = pw_layers_copy(layers)
+        .layers = pw_layers_copy(ls.layers)
     };
 
     return chunk;
@@ -63,7 +110,8 @@ const char* pw_gen_region_path(pw_chunk_coord_t x, pw_chunk_coord_t y){
 PWRegion pw_region_create(
     pw_chunk_coord_t x, pw_chunk_coord_t y, 
     size_t width_in_chunk, size_t height_in_chunk, 
-    size_t chunk_width, size_t chunk_height
+    size_t chunk_width, size_t chunk_height,
+    PWLayerSystem ls
 ){
     PWRegion region = {
         .x = x, .y = y, 
@@ -72,10 +120,20 @@ PWRegion pw_region_create(
         .loaded = TRUE, .id = 0
     };
     region.chunks = (PWChunk*)malloc(region.width_in_chunk * region.height_in_chunk * sizeof(PWChunk));
+
+    for(size_t i = 0; i < height_in_chunk; i++){
+        for(size_t j = 0; j < width_in_chunk; j++){
+            region.chunks[i*width_in_chunk + j] = pw_chunk_create(x + j*chunk_width, y + i*chunk_height, chunk_width, chunk_height, ls);
+        }
+    }
+
     return region;
 }
 
 void pw_region_delete(PWRegion* region){
+    for(size_t i = 0; i < region->width_in_chunk*region->height_in_chunk; i++){
+        pw_chunk_delete(&region->chunks[i]);
+    }
     free(region->chunks);
 }
 
@@ -93,11 +151,12 @@ PWRegion pw_region_create_or_load(
     const char* path, 
     pw_chunk_coord_t x, pw_chunk_coord_t y, 
     size_t width_in_chunk, size_t height_in_chunk,
-    size_t chunk_width, size_t chunk_height
+    size_t chunk_width, size_t chunk_height,
+    PWLayerSystem ls
 ){
     PWRegion region;
     if(pw_region_load(&region, path)){
-        region = pw_region_create(x, y, width_in_chunk, height_in_chunk, chunk_width, chunk_height);
+        region = pw_region_create(x, y, width_in_chunk, height_in_chunk, chunk_width, chunk_height, ls);
     }
     return region;
 }
@@ -111,7 +170,8 @@ int pw_field_init(
     size_t region_width_in_chunks, size_t region_height_in_chunks,
     size_t field_width_in_chunks, size_t field_height_in_chunks,
     size_t chunk_width, size_t chunk_height,
-    size_t max_loaded_regions_count
+    size_t max_loaded_regions_count,
+    PWLayerSystem ls
 ){
     if(!field) return 1;
 
@@ -127,12 +187,12 @@ int pw_field_init(
     field->max_loaded_regions_count = max_loaded_regions_count;
     field->loading_algo = PW_FIELD_LOAD_LAST;
 
+    field->ls = ls;
+
     if(field->chunks != NULL){
         free(field->chunks);
     }
-    // pool_free(field->regions);
     
-    // field->regions = (PWRegionPool){0};
     ll_init(field->region_list);
 
     field->chunks = (PWChunk*)calloc(
@@ -271,7 +331,6 @@ void pw_field_regions_load(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t 
 
     for(pw_chunk_coord_t i = start_ry; i >= end_ry; i -= field->region_height_in_chunks*field->chunk_height){
         for(pw_chunk_coord_t j = start_rx; j <= end_rx; j += field->region_width_in_chunks*field->chunk_width){
-            
             pw_field_region_load(field, j, i);   
         }
     }
@@ -312,7 +371,8 @@ void pw_field_region_load_last(PWField *field, pw_chunk_coord_t x, pw_chunk_coor
         field->region_width_in_chunks,
         field->region_height_in_chunks,
         field->chunk_width,
-        field->chunk_height
+        field->chunk_height,
+        field->ls
     );
     ll_push_tail(field->region_list, region);
 }
@@ -334,7 +394,7 @@ void pw_field_region_unload_far(PWField *field){
         LL_TYPEOF(field->region_list) curr_region = field->region_list.head;
         LL_TYPEOF(field->region_list) region_for_delete = NULL;
         while(curr_region){
-            // Distance from field center to current region center
+            // Sum of distances from 4 corners of field to current region center
             pw_chunk_coord_t region_center_x = curr_region->value.x + field->region_width_in_chunks*field->chunk_width/2;
             pw_chunk_coord_t region_center_y = curr_region->value.y + field->region_height_in_chunks*field->chunk_height/2;
             float dist = 
@@ -342,6 +402,7 @@ void pw_field_region_unload_far(PWField *field){
             SQUARE_DISTANCE(field->x + field_width, field->y, region_center_x, region_center_y) + 
             SQUARE_DISTANCE(field->x, field->y + field_height, region_center_x, region_center_y) + 
             SQUARE_DISTANCE(field->x + field_width, field->y + field_height, region_center_x, region_center_y);
+
             if(dist > max_dist){
                 max_dist = dist;
                 region_for_delete = curr_region;
@@ -365,7 +426,8 @@ void pw_field_region_load_far(PWField *field, pw_chunk_coord_t x, pw_chunk_coord
         field->region_width_in_chunks,
         field->region_height_in_chunks,
         field->chunk_width,
-        field->chunk_height
+        field->chunk_height,
+        field->ls
     );
     ll_push_tail(field->region_list, region);
 }
@@ -387,7 +449,8 @@ void pw_field_region_load_lru(PWField *field, pw_chunk_coord_t x, pw_chunk_coord
             field->region_width_in_chunks,
             field->region_height_in_chunks,
             field->chunk_width,
-            field->chunk_height
+            field->chunk_height,
+            field->ls
         );
 
         if(field->region_list.count >= field->max_loaded_regions_count)

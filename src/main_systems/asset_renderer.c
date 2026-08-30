@@ -11,7 +11,7 @@ void pw_draw_image(Image context, PWAssetManager* am, pw_image_t image_id, Trans
 void pw_draw_sprite_multiple(Image context , PWAssetManager* am, pw_asset_t asset_id, Transforms2d transforms, int index){
     transforms.translation.y = -transforms.translation.y;
     PWAsset asset = pool_get(am->asset_pool, asset_id);
-    Image img = pool_get(am->image_pool, asset.sprite.image_id);
+    // Image img = pool_get(am->image_pool, asset.sprite.image_id);
     
     Image frame = pw_sprite_multiple_get_image(am, asset_id, index);
     pnt_blit_transformed(context, frame, transforms.translation, transforms.rotation, transforms.scale);

@@ -192,7 +192,12 @@ int pw_asset_manager_init(PWAssetManager* am){
     size_t dummy;
     pool_append(am->asset_pool, (PWAsset){0}, dummy);
     pool_append(am->image_pool, (Image){0}, dummy);
-    am->loaded_images.hasheq = ht_cstr_hasheq;
+    
+    pw_image_ht_t loaded_ht = {
+        .hasheq = ht_cstr_hasheq
+    };
+    am->loaded_images = loaded_ht;
+    // am->loaded_images.hasheq = ht_cstr_hasheq;
     return 0;
 }
 

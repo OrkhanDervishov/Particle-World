@@ -2,6 +2,7 @@
 #define LINEAR_H_
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #define PI_CONST 3.14159265f
 

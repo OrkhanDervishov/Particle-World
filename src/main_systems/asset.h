@@ -89,10 +89,11 @@ typedef struct{
     Slots slots;
 } PWAssetPool;
 
+typedef Ht(const char*, pw_image_t) pw_image_ht_t;
 typedef struct{
     // File loading
     // Hash tables for storing resource parths and their indices
-    Ht(char*, pw_image_t) loaded_images;
+    pw_image_ht_t loaded_images;
 
     // Storing resources
     // Pools for storing resources

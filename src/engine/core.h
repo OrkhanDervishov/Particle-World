@@ -19,6 +19,8 @@
 #define TRUE true
 #define FALSE false
 
+#define PW_ASSERT(x) assert(x)
+
 typedef enum{
     UP = 0,
     DOWN,

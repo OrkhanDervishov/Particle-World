@@ -8,7 +8,7 @@
 //************************************************
  
 typedef struct{
-    float *items;
+    int *items;
     size_t count;
     size_t capacity;    
 } Integers;
@@ -47,6 +47,20 @@ typedef struct{
     size_t capacity;
 } Numbers;
 /*************************************************/
+
+#define Da(Type)\
+struct{\
+    Type *items;\
+    size_t count;\
+    size_t capacity;\
+    size_t item_size;\
+}
+
+#define da_typeof(arr) __typeof__((arr))
+
+#define da_typeof_value(arr) __typeof__(*(arr).items)
+
+#define da_zero(arr) (da_typeof((arr))){0}
 
 #define da_get(arr, index) (arr).items[(index)]
 
@@ -129,6 +143,24 @@ do{\
 // Foreach for normal arrays
 #define foreach(obj_p, arr, count) for(int i = 0; (i < (count)) && (((obj_p) = &(arr)[i]), 1); i++)
 
+
+
+//-------------------------------------
+/*
+    DaAnyData is a special dynamic array that can hold any type of value.
+    It has additional item_size member.
+*/
+typedef struct{
+    void* items;
+    size_t count;
+    size_t capacity;
+    size_t item_size;
+} DaAnyData;
+
+
+
+//-------------------------------------
+
 //#################################################################################
 
 
@@ -151,6 +183,23 @@ typedef struct{
 } NumberPool;
 
 /*************************************************/
+
+#define Pool(Type)\
+struct{\
+    struct{\
+        Type *items;\
+        size_t count;\
+        size_t capacity;\
+    } elems;\
+    Indices free_indices;\
+    Slots slots;\
+}
+
+#define pool_typeof(pool) __typeof__((pool))
+
+#define pool_typeof_value(pool) __typeof__(*(pool).elems.items)
+
+#define pool_zero(pool) (pool_typeof((pool))){0}
 
 #define pool_free(pool)\
 do{\

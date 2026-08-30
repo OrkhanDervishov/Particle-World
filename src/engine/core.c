@@ -7,6 +7,7 @@ void* Malloc2D(int rows, int cols, int elemSize){
     //     arr[i] = malloc(cols * elemSize);
     // }
     // return arr;
+    return NULL;
 }
 
 void Free2D(void* arr, int rows){

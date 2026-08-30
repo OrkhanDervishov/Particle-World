@@ -176,8 +176,11 @@ typedef uintptr_t (*Ht_Hasheq)(Ht_Op op, void const *a, void const *b, size_t n)
     #endif
 #endif
 
+// #ifdef HT_IMPLEMENTATION
+
+
 // The default .hasheq implementation for C-strings.
-HT_PUBDEF uintptr_t ht_cstr_hasheq(Ht_Op op, void const *a, void const *b, size_t n);
+HT_PUBDEF uintptr_t ht_cstr_hasheq(Ht_Op op, void const *a, void const *b, size_t n);   
 // The default .hasheq implementation for when .hasheq == NULL.
 HT_PUBDEF uintptr_t ht_mem_hasheq(Ht_Op op, void const *a, void const *b, size_t n);
 
@@ -559,6 +562,7 @@ static int ht__memcmp(const void *vl, const void *vr, size_t n);
 
 #endif // HT_H_
 
+// #endif
 #ifdef HT_IMPLEMENTATION
 
 static void *ht__put(Ht__Abstract *ht, void *key, Ht__Layout l)
