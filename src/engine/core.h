@@ -19,7 +19,13 @@
 #define TRUE true
 #define FALSE false
 
+// #define NDEBUG
 #define PW_ASSERT(x) assert(x)
+
+typedef struct{
+    char* str;
+    size_t size;
+} string8;
 
 typedef enum{
     UP = 0,

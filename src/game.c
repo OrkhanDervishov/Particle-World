@@ -751,6 +751,27 @@ typedef struct{
 } NumberPool;
 
 
+
+PWLayerSystem gen_ls(){
+    PWLayerSystem ls = {0};
+    PWLayer layer1 = pw_layer_create(PW_LAYER_GRID, sizeof(int), 100, 32, 32);
+    pw_layer_add_sublayer(&layer1, sizeof(int));
+
+    PWLayer layer2 = pw_layer_create(PW_LAYER_ENTITY, 16, 100, 32, 32);
+    PWLayer layer3 = pw_layer_create(PW_LAYER_GRID, 20, 100, 32, 32);
+    
+    // printf("works1\n");
+    pw_layer_sys_layer_add(&ls, layer1, pw_layer1_render, pw_layer1_generate);
+    // printf("works2\n");
+    // pw_layer_sys_layer_add(&ls, layer2);
+    // pw_layer_sys_layer_add(&ls, layer3);
+    pw_layer_sys_info(&ls);
+
+    // layer1_fill(&layer1);
+
+    return ls;
+}
+
 int RunEntityGame(ParticleEngine* game){
     
     // ParticleEngine* gui_engine;
@@ -760,17 +781,7 @@ int RunEntityGame(ParticleEngine* game){
     image.buffer = NULL;
     pnt_load_image(&image, "resources/CHESS.bmp");
     
-
-    PWLayerSystem ls = {0};
-    PWLayer layer1 = pw_layer_create(PW_LAYER_GRID, 32, 100, 32, 32);
-    PWLayer layer2 = pw_layer_create(PW_LAYER_ENTITY, 16, 100, 32, 32);
-    PWLayer layer3 = pw_layer_create(PW_LAYER_GRID, 20, 100, 32, 32);
-    pw_layer_sys_layer_add(&ls, layer1);
-    pw_layer_sys_layer_add(&ls, layer2);
-    pw_layer_sys_layer_add(&ls, layer3);
-    pw_layer_sys_info(&ls);
-
-
+    game->field.ls = gen_ls();
     
     pw_asset_t player_asset = pw_load_asset(&game->am, "resources/wizard.png", PW_ASSET_SPRITE);
     pw_asset_t block_asset = pw_load_asset(&game->am, "resources/block.png", PW_ASSET_SPRITE);
@@ -779,12 +790,12 @@ int RunEntityGame(ParticleEngine* game){
     pw_asset_t eye_asset = pw_load_asset(&game->am, "resources/eye_sprites.png", PW_ASSET_SPRITE);
     pw_make_asset_image_multiple_auto(&game->am, active_bombs_asset, (vec2){1,3});
     pw_make_asset_image_multiple_auto(&game->am, eye_asset, (vec2){1,5});
-    
-    PWFrames frames = {0};
+
+    PWFrames frames;
     da_append(frames, 0);
     da_append(frames, 1);
     da_append(frames, 2);
-    PWTimes delays = {0};
+    PWTimes delays;
     da_append(delays, 0.2f);
     da_append(delays, 0.2f);
     da_append(delays, 0.2f);
@@ -795,7 +806,6 @@ int RunEntityGame(ParticleEngine* game){
     PWRenderable bomb_animator = pw_sprite_animator_create_renderable(&game->am, bomb_animation, TRUE, TRUE);
     PWRenderable eye_animator = pw_sprite_animator_create_renderable(&game->am, eye_animation, TRUE, TRUE);
     
-
     player = (PWEntity){
         .type = PW_ENTITY_DYNAMIC,
         .pos = {0.0f, 100.0f},
@@ -859,7 +869,6 @@ int RunEntityGame(ParticleEngine* game){
     #ifdef PW_USE_IMGUI
     imgui_init(game);
     #endif
-
 
     acc = (vec2f){0.0f, 0.0f};
 
@@ -973,7 +982,10 @@ int RunEntityGame(ParticleEngine* game){
         // };
         // pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!\nerfegrg\nwefefef", font_transforms);
 
+        // pw_time_t layer_start = get_current_time();
         draw_scene(game);
+        // pw_time_t layer_end = get_current_time();
+        // printf("%lf\n", layer_end - layer_start);
         pw_field_update(
             &game->field, 
             (pw_chunk_coord_t)ENTITY_GET(game->em.pool, player_id).pos.x, 
@@ -981,8 +993,18 @@ int RunEntityGame(ParticleEngine* game){
         );
         // printf("region_count: %d\n", pool_get_count(field.regions));
         // printf("field_x:%d field_y:%d\n", field.x, field.y);
-        pw_field_regions_render(game->win->context, game->camera, game->field, FALSE);
-        pw_field_chunks_render(game->win->context, game->camera, game->field, TRUE);
+        pw_field_regions_render(game->win->context, game->camera, game->field, TRUE);
+        // pw_field_chunks_render(game->win->context, game->camera, game->field, TRUE);
+        
+        // pw_time_t layer_start = get_current_time();
+        // pw_layer1_render(
+        //     game->win->context, game->camera, 
+        //     da_get(game->field.ls.layers, 0), 
+        //     0, 0, 
+        //     game->field.chunk_width, game->field.chunk_height
+        // );
+        // pw_time_t layer_end = get_current_time();
+        // printf("%lf\n", layer_end - layer_start);
         // pw_chunk_render(
         //     game->win->context, game->camera,
         //     &field.chunks[0], 
