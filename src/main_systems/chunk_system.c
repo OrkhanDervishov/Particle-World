@@ -1,4 +1,7 @@
 #include "chunk_system.h"
+#include "perlin.h"
+
+int permutation[PERM_TOTAL];
 
 void pw_layers_prepare(PWLayers *layers){
 
@@ -42,6 +45,7 @@ PWLayers pw_layers_copy(PWLayers layers){
         
         PW_ASSERT(src_layer != NULL);
         da_zero(dst_layer.sublayers);
+        da_zero(dst_layer.images);
 
         da_reserve(dst_layer.sublayers, src_layer->sublayers.count);
         
@@ -59,6 +63,14 @@ PWLayers pw_layers_copy(PWLayers layers){
             da_append(dst_layer.sublayers, dst_sub);
         }
         
+        if(src_layer->type == PW_LAYER_GRID){
+            for(size_t j = 0; j < src_layer->images.count; j++){
+                Image image = {.buffer = NULL};
+                pnt_create_image(&image, da_get(src_layer->images, j).width, da_get(src_layer->images, j).height);
+                da_append(dst_layer.images, image);
+            }
+        }
+
         da_append(result, dst_layer);
     }
     
@@ -72,6 +84,11 @@ void pw_layer_free(PWLayer *layer){
         da_free(da_get(layer->sublayers, i).data);
     }
     da_free(layer->sublayers);
+
+    for(size_t i = 0; i < layer->images.count; i++){
+        pnt_delete_image(&da_get(layer->images, i));
+    }
+    da_free(layer->images);
 }
 
 void pw_layers_free(PWLayers *layers){
@@ -111,6 +128,15 @@ void pw_layer_add_sublayer(PWLayer *layer, size_t item_size){
     }
 
     da_append(layer->sublayers, sublayer);
+}
+
+void pw_layer_add_image(PWLayer *layer, size_t width, size_t height){
+    Image image;
+    image.buffer = NULL;
+    if(pnt_create_image(&image, width, height)){
+        printf("layer image was not created\n");
+    }
+    da_append(layer->images, image);
 }
 
 int pw_layer_sys_layer_add(
@@ -190,7 +216,7 @@ PWChunk pw_chunk_create(
         .layers = pw_layers_copy(ls.layers)
     };
     if(generate){
-        pw_layers_generate(&chunk.layers, ls, x, y);
+        pw_layers_generate(&chunk.layers, ls, x/(pw_chunk_coord_t)chunk.w, y/(pw_chunk_coord_t)chunk.h);
     }
 
     return chunk;
@@ -301,6 +327,7 @@ int pw_field_init(
         sizeof(PWChunk*)
     );
 
+    make_permutation(permutation);
     return 0;
 }
 
@@ -321,7 +348,7 @@ void pw_field_chunk_organize(PWField field){
     for(size_t i = 0; i < field.field_height_in_chunks; i++)
     for(size_t j = 0; j < field.field_width_in_chunks; j++){
         pw_chunk_coord_t cx = field.x + j * field.chunk_width;
-        pw_chunk_coord_t cy = field.y + i * field.chunk_height;
+        pw_chunk_coord_t cy = field.y - i * field.chunk_height;
 
         size_t region_width = field.region_width_in_chunks * field.chunk_width;
         size_t region_height = field.region_height_in_chunks * field.chunk_height;
@@ -334,7 +361,7 @@ void pw_field_chunk_organize(PWField field){
         while(curr_region){
 
             if(curr_region->value.x == rx && curr_region->value.y == ry){
-                size_t ri = (cy - ry) / field.chunk_height;
+                size_t ri = (ry - cy) / field.chunk_height;
                 size_t rj = (cx - rx) / field.chunk_width;
 
                 size_t index = ri * (field.region_width_in_chunks) + rj;
@@ -383,9 +410,15 @@ void pw_field_update(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
     }
 }
 
-typedef struct{
-    pw_chunk_coord_t x, y;
-} vec2_chunk_coord;
+
+static pw_chunk_coord_t ceil_div_mul(pw_chunk_coord_t v, pw_chunk_coord_t step){
+    // returns the smallest multiple of `step` that is >= v  (step > 0)
+    pw_chunk_coord_t q = v / step;
+    pw_chunk_coord_t r = v % step;
+    if(r != 0 && v > 0) q += 1;      // round up for positive remainders
+    else if(r != 0 && v < 0) /* truncation already rounds toward zero, i.e. up, for negative v */;
+    return q * step;
+}
 
 vec2_chunk_coord pw_field_coord_region(PWField field, pw_chunk_coord_t x, pw_chunk_coord_t y){
     size_t region_width = field.region_width_in_chunks * field.chunk_width;
@@ -393,8 +426,13 @@ vec2_chunk_coord pw_field_coord_region(PWField field, pw_chunk_coord_t x, pw_chu
 
     return (vec2_chunk_coord){
         (x / (pw_chunk_coord_t)region_width + (x < 0 ? -1 : 0)) * (pw_chunk_coord_t)region_width,
-        (y / (pw_chunk_coord_t)region_height + (y < 0 ? 0 : 1)) * (pw_chunk_coord_t)region_height
+        ceil_div_mul(y, (pw_chunk_coord_t)region_height)
+        // (y / (pw_chunk_coord_t)region_height + (y < 0 ? 0 : 1)) * (pw_chunk_coord_t)region_height
     };
+}
+
+vec2_chunk_coord pw_field_get_region(PWField field){
+    return pw_field_coord_region(field, field.x_center, field.y_center);
 }
 
 bool pw_field_region_is_loaded(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y, size_t *index){
@@ -648,7 +686,7 @@ void pw_region_render(Image context, PWCamera2D camera, PWField field, PWRegion 
                 context, camera, field,
                 &region.chunks[i*region.width_in_chunk + j], 
                 (float)(region.x + j*(pw_chunk_coord_t)(chunk_width)), 
-                (float)(region.y - i*(pw_chunk_coord_t)(chunk_height)),
+                (float)(region.y + i*(pw_chunk_coord_t)(chunk_height)),
                 purple
             );
             // pw_rect_render(
@@ -726,34 +764,62 @@ void pw_layer1_render(
     pw_chunk_coord_t x, pw_chunk_coord_t y, 
     size_t chunk_width, size_t chunk_height
 ){
-    size_t tile_width = chunk_width / layer.width;
-    size_t tile_height = chunk_height / layer.height;
-    pw_chunk_coord_t endx = x + tile_width * (pw_chunk_coord_t)layer.width;
-    pw_chunk_coord_t endy = y + tile_height * (pw_chunk_coord_t)layer.height;
+    // return;
+    float tile_w = (float)chunk_width  / (float)layer.width  * camera.zoom;
+    float tile_h = (float)chunk_height / (float)layer.height * camera.zoom;
+    // pw_chunk_coord_t endx = x + tile_width * (pw_chunk_coord_t)layer.width;
+    // pw_chunk_coord_t endy = y + tile_height * (pw_chunk_coord_t)layer.height;
 
     // printf("cw:%zu ch:%zu\n", chunk_width, chunk_height);
     // printf("lw:%zu lh:%zu\n", layer.width, layer.height);
     // printf("tw:%zu th:%zu\n", tile_width, tile_height);
 
-    for(size_t i = 0; i < layer.height; i++)
-    for(size_t j = 0; j < layer.width; j++){
-        Rect tile = {
-            .x = (int)(x + (pw_chunk_coord_t)(j*tile_width)), 
-            .y = (int)(y + (pw_chunk_coord_t)(i*tile_height)),
-            .w = (int)tile_width, .h = (int)tile_height
-        };
-        tile = pw_world_to_view_rect(tile, camera);
+    Image part_image = da_get(layer.images, 0);
+    for(size_t i = 0; i < part_image.height; i++)
+    for(size_t j = 0; j < part_image.width; j++){
+        // Rect tile = {
+        //     .x = (int)(x + (pw_chunk_coord_t)(j*tile_width)), 
+        //     .y = (int)(y + (pw_chunk_coord_t)(i*tile_height)),
+        //     .w = (int)tile_width, .h = (int)tile_height
+        // };
+        // tile = pw_world_to_view_rect(tile, camera);
         int color = da_any_get(da_get(layer.sublayers, 0).data, i*layer.width + j, int);
-        // printf("%d ", color);
-        // CONSOLE_RECT(tile);
-        pnt_draw_filled_rect(context, tile, (Color){.rgba = color*0x11111111});
+        PNT_IMG_GET(part_image, j, part_image.height - 1 - i) = (Color){.rgba = color};
+        // // printf("%d ", color);
+        // // CONSOLE_RECT(tile);
+        // pnt_draw_filled_rect(context, tile, (Color){.rgba = color*0x11111111});
     }
+
+    
+    vec2f chunk_coord = (vec2f){(float)x, (float)y};
+    vec2 chunk_view_coord = pw_world_to_view_pos(chunk_coord, camera);
+    pnt_blit_scaled(context, part_image, chunk_view_coord.x, chunk_view_coord.y, tile_w, tile_h);
 }
 
 void pw_layer1_generate(PWLayer *layer, pw_chunk_coord_t x, pw_chunk_coord_t y){
+    x *= (pw_chunk_coord_t)layer->width;
+    y *= (pw_chunk_coord_t)layer->height;
     for(size_t i = 0; i < layer->height; i++)
     for(size_t j = 0; j < layer->width; j++){
-        da_any_set(da_get(layer->sublayers, 0).data, i*layer->width + j, rand()%16, int);
+        double val = noise2D((double)(x+(pw_chunk_coord_t)j) * 0.1, (double)(y+(pw_chunk_coord_t)i) * 0.1, permutation) * 10.0;
+
+        Color c;
+        c.r = (int)(val) & 255;
+        c.g = (int)(val) & 255;
+        c.b = (int)(val) & 255;
+        c.a = 255;
+        // double n = noise2D((double)(x+(pw_chunk_coord_t)j) * 0.05,
+        //             (double)(y+(pw_chunk_coord_t)i) * 0.05,
+        //             permutation);           // ~ -1..1
+
+        // double normalized = (n + 1.0) * 0.5;        // -> ~0..1
+        // int v = (int)(normalized * 255.0);
+        // if(v < 0)   v = 0;
+        // if(v > 255) v = 255;
+
+        // Color c = { .r = v, .g = v, .b = v, .a = 255 };
+
+        da_any_set(da_get(layer->sublayers, 0).data, i*layer->width + j, c.rgba, int);
     }
 }
 

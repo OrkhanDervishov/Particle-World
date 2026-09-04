@@ -501,6 +501,7 @@ void clear_game_window(ParticleEngine* game){
 
 void draw_scene(ParticleEngine* game){
     clear_game_window(game);
+    pw_field_regions_render(game->win->context, game->camera, game->field, TRUE);
     draw_entities(game);
     if(game->s_params.use_custom_cursor)
         draw_cursor(game->win->context, game->mouse);
@@ -756,6 +757,9 @@ PWLayerSystem gen_ls(){
     PWLayerSystem ls = {0};
     PWLayer layer1 = pw_layer_create(PW_LAYER_GRID, sizeof(int), 100, 32, 32);
     pw_layer_add_sublayer(&layer1, sizeof(int));
+    printf("works1\n");
+    pw_layer_add_image(&layer1, layer1.width, layer1.height);
+    printf("works2\n");
 
     PWLayer layer2 = pw_layer_create(PW_LAYER_ENTITY, 16, 100, 32, 32);
     PWLayer layer3 = pw_layer_create(PW_LAYER_GRID, 20, 100, 32, 32);
@@ -983,7 +987,6 @@ int RunEntityGame(ParticleEngine* game){
         // pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!\nerfegrg\nwefefef", font_transforms);
 
         // pw_time_t layer_start = get_current_time();
-        draw_scene(game);
         // pw_time_t layer_end = get_current_time();
         // printf("%lf\n", layer_end - layer_start);
         pw_field_update(
@@ -991,9 +994,10 @@ int RunEntityGame(ParticleEngine* game){
             (pw_chunk_coord_t)ENTITY_GET(game->em.pool, player_id).pos.x, 
             (pw_chunk_coord_t)ENTITY_GET(game->em.pool, player_id).pos.y 
         );
+        draw_scene(game);
         // printf("region_count: %d\n", pool_get_count(field.regions));
         // printf("field_x:%d field_y:%d\n", field.x, field.y);
-        pw_field_regions_render(game->win->context, game->camera, game->field, TRUE);
+        // pw_field_regions_render(game->win->context, game->camera, game->field, TRUE);
         // pw_field_chunks_render(game->win->context, game->camera, game->field, TRUE);
         
         // pw_time_t layer_start = get_current_time();
@@ -1024,6 +1028,19 @@ int RunEntityGame(ParticleEngine* game){
             camera_info, 
             (Transforms2d){
                 .translation = (vec2f){0.0f, -20.0f},
+                .rotation = 0.0f,
+                .scale = (vec2f){2.0f, 2.0f}
+            }
+        );
+
+        vec2_chunk_coord region_coord = pw_field_get_region(game->field);
+        sprintf(camera_info, "x:%d y:%d", region_coord.x, region_coord.y);
+        pw_draw_sprite_text(
+            game->win->context, 
+            &game->am, &fonts, 
+            camera_info, 
+            (Transforms2d){
+                .translation = (vec2f){0.0f, -40.0f},
                 .rotation = 0.0f,
                 .scale = (vec2f){2.0f, 2.0f}
             }

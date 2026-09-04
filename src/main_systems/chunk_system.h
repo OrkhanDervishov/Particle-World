@@ -57,6 +57,8 @@ typedef struct{
     // Data itself
     // In the future data will be divided into sublayers for storing item's data with data oriented design
     PWSubLayers sublayers;
+
+    Da(Image) images;
 } PWLayer;
 typedef Da(PWLayer) PWLayers;
 
@@ -84,6 +86,7 @@ typedef struct{
 
 PWLayer pw_layer_create(PWLayerType type, size_t item_size, size_t size, size_t width, size_t height);
 void pw_layer_add_sublayer(PWLayer *layer, size_t item_size);
+void pw_layer_add_image(PWLayer *layer, size_t width, size_t height);
 int pw_layer_sys_layer_add(PWLayerSystem *ls, PWLayer layer, PWLayerRenderer layer_renderer, PWLayerGenerator layer_generator);
 void pw_layer_sys_info(PWLayerSystem *ls);
 
@@ -172,6 +175,12 @@ int pw_field_init(
 void pw_field_destroy(PWField *field);
 void pw_field_chunk_organize(PWField field);
 void pw_field_update(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y);
+
+typedef struct{
+    pw_chunk_coord_t x, y;
+} vec2_chunk_coord;
+vec2_chunk_coord pw_field_get_region(PWField field);
+vec2_chunk_coord pw_field_coord_region(PWField field, pw_chunk_coord_t x, pw_chunk_coord_t y);
 
 void pw_field_region_unload_last(PWField *field);
 void pw_field_region_unload_far(PWField *field);
