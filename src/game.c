@@ -2,6 +2,7 @@
 #include "chunk_system.h"
 #include "imgui_dev.c"
 #include "chunk_system.h"
+#include "perlin.h"
 
 void Guide(ParticleEngine* game, Color textColor);
 void init_buttons(ParticleEngine* game, Button** buttons);
@@ -502,6 +503,7 @@ void clear_game_window(ParticleEngine* game){
 void draw_scene(ParticleEngine* game){
     clear_game_window(game);
     pw_field_regions_render(game->win->context, game->camera, game->field, TRUE);
+    // pw_chunk_render(game->win->context, game->camera, game->field, game->field.region_list.head->value.chunks, 0.0f, 0.0f, (Color){.rgba=0xFF0000FF});
     draw_entities(game);
     if(game->s_params.use_custom_cursor)
         draw_cursor(game->win->context, game->mouse);
@@ -751,15 +753,19 @@ typedef struct{
     Slots slots;
 } NumberPool;
 
+void pw_layer1_render(
+    Image context, PWCamera2D camera, PWLayer layer, 
+    pw_chunk_coord_t x, pw_chunk_coord_t y, 
+    size_t chunk_width, size_t chunk_height
+);
+void pw_layer1_generate(PWLayer *layer, pw_chunk_coord_t x, pw_chunk_coord_t y);
 
 
 PWLayerSystem gen_ls(){
     PWLayerSystem ls = {0};
     PWLayer layer1 = pw_layer_create(PW_LAYER_GRID, sizeof(int), 100, 32, 32);
     pw_layer_add_sublayer(&layer1, sizeof(int));
-    printf("works1\n");
     pw_layer_add_image(&layer1, layer1.width, layer1.height);
-    printf("works2\n");
 
     PWLayer layer2 = pw_layer_create(PW_LAYER_ENTITY, 16, 100, 32, 32);
     PWLayer layer3 = pw_layer_create(PW_LAYER_GRID, 20, 100, 32, 32);
@@ -776,8 +782,9 @@ PWLayerSystem gen_ls(){
     return ls;
 }
 
+int permutation[PERM_TOTAL];
 int RunEntityGame(ParticleEngine* game){
-    
+    make_permutation(permutation);
     // ParticleEngine* gui_engine;
     // CreateParticleEngine(&gui_engine, "./configs/gui_conf.conf");
     
@@ -873,6 +880,7 @@ int RunEntityGame(ParticleEngine* game){
     #ifdef PW_USE_IMGUI
     imgui_init(game);
     #endif
+    printf("works100\n");
 
     acc = (vec2f){0.0f, 0.0f};
 
@@ -1088,6 +1096,57 @@ void Guide(ParticleEngine* game, Color textColor){
     BasicTextRender(game->win, guideSpell,          startX, startY+180, 2, textColor);  
     BasicTextRender(game->win, guideChunks,         startX, startY+200, 2, textColor);  
     BasicTextRender(game->win, guideExit,           startX, startY+220, 2, textColor);  
+}
+
+void pw_layer1_render(
+    Image context, PWCamera2D camera, PWLayer layer, 
+    pw_chunk_coord_t x, pw_chunk_coord_t y, 
+    size_t chunk_width, size_t chunk_height
+){
+    float tile_w = (float)chunk_width  / (float)layer.width  * camera.zoom;
+    float tile_h = (float)chunk_height / (float)layer.height * camera.zoom;
+    // pw_chunk_coord_t endx = x + tile_width * (pw_chunk_coord_t)layer.width;
+    // pw_chunk_coord_t endy = y + tile_height * (pw_chunk_coord_t)layer.height;
+
+    Image part_image = da_get(layer.images, 0);
+    for(size_t i = 0; i < part_image.height; i++)
+    for(size_t j = 0; j < part_image.width; j++){
+        int color = da_any_get(da_get(layer.sublayers, 0).data, i*layer.width + j, int);
+        PNT_IMG_GET(part_image, j, part_image.height - 1 - i) = (Color){.rgba = color};
+    }
+
+    
+    vec2f chunk_coord = (vec2f){(float)x, (float)y};
+    vec2 chunk_view_coord = pw_world_to_view_pos(chunk_coord, camera);
+    pnt_blit_scaled(context, part_image, chunk_view_coord.x, chunk_view_coord.y, tile_w, tile_h);
+}
+
+// WORKS CORRECTLY
+void pw_layer1_generate(PWLayer *layer, pw_chunk_coord_t x, pw_chunk_coord_t y){
+    x *= (pw_chunk_coord_t)layer->width;
+    y *= (pw_chunk_coord_t)layer->height;
+    for(size_t i = 0; i < layer->height; i++)
+    for(size_t j = 0; j < layer->width; j++){
+        double val = noise2D((double)(x+(pw_chunk_coord_t)j) * 0.01, (double)(y+(pw_chunk_coord_t)i) * 0.01, permutation) * 10.0;
+
+        Color c;
+        c.r = (int)(val) & 255;
+        c.g = (int)(val) & 255;
+        c.b = (int)(val) & 255;
+        c.a = 255;
+        // double n = noise2D((double)(x+(pw_chunk_coord_t)j) * 0.05,
+        //             (double)(y+(pw_chunk_coord_t)i) * 0.05,
+        //             permutation);
+
+        // double normalized = (n + 1.0) * 0.5;
+        // int v = (int)(normalized * 255.0);
+        // if(v < 0)   v = 0;
+        // if(v > 255) v = 255;
+
+        // Color c = { .r = v, .g = v, .b = v, .a = 255 };
+
+        da_any_set(da_get(layer->sublayers, 0).data, i*layer->width + j, c.rgba, int);
+    }
 }
 
 

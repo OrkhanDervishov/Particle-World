@@ -179,8 +179,8 @@ void pw_field_update(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y);
 typedef struct{
     pw_chunk_coord_t x, y;
 } vec2_chunk_coord;
-vec2_chunk_coord pw_field_get_region(PWField field);
 vec2_chunk_coord pw_field_coord_region(PWField field, pw_chunk_coord_t x, pw_chunk_coord_t y);
+vec2_chunk_coord pw_field_get_region(PWField field);
 
 void pw_field_region_unload_last(PWField *field);
 void pw_field_region_unload_far(PWField *field);

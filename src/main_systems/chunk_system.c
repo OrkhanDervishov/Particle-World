@@ -1,7 +1,5 @@
 #include "chunk_system.h"
-#include "perlin.h"
 
-int permutation[PERM_TOTAL];
 
 void pw_layers_prepare(PWLayers *layers){
 
@@ -250,7 +248,7 @@ PWRegion pw_region_create(
 
     for(size_t i = 0; i < height_in_chunk; i++){
         for(size_t j = 0; j < width_in_chunk; j++){
-            region.chunks[i*width_in_chunk + j] = pw_chunk_create(x + j*chunk_width, y + i*chunk_height, chunk_width, chunk_height, ls, TRUE);
+            region.chunks[i*width_in_chunk + j] = pw_chunk_create(x + j*chunk_width, y - i*chunk_height, chunk_width, chunk_height, ls, TRUE);
         }
     }
 
@@ -327,7 +325,6 @@ int pw_field_init(
         sizeof(PWChunk*)
     );
 
-    make_permutation(permutation);
     return 0;
 }
 
@@ -343,7 +340,6 @@ void pw_field_destroy(PWField *field){
 }
 
 void pw_field_chunk_organize(PWField field){
-    
     // Organize chunks from region list
     for(size_t i = 0; i < field.field_height_in_chunks; i++)
     for(size_t j = 0; j < field.field_width_in_chunks; j++){
@@ -412,11 +408,10 @@ void pw_field_update(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
 
 
 static pw_chunk_coord_t ceil_div_mul(pw_chunk_coord_t v, pw_chunk_coord_t step){
-    // returns the smallest multiple of `step` that is >= v  (step > 0)
     pw_chunk_coord_t q = v / step;
     pw_chunk_coord_t r = v % step;
-    if(r != 0 && v > 0) q += 1;      // round up for positive remainders
-    else if(r != 0 && v < 0) /* truncation already rounds toward zero, i.e. up, for negative v */;
+    if(r != 0 && v > 0) q += 1;
+    // else if(r != 0 && v < 0)
     return q * step;
 }
 
@@ -637,6 +632,7 @@ void pw_rect_render(Image context, PWCamera2D camera, float x, float y, float w,
 }
 
 void pw_chunk_render(Image context, PWCamera2D camera, PWField field, PWChunk* chunk, float x, float y, Color color){
+    if(chunk == NULL) return;
     Rect rect = {
         .x = (int)x, 
         .y = (int)y, 
@@ -644,14 +640,11 @@ void pw_chunk_render(Image context, PWCamera2D camera, PWField field, PWChunk* c
         .h = (int)chunk->h
     };
     rect = pw_world_to_view_rect(rect, camera);
-
     pw_chunk_coord_t coord_x = (pw_chunk_coord_t)x;
     pw_chunk_coord_t coord_y = (pw_chunk_coord_t)y;
-
-    // CONSOLE_RECT(rect);
+    
     pw_layers_render(chunk->layers, field.ls, context, camera, coord_x, coord_y, field.chunk_width, field.chunk_height);
     pnt_draw_rect(context, rect, color, 1);
-    // draw_filled_rect_f(window->context, rect, color);
 }
 
 void pw_region_render(Image context, PWCamera2D camera, PWField field, PWRegion region, size_t chunk_width, size_t chunk_height, bool show_chunks){
@@ -680,13 +673,14 @@ void pw_region_render(Image context, PWCamera2D camera, PWField field, PWRegion 
     // pnt_draw_rect(context, rect, red, 1);
 
     if(show_chunks){
+        // for(int i = region.height_in_chunk - 1; i >= 0; i--)
         for(int i = 0; i < region.height_in_chunk; i++)
         for(int j = 0; j < region.width_in_chunk; j++){
             pw_chunk_render(
                 context, camera, field,
                 &region.chunks[i*region.width_in_chunk + j], 
                 (float)(region.x + j*(pw_chunk_coord_t)(chunk_width)), 
-                (float)(region.y + i*(pw_chunk_coord_t)(chunk_height)),
+                (float)(region.y - i*(pw_chunk_coord_t)(chunk_height)),
                 purple
             );
             // pw_rect_render(
@@ -747,6 +741,7 @@ void pw_field_chunks_render(Image context, PWCamera2D camera, PWField field, boo
     // exit(0);
 }
 
+
 void pw_field_regions_render(Image context, PWCamera2D camera, PWField field, bool show_chunks){
     
     LL_TYPEOF(field.region_list) curr_region = field.region_list.head;
@@ -759,70 +754,6 @@ void pw_field_regions_render(Image context, PWCamera2D camera, PWField field, bo
 }
 
 
-void pw_layer1_render(
-    Image context, PWCamera2D camera, PWLayer layer, 
-    pw_chunk_coord_t x, pw_chunk_coord_t y, 
-    size_t chunk_width, size_t chunk_height
-){
-    // return;
-    float tile_w = (float)chunk_width  / (float)layer.width  * camera.zoom;
-    float tile_h = (float)chunk_height / (float)layer.height * camera.zoom;
-    // pw_chunk_coord_t endx = x + tile_width * (pw_chunk_coord_t)layer.width;
-    // pw_chunk_coord_t endy = y + tile_height * (pw_chunk_coord_t)layer.height;
-
-    // printf("cw:%zu ch:%zu\n", chunk_width, chunk_height);
-    // printf("lw:%zu lh:%zu\n", layer.width, layer.height);
-    // printf("tw:%zu th:%zu\n", tile_width, tile_height);
-
-    Image part_image = da_get(layer.images, 0);
-    for(size_t i = 0; i < part_image.height; i++)
-    for(size_t j = 0; j < part_image.width; j++){
-        // Rect tile = {
-        //     .x = (int)(x + (pw_chunk_coord_t)(j*tile_width)), 
-        //     .y = (int)(y + (pw_chunk_coord_t)(i*tile_height)),
-        //     .w = (int)tile_width, .h = (int)tile_height
-        // };
-        // tile = pw_world_to_view_rect(tile, camera);
-        int color = da_any_get(da_get(layer.sublayers, 0).data, i*layer.width + j, int);
-        PNT_IMG_GET(part_image, j, part_image.height - 1 - i) = (Color){.rgba = color};
-        // // printf("%d ", color);
-        // // CONSOLE_RECT(tile);
-        // pnt_draw_filled_rect(context, tile, (Color){.rgba = color*0x11111111});
-    }
-
-    
-    vec2f chunk_coord = (vec2f){(float)x, (float)y};
-    vec2 chunk_view_coord = pw_world_to_view_pos(chunk_coord, camera);
-    pnt_blit_scaled(context, part_image, chunk_view_coord.x, chunk_view_coord.y, tile_w, tile_h);
-}
-
-void pw_layer1_generate(PWLayer *layer, pw_chunk_coord_t x, pw_chunk_coord_t y){
-    x *= (pw_chunk_coord_t)layer->width;
-    y *= (pw_chunk_coord_t)layer->height;
-    for(size_t i = 0; i < layer->height; i++)
-    for(size_t j = 0; j < layer->width; j++){
-        double val = noise2D((double)(x+(pw_chunk_coord_t)j) * 0.1, (double)(y+(pw_chunk_coord_t)i) * 0.1, permutation) * 10.0;
-
-        Color c;
-        c.r = (int)(val) & 255;
-        c.g = (int)(val) & 255;
-        c.b = (int)(val) & 255;
-        c.a = 255;
-        // double n = noise2D((double)(x+(pw_chunk_coord_t)j) * 0.05,
-        //             (double)(y+(pw_chunk_coord_t)i) * 0.05,
-        //             permutation);           // ~ -1..1
-
-        // double normalized = (n + 1.0) * 0.5;        // -> ~0..1
-        // int v = (int)(normalized * 255.0);
-        // if(v < 0)   v = 0;
-        // if(v > 255) v = 255;
-
-        // Color c = { .r = v, .g = v, .b = v, .a = 255 };
-
-        da_any_set(da_get(layer->sublayers, 0).data, i*layer->width + j, c.rgba, int);
-    }
-}
-
 /*********************************************/
 
 
@@ -830,7 +761,7 @@ void pw_layer1_generate(PWLayer *layer, pw_chunk_coord_t x, pw_chunk_coord_t y){
 
 /*
     TODO 1: Create a better dynamic array. [COMPLETED]
-    TODO 2: Fix crash that occurs when region or chunk is destroyed. [PARTIAL]
+    TODO 2: Fix crash that occurs when region or chunk is destroyed. [COMPLETED]
     TODO 3: Review all chunk system code for memory leaks. []
     TODO 4: Improve rendering system for layers. []
 */
