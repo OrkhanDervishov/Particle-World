@@ -2,6 +2,7 @@
 #include "chunk_system.h"
 #include "imgui_dev.c"
 #include "chunk_system.h"
+#include "perlin.h"
 
 void Guide(ParticleEngine* game, Color textColor);
 void init_buttons(ParticleEngine* game, Button** buttons);
@@ -501,6 +502,8 @@ void clear_game_window(ParticleEngine* game){
 
 void draw_scene(ParticleEngine* game){
     clear_game_window(game);
+    pw_field_regions_render(game->win->context, game->camera, game->field, TRUE);
+    // pw_chunk_render(game->win->context, game->camera, game->field, game->field.region_list.head->value.chunks, 0.0f, 0.0f, (Color){.rgba=0xFF0000FF});
     draw_entities(game);
     if(game->s_params.use_custom_cursor)
         draw_cursor(game->win->context, game->mouse);
@@ -750,9 +753,38 @@ typedef struct{
     Slots slots;
 } NumberPool;
 
+void pw_layer1_render(
+    Image context, PWCamera2D camera, PWLayer layer, 
+    pw_chunk_coord_t x, pw_chunk_coord_t y, 
+    size_t chunk_width, size_t chunk_height
+);
+void pw_layer1_generate(PWLayer *layer, pw_chunk_coord_t x, pw_chunk_coord_t y);
 
-int RunEntityGame(ParticleEngine* game){
+
+PWLayerSystem gen_ls(){
+    PWLayerSystem ls = {0};
+    PWLayer layer1 = pw_layer_create(PW_LAYER_GRID, sizeof(int), 100, 32, 32);
+    pw_layer_add_sublayer(&layer1, sizeof(int));
+    pw_layer_add_image(&layer1, layer1.width, layer1.height);
+
+    PWLayer layer2 = pw_layer_create(PW_LAYER_ENTITY, 16, 100, 32, 32);
+    PWLayer layer3 = pw_layer_create(PW_LAYER_GRID, 20, 100, 32, 32);
     
+    // printf("works1\n");
+    pw_layer_sys_layer_add(&ls, layer1, pw_layer1_render, pw_layer1_generate);
+    // printf("works2\n");
+    // pw_layer_sys_layer_add(&ls, layer2);
+    // pw_layer_sys_layer_add(&ls, layer3);
+    pw_layer_sys_info(&ls);
+
+    // layer1_fill(&layer1);
+
+    return ls;
+}
+
+int permutation[PERM_TOTAL];
+int RunEntityGame(ParticleEngine* game){
+    make_permutation(permutation);
     // ParticleEngine* gui_engine;
     // CreateParticleEngine(&gui_engine, "./configs/gui_conf.conf");
     
@@ -760,17 +792,7 @@ int RunEntityGame(ParticleEngine* game){
     image.buffer = NULL;
     pnt_load_image(&image, "resources/CHESS.bmp");
     
-
-    PWLayerSystem ls = {0};
-    PWLayer layer1 = pw_layer_create(PW_LAYER_GRID, 32, 100, 32, 32);
-    PWLayer layer2 = pw_layer_create(PW_LAYER_ENTITY, 16, 100, 32, 32);
-    PWLayer layer3 = pw_layer_create(PW_LAYER_GRID, 20, 100, 32, 32);
-    pw_layer_sys_layer_add(&ls, layer1);
-    pw_layer_sys_layer_add(&ls, layer2);
-    pw_layer_sys_layer_add(&ls, layer3);
-    pw_layer_sys_info(&ls);
-
-
+    game->field.ls = gen_ls();
     
     pw_asset_t player_asset = pw_load_asset(&game->am, "resources/wizard.png", PW_ASSET_SPRITE);
     pw_asset_t block_asset = pw_load_asset(&game->am, "resources/block.png", PW_ASSET_SPRITE);
@@ -779,12 +801,12 @@ int RunEntityGame(ParticleEngine* game){
     pw_asset_t eye_asset = pw_load_asset(&game->am, "resources/eye_sprites.png", PW_ASSET_SPRITE);
     pw_make_asset_image_multiple_auto(&game->am, active_bombs_asset, (vec2){1,3});
     pw_make_asset_image_multiple_auto(&game->am, eye_asset, (vec2){1,5});
-    
-    PWFrames frames = {0};
+
+    PWFrames frames;
     da_append(frames, 0);
     da_append(frames, 1);
     da_append(frames, 2);
-    PWTimes delays = {0};
+    PWTimes delays;
     da_append(delays, 0.2f);
     da_append(delays, 0.2f);
     da_append(delays, 0.2f);
@@ -795,7 +817,6 @@ int RunEntityGame(ParticleEngine* game){
     PWRenderable bomb_animator = pw_sprite_animator_create_renderable(&game->am, bomb_animation, TRUE, TRUE);
     PWRenderable eye_animator = pw_sprite_animator_create_renderable(&game->am, eye_animation, TRUE, TRUE);
     
-
     player = (PWEntity){
         .type = PW_ENTITY_DYNAMIC,
         .pos = {0.0f, 100.0f},
@@ -859,7 +880,7 @@ int RunEntityGame(ParticleEngine* game){
     #ifdef PW_USE_IMGUI
     imgui_init(game);
     #endif
-
+    printf("works100\n");
 
     acc = (vec2f){0.0f, 0.0f};
 
@@ -973,16 +994,29 @@ int RunEntityGame(ParticleEngine* game){
         // };
         // pw_draw_sprite_text(game->win->context, &game->am, &fonts, "Hello World!\nerfegrg\nwefefef", font_transforms);
 
-        draw_scene(game);
+        // pw_time_t layer_start = get_current_time();
+        // pw_time_t layer_end = get_current_time();
+        // printf("%lf\n", layer_end - layer_start);
         pw_field_update(
             &game->field, 
             (pw_chunk_coord_t)ENTITY_GET(game->em.pool, player_id).pos.x, 
             (pw_chunk_coord_t)ENTITY_GET(game->em.pool, player_id).pos.y 
         );
+        draw_scene(game);
         // printf("region_count: %d\n", pool_get_count(field.regions));
         // printf("field_x:%d field_y:%d\n", field.x, field.y);
-        pw_field_regions_render(game->win->context, game->camera, game->field, FALSE);
-        pw_field_chunks_render(game->win->context, game->camera, game->field, TRUE);
+        // pw_field_regions_render(game->win->context, game->camera, game->field, TRUE);
+        // pw_field_chunks_render(game->win->context, game->camera, game->field, TRUE);
+        
+        // pw_time_t layer_start = get_current_time();
+        // pw_layer1_render(
+        //     game->win->context, game->camera, 
+        //     da_get(game->field.ls.layers, 0), 
+        //     0, 0, 
+        //     game->field.chunk_width, game->field.chunk_height
+        // );
+        // pw_time_t layer_end = get_current_time();
+        // printf("%lf\n", layer_end - layer_start);
         // pw_chunk_render(
         //     game->win->context, game->camera,
         //     &field.chunks[0], 
@@ -1002,6 +1036,19 @@ int RunEntityGame(ParticleEngine* game){
             camera_info, 
             (Transforms2d){
                 .translation = (vec2f){0.0f, -20.0f},
+                .rotation = 0.0f,
+                .scale = (vec2f){2.0f, 2.0f}
+            }
+        );
+
+        vec2_chunk_coord region_coord = pw_field_get_region(game->field);
+        sprintf(camera_info, "x:%d y:%d", region_coord.x, region_coord.y);
+        pw_draw_sprite_text(
+            game->win->context, 
+            &game->am, &fonts, 
+            camera_info, 
+            (Transforms2d){
+                .translation = (vec2f){0.0f, -40.0f},
                 .rotation = 0.0f,
                 .scale = (vec2f){2.0f, 2.0f}
             }
@@ -1049,6 +1096,57 @@ void Guide(ParticleEngine* game, Color textColor){
     BasicTextRender(game->win, guideSpell,          startX, startY+180, 2, textColor);  
     BasicTextRender(game->win, guideChunks,         startX, startY+200, 2, textColor);  
     BasicTextRender(game->win, guideExit,           startX, startY+220, 2, textColor);  
+}
+
+void pw_layer1_render(
+    Image context, PWCamera2D camera, PWLayer layer, 
+    pw_chunk_coord_t x, pw_chunk_coord_t y, 
+    size_t chunk_width, size_t chunk_height
+){
+    float tile_w = (float)chunk_width  / (float)layer.width  * camera.zoom;
+    float tile_h = (float)chunk_height / (float)layer.height * camera.zoom;
+    // pw_chunk_coord_t endx = x + tile_width * (pw_chunk_coord_t)layer.width;
+    // pw_chunk_coord_t endy = y + tile_height * (pw_chunk_coord_t)layer.height;
+
+    Image part_image = da_get(layer.images, 0);
+    for(size_t i = 0; i < part_image.height; i++)
+    for(size_t j = 0; j < part_image.width; j++){
+        int color = da_any_get(da_get(layer.sublayers, 0).data, i*layer.width + j, int);
+        PNT_IMG_GET(part_image, j, part_image.height - 1 - i) = (Color){.rgba = color};
+    }
+
+    
+    vec2f chunk_coord = (vec2f){(float)x, (float)y};
+    vec2 chunk_view_coord = pw_world_to_view_pos(chunk_coord, camera);
+    pnt_blit_scaled(context, part_image, chunk_view_coord.x, chunk_view_coord.y, tile_w, tile_h);
+}
+
+// WORKS CORRECTLY
+void pw_layer1_generate(PWLayer *layer, pw_chunk_coord_t x, pw_chunk_coord_t y){
+    x *= (pw_chunk_coord_t)layer->width;
+    y *= (pw_chunk_coord_t)layer->height;
+    for(size_t i = 0; i < layer->height; i++)
+    for(size_t j = 0; j < layer->width; j++){
+        double val = noise2D((double)(x+(pw_chunk_coord_t)j) * 0.01, (double)(y+(pw_chunk_coord_t)i) * 0.01, permutation) * 10.0;
+
+        Color c;
+        c.r = (int)(val) & 255;
+        c.g = (int)(val) & 255;
+        c.b = (int)(val) & 255;
+        c.a = 255;
+        // double n = noise2D((double)(x+(pw_chunk_coord_t)j) * 0.05,
+        //             (double)(y+(pw_chunk_coord_t)i) * 0.05,
+        //             permutation);
+
+        // double normalized = (n + 1.0) * 0.5;
+        // int v = (int)(normalized * 255.0);
+        // if(v < 0)   v = 0;
+        // if(v > 255) v = 255;
+
+        // Color c = { .r = v, .g = v, .b = v, .a = 255 };
+
+        da_any_set(da_get(layer->sublayers, 0).data, i*layer->width + j, c.rgba, int);
+    }
 }
 
 

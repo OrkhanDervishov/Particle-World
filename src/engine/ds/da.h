@@ -53,42 +53,65 @@ struct{\
     Type *items;\
     size_t count;\
     size_t capacity;\
-    size_t item_size;\
 }
+
 
 #define da_typeof(arr) __typeof__((arr))
 
 #define da_typeof_value(arr) __typeof__(*(arr).items)
 
-#define da_zero(arr) (da_typeof((arr))){0}
+#define da_zero(arr)\
+do{\
+    (arr).items = NULL;\
+    (arr).count = 0;\
+    (arr).capacity = 0;\
+}while(0)
 
 #define da_get(arr, index) (arr).items[(index)]
 
+#define da_set(arr, index, x) (arr).items[(index)] = (x)
+
+#define da_top(arr) (arr).items[(arr).count-1]
+#define da_front(arr) (arr).items[0]
+#define da_back(arr) da_top(arr)
+
 #define da_reserve(arr, size)\
 do{\
-    (arr).items = realloc((arr).items, ((arr).capacity + (size)) * sizeof(*(arr).items));\
-    (arr).capacity += (size);\
+    void* da_tmp = realloc((arr).items, ((arr).capacity + (size)) * sizeof(*(arr).items));\
+    if(da_tmp){\
+        (arr).items = da_tmp;\
+        (arr).capacity += (size);\
+    }\
+}while(0)
+
+#define da_free(arr)\
+do{\
+    free((arr).items);\
+    (arr).items = NULL;\
+    (arr).capacity = 0;\
+    (arr).count = 0;\
 }while(0)
 
 #define da_free_n(arr, size)\
 do{\
-    if((size) <= (arr).capacity){\
-        (arr).items = realloc((arr).items, ((arr).capacity - (size)) * sizeof(*(arr).items));\
-        (arr).capacity -= (size);\
-        (arr).count = (arr).count < (arr).capacity ? (arr).count : (arr).capacity;\
+    if((size) < (arr).capacity){\
+        void* da_tmp = realloc((arr).items, ((arr).capacity - (size)) * sizeof(*(arr).items));\
+        if(da_tmp){\
+            (arr).items = da_tmp;\
+            (arr).capacity -= (size);\
+            (arr).count = (arr).count < (arr).capacity ? (arr).count : (arr).capacity;\
+        }\
+    }\
+    else if((size) == (arr).capacity){\
+        da_free(arr);\
     }\
 }while(0)
-
-#define da_free(arr) da_free_n(arr, (arr).capacity)
-
-#define da_set(arr, index, x) (arr).items[(index)] = (x)
 
 #define da_append(arr, x) \
 do{\
     if((arr).count >= (arr).capacity){\
-        if((arr).capacity == 0) (arr).capacity = 64;\
-        (arr).capacity *= 2;\
-        (arr).items = realloc((arr).items, (arr).capacity * sizeof(*(arr).items));\
+        if((arr).capacity == 0) (arr).capacity = 32;\
+        da_reserve(arr, (arr).capacity);\
     }\
     (arr).items[arr.count++] = (x);\
 }while(0)
@@ -101,10 +124,6 @@ do{\
 do{\
     if((arr).count != 0) (arr).count--;\
 }while(0)
-
-#define da_top(arr) (arr).items[(arr).count-1]
-#define da_front(arr) (arr).items[0]
-#define da_back(arr) da_top(arr)
 
 #define da_fill(arr, x)\
 do{\
@@ -157,6 +176,96 @@ typedef struct{
     size_t item_size;
 } DaAnyData;
 
+#define da_any_init(arr, itemsize)\
+do{\
+    da_zero(arr);\
+    (arr).item_size = (itemsize);\
+}while(0)
+
+#define da_any_reserve(arr, size)\
+do{\
+    void* da_tmp = realloc((arr).items, ((arr).capacity + (size)) * (arr).item_size);\
+    if(da_tmp){\
+        (arr).items = da_tmp;\
+        (arr).capacity += (size);\
+    }\
+}while(0)
+
+#define da_any_free(arr)\
+do{\
+    free((arr).items);\
+    (arr).items = NULL;\
+    (arr).capacity = 0;\
+    (arr).count = 0;\
+}while(0)
+
+#define da_any_free_n(arr, size)\
+do{\
+    if((size) < (arr).capacity){\
+        void* da_tmp = realloc((arr).items, ((arr).capacity - (size)) * (arr).item_size);\
+        if(da_tmp){\
+            (arr).items = da_tmp;\
+            (arr).capacity -= (size);\
+            (arr).count = (arr).count < (arr).capacity ? (arr).count : (arr).capacity;\
+        }\
+    }\
+    else if((size) == (arr).capacity){\
+        da_any_free(arr);\
+    }\
+}while(0)
+
+#define da_any_get(arr, index, Type) ((Type*)(arr).items)[index]
+#define da_any_set(arr, index, x, Type) ((Type*)(arr).items)[index] = (x)
+#define da_any_top(arr, Type) da_any_get(arr, (arr).count - 1, Type)
+#define da_any_front(arr, Type) da_any_get(arr, 0, Type)
+#define da_any_back(arr, Type) da_any_top(arr, Type)
+
+#define da_any_append(arr, x, Type) \
+do{\
+    if((arr).count >= (arr).capacity){\
+        if((arr).capacity == 0) (arr).capacity = 32;\
+        da_any_reserve(arr, (arr).capacity);\
+    }\
+    da_any_set(arr, (arr).count++, x, Type);\
+}while(0)
+#define da_any_insert(arr, x, Type) da_any_append(arr, x, Type)
+#define da_any_push(arr, x, Type) da_any_append(arr, x, Type)
+
+#define da_any_pop(arr)\
+do{\
+    if((arr).count != 0) (arr).count--;\
+}while(0)
+
+#define da_any_fill(arr, x, Type)\
+do{\
+    for(size_t da_i = 0; da_i < (arr).capacity; da_i++){\
+        da_any_set(arr, da_i, x, Type);\
+    }\
+    (arr).count = (arr).capacity;\
+}while(0)
+
+#define da_any_resize(arr, x, count, Type)\
+do{\
+    if((arr).capacity < (count)){\
+        da_any_reserve(arr, (count) - (arr).capacity);\
+    }\
+    da_any_fill(arr, x, Type);\
+}while(0)
+
+#define da_any_copy(dest, src, Type)\
+do{\
+    if((dest).capacity <= (src).count){\
+        size_t da_size = (src).count - (dest).capacity;\
+        da_any_reserve(dest, da_size);\
+    }\
+    for(size_t da_i = 0; da_i < (src).count; da_i++){\
+        da_any_set(dest, da_i, da_any_get(src, da_i, Type), Type);\
+    }\
+    (dest).count = (src).count;\
+}while(0)
+
+#define da_any_foreach(obj_p, arr, Type) \
+    for(size_t da_i = 0; (da_i < (arr).count) && (((obj_p) = &((Type*)(arr).items)[da_i]), 1); da_i++)
 
 
 //-------------------------------------

@@ -1,32 +1,101 @@
 #include "chunk_system.h"
 
-PWLayers pw_layers_copy(PWLayers layers){
-    for(size_t i = 0; i < layers.count; i++){
-        PWLayer *layer = &da_get(layers, i);
-        for(size_t j = 0; j < layers.count; j++){
+
+void pw_layers_prepare(PWLayers *layers){
+
+    for(size_t i = 0; i < layers->count; i++){
+        PWLayer *layer = &da_get(*layers, i);
+        for(size_t j = 0; j < layer->sublayers.count; j++){
             PWSubLayer *sublayer = &da_get(layer->sublayers, j);
-            da_zero(sublayer->data);
+            da_free(sublayer->data);
             if(layer->type == PW_LAYER_GRID){
-                da_reserve(sublayer->data, sublayer->item_size * layer->size);
+                da_any_reserve(sublayer->data, sublayer->item_size * layer->size);
             }
         }
     }
-    return layers;
 }
 
-void pw_layer_free(PWLayer layer){
-    for(size_t i = 0; i < layer.sublayers.count; i++){
-        da_free(da_get(layer.sublayers, i).data);
-    }
-    da_free(layer.sublayers);
-}
+// PWLayers pw_layers_copy(PWLayers layers){
+//     PWLayers res =
 
-void pw_layers_free(PWLayers layers){
+//     for(size_t i = 0; i < layers.count; i++){
+//         PWLayer *layer = &da_get(layers, i);
+//         layers
+//         for(size_t j = 0; j < layer->sublayers.count; j++){
+//             PWSubLayer *sublayer = &da_get(layer->sublayers, j);
+//             sublayer->data = (DaAnyData){0};
+//             if(layer->type == PW_LAYER_GRID){
+//                 da_reserve(sublayer->data, sublayer->item_size * layer->size);
+//             }
+//         }
+//     }
+//     return layers;
+// }
+
+PWLayers pw_layers_copy(PWLayers layers){
+    PWLayers result;
+    da_zero(result);
+    da_reserve(result, layers.count);
 
     for(size_t i = 0; i < layers.count; i++){
-        pw_layer_free(da_get(layers, i));
+        PWLayer *src_layer = &da_get(layers, i);
+        PWLayer dst_layer = *src_layer;
+        
+        PW_ASSERT(src_layer != NULL);
+        da_zero(dst_layer.sublayers);
+        da_zero(dst_layer.images);
+
+        da_reserve(dst_layer.sublayers, src_layer->sublayers.count);
+        
+        for(size_t j = 0; j < src_layer->sublayers.count; j++){
+            PWSubLayer *src_sub = &da_get(src_layer->sublayers, j);
+            PWSubLayer dst_sub = *src_sub;
+            
+            PW_ASSERT(src_sub != NULL);
+            da_any_init(dst_sub.data, src_sub->data.item_size);
+
+            if(src_layer->type == PW_LAYER_GRID){
+                da_any_reserve(dst_sub.data, src_sub->item_size * src_layer->size);
+            }
+            
+            da_append(dst_layer.sublayers, dst_sub);
+        }
+        
+        if(src_layer->type == PW_LAYER_GRID){
+            for(size_t j = 0; j < src_layer->images.count; j++){
+                Image image = {.buffer = NULL};
+                pnt_create_image(&image, da_get(src_layer->images, j).width, da_get(src_layer->images, j).height);
+                da_append(dst_layer.images, image);
+            }
+        }
+
+        da_append(result, dst_layer);
     }
-    da_free(layers);
+    
+    return result;
+}
+
+void pw_layer_free(PWLayer *layer){
+    if(layer == NULL) return;
+
+    for(size_t i = 0; i < layer->sublayers.count; i++){
+        da_free(da_get(layer->sublayers, i).data);
+    }
+    da_free(layer->sublayers);
+
+    for(size_t i = 0; i < layer->images.count; i++){
+        pnt_delete_image(&da_get(layer->images, i));
+    }
+    da_free(layer->images);
+}
+
+void pw_layers_free(PWLayers *layers){
+    if(layers == NULL) return;
+    for(size_t i = 0; i < layers->count; i++){
+        pw_layer_free(&da_get(*layers, i));
+    }
+
+    da_free(*layers);
 }
 
 void* pw_layer_get(PWLayer layer, size_t x, size_t y){
@@ -50,13 +119,34 @@ void pw_layer_add_sublayer(PWLayer *layer, size_t item_size){
     PWSubLayer sublayer = {
         .item_size = item_size
     };
+    
+    da_any_init(sublayer.data, item_size);
+    if(layer->type == PW_LAYER_GRID){
+        da_any_reserve(sublayer.data, sublayer.item_size * layer->size);
+    }
+
     da_append(layer->sublayers, sublayer);
 }
 
-int pw_layer_sys_layer_add(PWLayerSystem *ls, PWLayer layer){
+void pw_layer_add_image(PWLayer *layer, size_t width, size_t height){
+    Image image;
+    image.buffer = NULL;
+    if(pnt_create_image(&image, width, height)){
+        printf("layer image was not created\n");
+    }
+    da_append(layer->images, image);
+}
+
+int pw_layer_sys_layer_add(
+    PWLayerSystem *ls, PWLayer layer, PWLayerRenderer layer_renderer, PWLayerGenerator layer_generator
+)
+{
     layer.id = ls->registered_layer_count;
     da_append(ls->layers, layer);
+    da_append(ls->layer_renderers, layer_renderer);
+    da_append(ls->layer_generators, layer_generator);
     ls->registered_layer_count++;
+    return 0;
 }
 
 void pw_layer_sys_info(PWLayerSystem *ls){
@@ -79,24 +169,59 @@ void pw_layer_sys_info(PWLayerSystem *ls){
     }
 }
 
+void pw_layer_sys_free(PWLayerSystem* ls){
+    da_free(ls->layer_renderers);
+    da_free(ls->layer_generators);
+}
+
+
+/*
+    Generate all layers
+*/
+void pw_layers_generate(PWLayers *layers, PWLayerSystem ls, pw_chunk_coord_t x, pw_chunk_coord_t y){
+    for(size_t i = 0; i < layers->count; i++){
+        PWLayer *layer = &da_get(*layers, i);
+        if(da_get(ls.layer_generators, layer->id) == NULL) continue;
+        da_get(ls.layer_generators, layer->id)(layer, x, y);
+    }
+}
+
+/*
+    Render all layers
+*/
+void pw_layers_render(
+    PWLayers layers, PWLayerSystem ls,         
+    Image context, PWCamera2D camera, 
+    pw_chunk_coord_t x, pw_chunk_coord_t y,
+    size_t chunk_width, size_t chunk_height
+){
+    for(size_t i = 0; i < layers.count; i++){
+        PWLayer layer = da_get(layers, i);
+        if(da_get(ls.layer_renderers, layer.id) == NULL) continue;
+        da_get(ls.layer_renderers, layer.id)(context, camera, layer, x, y, chunk_width, chunk_height);
+    }
+}
 
 /*********************************************/
 
 PWChunk pw_chunk_create(
     pw_chunk_coord_t x, pw_chunk_coord_t y,
     pw_chunk_coord_t w, pw_chunk_coord_t h,
-    PWLayerSystem ls
+    PWLayerSystem ls, bool generate
 ){
     PWChunk chunk = {
         .x = x, .y = y, .w = w, .h = h,
         .layers = pw_layers_copy(ls.layers)
     };
+    if(generate){
+        pw_layers_generate(&chunk.layers, ls, x/(pw_chunk_coord_t)chunk.w, y/(pw_chunk_coord_t)chunk.h);
+    }
 
     return chunk;
 }
 
 void pw_chunk_delete(PWChunk *chunk){
-    pw_layers_free(chunk->layers);
+    pw_layers_free(&chunk->layers);
 }
 
 
@@ -123,7 +248,7 @@ PWRegion pw_region_create(
 
     for(size_t i = 0; i < height_in_chunk; i++){
         for(size_t j = 0; j < width_in_chunk; j++){
-            region.chunks[i*width_in_chunk + j] = pw_chunk_create(x + j*chunk_width, y + i*chunk_height, chunk_width, chunk_height, ls);
+            region.chunks[i*width_in_chunk + j] = pw_chunk_create(x + j*chunk_width, y - i*chunk_height, chunk_width, chunk_height, ls, TRUE);
         }
     }
 
@@ -195,9 +320,9 @@ int pw_field_init(
     
     ll_init(field->region_list);
 
-    field->chunks = (PWChunk*)calloc(
+    field->chunks = (PWChunk**)calloc(
         field->field_width_in_chunks * field->field_height_in_chunks, 
-        sizeof(PWChunk)
+        sizeof(PWChunk*)
     );
 
     return 0;
@@ -205,39 +330,42 @@ int pw_field_init(
 
 void pw_field_destroy(PWField *field){
     // pool_free(field->regions);
+    LL_TYPEOF(field->region_list) curr_region = field->region_list.head;
+    while(curr_region){
+        pw_region_delete(&curr_region->value);
+        curr_region = curr_region->next;
+    }
     ll_free(field->region_list);
     free(field->chunks);
 }
 
 void pw_field_chunk_organize(PWField field){
-    
     // Organize chunks from region list
     for(size_t i = 0; i < field.field_height_in_chunks; i++)
     for(size_t j = 0; j < field.field_width_in_chunks; j++){
         pw_chunk_coord_t cx = field.x + j * field.chunk_width;
-        pw_chunk_coord_t cy = field.y + i * field.chunk_height;
+        pw_chunk_coord_t cy = field.y - i * field.chunk_height;
 
         size_t region_width = field.region_width_in_chunks * field.chunk_width;
         size_t region_height = field.region_height_in_chunks * field.chunk_height;
         pw_chunk_coord_t rx = (cx / region_width) * region_width;
         pw_chunk_coord_t ry = (cy / region_height) * region_height;
 
-        PWChunk chunk = {0};
+        PWChunk* chunk;
 
         LL_TYPEOF(field.region_list) curr_region = field.region_list.head;
         while(curr_region){
-            // PWRegion region = pool_get(field->regions, k);
+
             if(curr_region->value.x == rx && curr_region->value.y == ry){
-                size_t ri = (cy - ry) / field.chunk_height;
+                size_t ri = (ry - cy) / field.chunk_height;
                 size_t rj = (cx - rx) / field.chunk_width;
 
                 size_t index = ri * (field.region_width_in_chunks) + rj;
-                chunk = curr_region->value.chunks[index];
+                chunk = &curr_region->value.chunks[index];
                 break;
             }
             curr_region = curr_region->next;
         }
-
 
         field.chunks[i * field.field_width_in_chunks + j] = chunk;
     }
@@ -278,9 +406,14 @@ void pw_field_update(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y){
     }
 }
 
-typedef struct{
-    pw_chunk_coord_t x, y;
-} vec2_chunk_coord;
+
+static pw_chunk_coord_t ceil_div_mul(pw_chunk_coord_t v, pw_chunk_coord_t step){
+    pw_chunk_coord_t q = v / step;
+    pw_chunk_coord_t r = v % step;
+    if(r != 0 && v > 0) q += 1;
+    // else if(r != 0 && v < 0)
+    return q * step;
+}
 
 vec2_chunk_coord pw_field_coord_region(PWField field, pw_chunk_coord_t x, pw_chunk_coord_t y){
     size_t region_width = field.region_width_in_chunks * field.chunk_width;
@@ -288,8 +421,13 @@ vec2_chunk_coord pw_field_coord_region(PWField field, pw_chunk_coord_t x, pw_chu
 
     return (vec2_chunk_coord){
         (x / (pw_chunk_coord_t)region_width + (x < 0 ? -1 : 0)) * (pw_chunk_coord_t)region_width,
-        (y / (pw_chunk_coord_t)region_height + (y < 0 ? 0 : 1)) * (pw_chunk_coord_t)region_height
+        ceil_div_mul(y, (pw_chunk_coord_t)region_height)
+        // (y / (pw_chunk_coord_t)region_height + (y < 0 ? 0 : 1)) * (pw_chunk_coord_t)region_height
     };
+}
+
+vec2_chunk_coord pw_field_get_region(PWField field){
+    return pw_field_coord_region(field, field.x_center, field.y_center);
 }
 
 bool pw_field_region_is_loaded(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y, size_t *index){
@@ -493,7 +631,8 @@ void pw_rect_render(Image context, PWCamera2D camera, float x, float y, float w,
     // draw_filled_rect_f(window->context, rect, color);
 }
 
-void pw_chunk_render(Image context, PWCamera2D camera, PWChunk* chunk, float x, float y, Color color){
+void pw_chunk_render(Image context, PWCamera2D camera, PWField field, PWChunk* chunk, float x, float y, Color color){
+    if(chunk == NULL) return;
     Rect rect = {
         .x = (int)x, 
         .y = (int)y, 
@@ -501,13 +640,14 @@ void pw_chunk_render(Image context, PWCamera2D camera, PWChunk* chunk, float x, 
         .h = (int)chunk->h
     };
     rect = pw_world_to_view_rect(rect, camera);
-
-    CONSOLE_RECT(rect);
+    pw_chunk_coord_t coord_x = (pw_chunk_coord_t)x;
+    pw_chunk_coord_t coord_y = (pw_chunk_coord_t)y;
+    
+    pw_layers_render(chunk->layers, field.ls, context, camera, coord_x, coord_y, field.chunk_width, field.chunk_height);
     pnt_draw_rect(context, rect, color, 1);
-    // draw_filled_rect_f(window->context, rect, color);
 }
 
-void pw_region_render(Image context, PWCamera2D camera, PWRegion region, size_t chunk_width, size_t chunk_height, bool show_chunks){
+void pw_region_render(Image context, PWCamera2D camera, PWField field, PWRegion region, size_t chunk_width, size_t chunk_height, bool show_chunks){
     Color red = {.rgba = 0xFF0000FF};
     Color purple = {.rgba = 0xFFFF00FF};
 
@@ -533,17 +673,25 @@ void pw_region_render(Image context, PWCamera2D camera, PWRegion region, size_t 
     // pnt_draw_rect(context, rect, red, 1);
 
     if(show_chunks){
+        // for(int i = region.height_in_chunk - 1; i >= 0; i--)
         for(int i = 0; i < region.height_in_chunk; i++)
         for(int j = 0; j < region.width_in_chunk; j++){
-            pw_rect_render(
-                context, camera, 
-                // &region.chunks[i*region.width_in_chunk + j], 
+            pw_chunk_render(
+                context, camera, field,
+                &region.chunks[i*region.width_in_chunk + j], 
                 (float)(region.x + j*(pw_chunk_coord_t)(chunk_width)), 
                 (float)(region.y - i*(pw_chunk_coord_t)(chunk_height)),
-                (float)(chunk_width),
-                (float)(chunk_height),
                 purple
             );
+            // pw_rect_render(
+            //     context, camera, 
+            //     // &region.chunks[i*region.width_in_chunk + j], 
+            //     (float)(region.x + j*(pw_chunk_coord_t)(chunk_width)), 
+            //     (float)(region.y - i*(pw_chunk_coord_t)(chunk_height)),
+            //     (float)(chunk_width),
+            //     (float)(chunk_height),
+            //     purple
+            // );
         }
     }
 }
@@ -593,16 +741,27 @@ void pw_field_chunks_render(Image context, PWCamera2D camera, PWField field, boo
     // exit(0);
 }
 
+
 void pw_field_regions_render(Image context, PWCamera2D camera, PWField field, bool show_chunks){
     
     LL_TYPEOF(field.region_list) curr_region = field.region_list.head;
     while(curr_region){
         // if(pool_is_deleted(field.regions, i)) continue;
         // printf("works\n");
-        pw_region_render(context, camera, curr_region->value, field.chunk_width, field.chunk_height, show_chunks);
+        pw_region_render(context, camera, field, curr_region->value, field.chunk_width, field.chunk_height, show_chunks);
         curr_region = curr_region->next;
     }
 }
 
 
 /*********************************************/
+
+
+
+
+/*
+    TODO 1: Create a better dynamic array. [COMPLETED]
+    TODO 2: Fix crash that occurs when region or chunk is destroyed. [COMPLETED]
+    TODO 3: Review all chunk system code for memory leaks. []
+    TODO 4: Improve rendering system for layers. []
+*/

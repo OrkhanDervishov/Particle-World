@@ -23,16 +23,11 @@
     Rendering:  void render_layer(Da(PWlayer) layers);
 */
 
+typedef int64_t pw_chunk_coord_t;
 
 typedef uint16_t pw_layer_id_t;
 
 #define PW_LAYER_GET(Layer, index, Type) (Type)((Layer).data.items)[(index)]
-// typedef struct{
-//     void* items;
-//     size_t count;
-//     size_t capacity;
-//     size_t item_size;
-// } AnyData;
 
 typedef enum{
     PW_LAYER_GRID = 0,
@@ -62,24 +57,40 @@ typedef struct{
     // Data itself
     // In the future data will be divided into sublayers for storing item's data with data oriented design
     PWSubLayers sublayers;
+
+    Da(Image) images;
 } PWLayer;
 typedef Da(PWLayer) PWLayers;
 
 
+
+
+
+typedef void (*PWLayerRenderer)(
+    Image context, PWCamera2D camera, PWLayer layer, 
+    pw_chunk_coord_t x, pw_chunk_coord_t y,
+    size_t chunk_width, size_t chunk_height
+);
+typedef void (*PWLayerGenerator)(
+    PWLayer *layer, pw_chunk_coord_t x, pw_chunk_coord_t y
+);
+
 typedef struct{
-    size_t registered_layer_count;
-    PWLayers layers;
+    size_t      registered_layer_count;
+    PWLayers    layers;
+    Da(PWLayerRenderer) layer_renderers;
+    Da(PWLayerGenerator) layer_generators;
 } PWLayerSystem;
 
 
 
 PWLayer pw_layer_create(PWLayerType type, size_t item_size, size_t size, size_t width, size_t height);
-int pw_layer_sys_layer_add(PWLayerSystem *ls, PWLayer layer);
+void pw_layer_add_sublayer(PWLayer *layer, size_t item_size);
+void pw_layer_add_image(PWLayer *layer, size_t width, size_t height);
+int pw_layer_sys_layer_add(PWLayerSystem *ls, PWLayer layer, PWLayerRenderer layer_renderer, PWLayerGenerator layer_generator);
 void pw_layer_sys_info(PWLayerSystem *ls);
 
 /*********************************************/
-
-typedef int64_t pw_chunk_coord_t;
 
 typedef struct{
     pw_chunk_coord_t    x, y;
@@ -150,7 +161,7 @@ typedef struct{
 
     PWLayerSystem   ls;
 
-    PWChunk*        chunks;
+    PWChunk**       chunks;
 } PWField;
 
 int pw_field_init(
@@ -165,6 +176,12 @@ void pw_field_destroy(PWField *field);
 void pw_field_chunk_organize(PWField field);
 void pw_field_update(PWField *field, pw_chunk_coord_t x, pw_chunk_coord_t y);
 
+typedef struct{
+    pw_chunk_coord_t x, y;
+} vec2_chunk_coord;
+vec2_chunk_coord pw_field_coord_region(PWField field, pw_chunk_coord_t x, pw_chunk_coord_t y);
+vec2_chunk_coord pw_field_get_region(PWField field);
+
 void pw_field_region_unload_last(PWField *field);
 void pw_field_region_unload_far(PWField *field);
 void pw_field_region_unload_lru(PWField *field);
@@ -175,11 +192,18 @@ void pw_field_region_unload(PWField *field);
 
 /*********************************************/
 
-void pw_chunk_render(Image context, PWCamera2D camera, PWChunk* chunk, float x, float y, Color color);
-void pw_region_render(Image context, PWCamera2D camera, PWRegion region, size_t chunk_width, size_t chunk_height, bool show_chunks);
+void pw_chunk_render(Image context, PWCamera2D camera, PWField field, PWChunk* chunk, float x, float y, Color color);
+void pw_region_render(Image context, PWCamera2D camera, PWField field, PWRegion region, size_t chunk_width, size_t chunk_height, bool show_chunks);
 void pw_field_chunks_render(Image context, PWCamera2D camera, PWField field, bool show_chunks);
 void pw_field_regions_render(Image context, PWCamera2D camera, PWField field, bool show_chunks);
 
+
+void pw_layer1_render(
+    Image context, PWCamera2D camera, PWLayer layer, 
+    pw_chunk_coord_t x, pw_chunk_coord_t y, 
+    size_t chunk_width, size_t chunk_height
+);
+void pw_layer1_generate(PWLayer *layer, pw_chunk_coord_t x, pw_chunk_coord_t y);
 
 /*********************************************/
 

@@ -62,7 +62,7 @@ int CreateParticleEngine(ParticleEngine** game, const char* conf_path){
     ArrangeChunks(cs);
 
     (*game)->field = (PWField){0};
-    pw_field_init(&(*game)->field, 3, 3, 5, 5, 128, 128, 20, (PWLayerSystem){0});
+    pw_field_init(&(*game)->field, 5, 5, 16, 10, 256, 256, 20, (PWLayerSystem){0});
     //******************************************/
     
     //******************************************/
